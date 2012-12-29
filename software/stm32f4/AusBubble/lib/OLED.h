@@ -38,12 +38,12 @@
 #include "Includes.h"
 
 /* Global Variables */
-#define xLevelL			0x00
-#define xLevelH			0x10
-#define xLevel			((xLevelH&0x0F)*16+xLevelL)
-#define maxColumn		128
-#define maxRow			64
-#define	oledBrightness	0xCF
+#define xLevelL         0x00
+#define xLevelH         0x10
+#define xLevel          ((xLevelH&0x0F)*16+xLevelL)
+#define maxColumn       128
+#define maxRow          64
+#define oledBrightness  0xCF
 
 /* Font Data */
 extern char fontData[240][5];

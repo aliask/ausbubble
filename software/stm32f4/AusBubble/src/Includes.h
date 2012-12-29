@@ -44,8 +44,8 @@
 #include "task.h"
 
 /* Synth Allowable Frequency Range (DO NOT MODIFY) */
-#define MIN_FREQ_MHZ					2400
-#define MAX_FREQ_MHZ					2500
+#define MIN_FREQ_MHZ                    2400
+#define MAX_FREQ_MHZ                    2500
 
 /* OLED */
 #define OLED_CS_PORT                    GPIOA

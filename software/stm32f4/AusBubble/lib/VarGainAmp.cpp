@@ -76,7 +76,7 @@ void VarGainAmpWrite(uint8_t data)
         if (data & (0x20 >> count))
         {
             // DATA=1
-        	GPIO_SetBits(VARGAINAMP_DATA_PORT, VARGAINAMP_DATA_PIN);
+            GPIO_SetBits(VARGAINAMP_DATA_PORT, VARGAINAMP_DATA_PIN);
             asm volatile("nop");
 
             // Pulse CLK
@@ -86,7 +86,7 @@ void VarGainAmpWrite(uint8_t data)
         else
         {
             // DATA=0
-        	GPIO_ResetBits(VARGAINAMP_DATA_PORT, VARGAINAMP_DATA_PIN);
+            GPIO_ResetBits(VARGAINAMP_DATA_PORT, VARGAINAMP_DATA_PIN);
             asm volatile("nop");
 
             // Pulse CLK

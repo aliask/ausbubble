@@ -54,7 +54,7 @@
 void writeCommand(unsigned char data)
 {
     // CS=0, DC=0
-	GPIO_WriteBit(OLED_CS_PORT, OLED_CS_PIN, Bit_RESET);
+    GPIO_WriteBit(OLED_CS_PORT, OLED_CS_PIN, Bit_RESET);
     GPIO_WriteBit(OLED_DC_PORT, OLED_DC_PIN, Bit_RESET);
     // Write data to SPI
     SPI_I2S_SendData(SPI1, data);
@@ -69,7 +69,7 @@ void writeCommand(unsigned char data)
 void writeData(unsigned char data)
 {
     // CS=0, DC=1
-	GPIO_WriteBit(OLED_CS_PORT, OLED_CS_PIN, Bit_RESET);
+    GPIO_WriteBit(OLED_CS_PORT, OLED_CS_PIN, Bit_RESET);
     GPIO_WriteBit(OLED_DC_PORT, OLED_DC_PIN, Bit_SET);
     // Write data to SPI
     SPI_I2S_SendData(SPI1, data);
@@ -228,7 +228,7 @@ void setNOP()
 /* Fill the screen with a particular data pattern */
 void fillScreen(unsigned char data)
 {
-	unsigned char i,j;
+    unsigned char i,j;
 
     for(i=0;i<8;i++)
     {

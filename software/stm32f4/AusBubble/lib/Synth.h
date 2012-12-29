@@ -37,10 +37,10 @@
 
 #include "Includes.h"
 
-#define F_VCO_MAX_MHZ   	5400.0
-#define F_REFERENCE_MHZ 	26.0
-#define FBKDIV          	4       // Prescaler divider (fvco<3.2GHz: 2, fvco>3.2GHz: 4)
-#define USE_SW_CONTROL  	1       // Software Control=1, Hardware Control=0 (via ENBL and MODE pins)
+#define F_VCO_MAX_MHZ       5400.0
+#define F_REFERENCE_MHZ     26.0
+#define FBKDIV              4       // Prescaler divider (fvco<3.2GHz: 2, fvco>3.2GHz: 4)
+#define USE_SW_CONTROL      1       // Software Control=1, Hardware Control=0 (via ENBL and MODE pins)
 
 // Synthesizer register defines
 #define REG_LF       (0x00 << 16)
