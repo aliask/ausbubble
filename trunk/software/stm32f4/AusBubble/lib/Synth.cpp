@@ -38,17 +38,17 @@ void SynthInit(void)
 {
     /* Set initial state of GPIO pins and perform hardware reset */
     // RESETX=0
-	GPIO_ResetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
+    GPIO_ResetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
     // ENX=1
-	GPIO_SetBits(SYNTH_ENX_PORT, SYNTH_ENX_PIN);
+    GPIO_SetBits(SYNTH_ENX_PORT, SYNTH_ENX_PIN);
     // SCLK=0
-	GPIO_ResetBits(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN);
+    GPIO_ResetBits(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN);
     // SDATA=0
-	GPIO_ResetBits(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN);
+    GPIO_ResetBits(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN);
     // ENBL=0
-	GPIO_ResetBits(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN);
+    GPIO_ResetBits(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN);
     // RESETX=1
-	GPIO_SetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
+    GPIO_SetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
 
     /* Software Reset */
     SynthWrite(REG_SDI_CTRL | (1<<SHIFT_RESET));
@@ -72,9 +72,9 @@ void SynthEnable(bool enable)
                                   (enable<<SHIFT_ENBL));   // Enable
     #else
         if(enable)
-        	GPIO_WriteBit(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN, Bit_SET);
+            GPIO_WriteBit(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN, Bit_SET);
         else
-        	GPIO_WriteBit(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN, Bit_RESET);
+            GPIO_WriteBit(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN, Bit_RESET);
     #endif
 }
 
@@ -107,9 +107,9 @@ void SynthWrite(uint32_t dataBits)
     {
         if(dataBits & (0x00400000 >> count))
         {
-        	// SDATA=1
-        	GPIO_SetBits(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN);
-        	asm volatile("nop");
+            // SDATA=1
+            GPIO_SetBits(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN);
+            asm volatile("nop");
 
             // Pulse SCLK
             GPIO_SetBits(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN);
@@ -117,9 +117,9 @@ void SynthWrite(uint32_t dataBits)
         }
         else
         {
-        	// SDATA=0
-        	GPIO_ResetBits(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN);
-        	asm volatile("nop");
+            // SDATA=0
+            GPIO_ResetBits(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN);
+            asm volatile("nop");
 
             // Pulse SCLK
             GPIO_SetBits(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN);
@@ -156,7 +156,7 @@ void SynthSendAddress(bool write, uint8_t address)
     if(write)
     {
         // SDATA=0
-    	GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_RESET);
+        GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_RESET);
         asm volatile("nop");
 
         // Pulse SCLK
@@ -167,7 +167,7 @@ void SynthSendAddress(bool write, uint8_t address)
     else
     {
         // SDATA=1
-    	GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_SET);
+        GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_SET);
         asm volatile("nop");
 
         // Pulse SCLK
@@ -181,7 +181,7 @@ void SynthSendAddress(bool write, uint8_t address)
         if(address & (0x40 >> count))
         {
             // SDATA=1
-        	GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_SET);
+            GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_SET);
             asm volatile("nop");
 
             // Pulse SCLK
@@ -191,7 +191,7 @@ void SynthSendAddress(bool write, uint8_t address)
         else
         {
             // SDATA=0
-        	GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_RESET);
+            GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_RESET);
             asm volatile("nop");
 
             // Pulse SCLK
@@ -222,7 +222,7 @@ void SynthSendData(uint16_t data)
         if (data & (0x8000 >> count))
         {
             // SDATA=1
-        	GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_SET);
+            GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_SET);
             asm volatile("nop");
 
             // Pulse SCLK
@@ -232,7 +232,7 @@ void SynthSendData(uint16_t data)
         else
         {
             // SDATA=0
-        	GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_RESET);
+            GPIO_WriteBit(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN, Bit_RESET);
             asm volatile("nop");
 
             // Pulse SCLK
@@ -283,13 +283,13 @@ void SynthSetFreq(float f_lo)
 {
     /* Register calculations taken from RFMD Programming Guide
     Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
-    int n_lo 		= log2f((float)(F_VCO_MAX_MHZ/f_lo));
-    int lodiv 		= 1<<n_lo;
-    int f_vco 		= lodiv*f_lo;
-    float n_div 	= f_vco/(float)(FBKDIV*F_REFERENCE_MHZ);
-    int n 			= n_div;
+    int n_lo        = log2f((float)(F_VCO_MAX_MHZ/f_lo));
+    int lodiv       = 1<<n_lo;
+    int f_vco       = lodiv*f_lo;
+    float n_div     = f_vco/(float)(FBKDIV*F_REFERENCE_MHZ);
+    int n           = n_div;
     double nummsb;
-    float fraction 	= modf((1<<16)*(n_div-n), &nummsb);
+    float fraction  = modf((1<<16)*(n_div-n), &nummsb);
     uint16_t numlsb = (1<<8)*fraction;
 
     // Set N divider, LO path divider and feedback divider

@@ -39,9 +39,9 @@ struct scanSettings_t gScanSettings;
 void ScanInit(scanSettings_t* settings)
 {
     settings->algorithm = ScanRandom;
-    settings->start 	= 2400.0;
-    settings->stop 		= 2500.0;
-    settings->stepSize 	= STEP_10K;
+    settings->start     = 2400.0;
+    settings->stop      = 2500.0;
+    settings->stepSize  = STEP_10K;
 }
 
 void AdvanceScan(scanSettings_t* settings)
