@@ -191,15 +191,15 @@ void drawSynthMenu()
 
 void drawUI(fsmStates location)
 {
-    fillScreen(0x00);
-
-    drawFrame();
-    centredString(" AusBubble ", 0);
-    safeFont57(127, 1, 0);
-    safeFont57(131, 1, 128-6);
-
     if(!gSplashActive)
     {
+        fillScreen(0x00);
+
+        drawFrame();
+        centredString(" AusBubble ", 0);
+        safeFont57(127, 1, 0);
+        safeFont57(131, 1, 128-6);
+
         switch(location)
         {
             case DisclaimerScreen:
