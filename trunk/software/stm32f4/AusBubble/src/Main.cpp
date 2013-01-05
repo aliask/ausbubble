@@ -113,6 +113,9 @@ void vUITask(void *pvParameters)
                 // Special case for SELECT: toggle the RF output
                 else if(gPendingButton == ButtonEnter)
                 {
+                	// If we're in a setting, get out of it
+                    gInSetting = false;
+
                     if(gEnabled)
                     {
                         gEnabled = 0;
