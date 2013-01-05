@@ -425,7 +425,6 @@ void doStepSize(buttonStates action)
                 gScanSettings.stepSize = STEP_1M;
             else if(gScanSettings.stepSize == STEP_1M)
                 gScanSettings.stepSize = STEP_1K;
-
             drawStep(5,gScanSettings.stepSize);
             break;
         case ButtonDown:
@@ -446,7 +445,6 @@ void doStepSize(buttonStates action)
                 gScanSettings.stepSize = STEP_1K;
             else if(gScanSettings.stepSize == STEP_1K)
                 gScanSettings.stepSize = STEP_1M;
-
             drawStep(5,gScanSettings.stepSize);
             break;
         default:
