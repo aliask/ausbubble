@@ -49,7 +49,7 @@
 // Valid step sizes
 #define STEP_1K   0.001
 #define STEP_10K  0.010
-#define STEP_25K  0.050
+#define STEP_25K  0.025
 #define STEP_50K  0.050
 #define STEP_100K 0.100
 #define STEP_250K 0.250
