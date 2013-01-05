@@ -64,6 +64,7 @@ extern int gEnabled;
 extern fsmStates gWhereAmI;
 extern int gPendingButton;
 extern float gPDETVoltage;
+extern bool gInSetting;
 
 /* Function prototypes */
 void drawUI(fsmStates location);
