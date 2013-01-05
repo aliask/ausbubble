@@ -393,27 +393,6 @@ void doStepSize(buttonStates action, bool* isSetting)
             toggleSetting(cursorPos, isSetting);
             break;
         case ButtonUp:
-            // Step backwards through the cycle
-            if(gScanSettings.stepSize == STEP_1K)
-                gScanSettings.stepSize = STEP_1M;
-            else if(gScanSettings.stepSize == STEP_10K)
-                gScanSettings.stepSize = STEP_1K;
-            else if(gScanSettings.stepSize == STEP_25K)
-                gScanSettings.stepSize = STEP_10K;
-            else if(gScanSettings.stepSize == STEP_50K)
-                gScanSettings.stepSize = STEP_25K;
-            else if(gScanSettings.stepSize == STEP_100K)
-                gScanSettings.stepSize = STEP_50K;
-            else if(gScanSettings.stepSize == STEP_250K)
-                gScanSettings.stepSize = STEP_100K;
-            else if(gScanSettings.stepSize == STEP_500K)
-                gScanSettings.stepSize = STEP_250K;
-            else if(gScanSettings.stepSize == STEP_1M)
-                gScanSettings.stepSize = STEP_500K;
-
-            drawStep(5,gScanSettings.stepSize);
-            break;
-        case ButtonDown:
             // Step forwards through the cycle
             if(gScanSettings.stepSize == STEP_1K)
                 gScanSettings.stepSize = STEP_10K;
@@ -431,6 +410,27 @@ void doStepSize(buttonStates action, bool* isSetting)
                 gScanSettings.stepSize = STEP_1M;
             else if(gScanSettings.stepSize == STEP_1M)
                 gScanSettings.stepSize = STEP_1K;
+
+            drawStep(5,gScanSettings.stepSize);
+            break;
+        case ButtonDown:
+            // Step backwards through the cycle
+            if(gScanSettings.stepSize == STEP_1M)
+                gScanSettings.stepSize = STEP_500K;
+            else if(gScanSettings.stepSize == STEP_500K)
+                gScanSettings.stepSize = STEP_250K;
+            else if(gScanSettings.stepSize == STEP_250K)
+                gScanSettings.stepSize = STEP_100K;
+            else if(gScanSettings.stepSize == STEP_100K)
+                gScanSettings.stepSize = STEP_50K;
+            else if(gScanSettings.stepSize == STEP_50K)
+                gScanSettings.stepSize = STEP_25K;
+            else if(gScanSettings.stepSize == STEP_25K)
+                gScanSettings.stepSize = STEP_10K;
+            else if(gScanSettings.stepSize == STEP_10K)
+                gScanSettings.stepSize = STEP_1K;
+            else if(gScanSettings.stepSize == STEP_1K)
+                gScanSettings.stepSize = STEP_1M;
 
             drawStep(5,gScanSettings.stepSize);
             break;
