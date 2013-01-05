@@ -39,6 +39,7 @@ int gEnabled = 0;
 fsmStates gWhereAmI = DisclaimerScreen;
 int gPendingButton = ButtonNone;
 float gPDETVoltage;
+bool gInSetting = false;
 
 int cursorPos = 0;
 
@@ -174,7 +175,11 @@ void drawSynthMenu()
     drawAlgorithm(4, gScanSettings.algorithm);
     drawStep(5, gScanSettings.stepSize);
 
-    safeFont57(131, cursorPos+2, 4);
+    if(gInSetting) {
+        safeFont57(131, cursorPos+2, 6);
+    } else {
+        safeFont57(131, cursorPos+2, 4);
+    }
 }
 
 void drawUI(fsmStates location)
@@ -205,13 +210,13 @@ void drawUI(fsmStates location)
     }
 }
 
-void toggleSetting(int index, bool* inSetting)
+void toggleSetting(int index)
 {
     // Toggle the inSetting flag
-    *inSetting ^= 1;
+    gInSetting ^= 1;
 
     // Draw the >> icon in the appropriate spot
-    if(*inSetting)
+    if(gInSetting)
     {
         safeFont57(' ', index+2, 4);
         safeFont57(131, index+2, 6);
@@ -261,7 +266,7 @@ void doDisclaimer(buttonStates action)
     }
 }
 
-void doSynthMin(buttonStates action, bool* inSetting)
+void doSynthMin(buttonStates action)
 {
     char menuText[21];
 
@@ -293,12 +298,12 @@ void doSynthMin(buttonStates action, bool* inSetting)
         case ButtonLeft:
         case ButtonRight:
         default:
-            toggleSetting(cursorPos, inSetting);
+            toggleSetting(cursorPos);
             break;
     }
 }
 
-void doSynthMax(buttonStates action, bool* inSetting)
+void doSynthMax(buttonStates action)
 {
     char menuText[21];
 
@@ -330,19 +335,19 @@ void doSynthMax(buttonStates action, bool* inSetting)
         case ButtonLeft:
         case ButtonRight:
         default:
-            toggleSetting(cursorPos, inSetting);
+            toggleSetting(cursorPos);
             break;
     }
 }
 
-void doAlgorithm(buttonStates action, bool* inSetting)
+void doAlgorithm(buttonStates action)
 {
     switch(action)
     {
         case ButtonEnter:
         case ButtonRight:
         case ButtonLeft:
-            toggleSetting(cursorPos, inSetting);
+            toggleSetting(cursorPos);
             break;
         case ButtonUp:
             switch(gScanSettings.algorithm)
@@ -383,14 +388,14 @@ void doAlgorithm(buttonStates action, bool* inSetting)
     }
 }
 
-void doStepSize(buttonStates action, bool* isSetting)
+void doStepSize(buttonStates action)
 {
     switch(action)
     {
         case ButtonEnter:
         case ButtonRight:
         case ButtonLeft:
-            toggleSetting(cursorPos, isSetting);
+            toggleSetting(cursorPos);
             break;
         case ButtonUp:
             // Step forwards through the cycle
@@ -441,24 +446,22 @@ void doStepSize(buttonStates action, bool* isSetting)
 
 void doSynthMenu(buttonStates action)
 {
-    static bool inSetting = false;
-
     // We're in a setting, let's handle the key press depending on which one
-    if(inSetting)
+    if(gInSetting)
     {
         switch(cursorPos)
         {
             case 0:
-                doSynthMin(action, &inSetting);
+                doSynthMin(action);
                 break;
             case 1:
-                doSynthMax(action, &inSetting);
+                doSynthMax(action);
                 break;
             case 2:
-                doAlgorithm(action, &inSetting);
+                doAlgorithm(action);
                 break;
             case 3:
-                doStepSize(action, &inSetting);
+                doStepSize(action);
                 break;
             default:
                 break;
@@ -502,7 +505,7 @@ void doSynthMenu(buttonStates action)
                 case 1:
                 case 2:
                 case 3:
-                    toggleSetting(cursorPos, &inSetting);
+                    toggleSetting(cursorPos);
                     break;
             }
             break;
