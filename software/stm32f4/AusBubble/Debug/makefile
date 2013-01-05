@@ -9,7 +9,7 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include src/system/subdir.mk
--include src/lib/subdir.mk
+-include src/drivers/subdir.mk
 -include src/subdir.mk
 -include lib/STM32F4xx_StdPeriph_Driver/src/subdir.mk
 -include lib/FreeRTOS/Source/portable/MemMang/subdir.mk
