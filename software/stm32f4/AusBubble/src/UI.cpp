@@ -40,6 +40,7 @@ fsmStates gWhereAmI = DisclaimerScreen;
 int gPendingButton = ButtonNone;
 float gPDETVoltage;
 bool gInSetting = false;
+bool gSplashActive = false;
 
 int cursorPos = 0;
 
@@ -66,11 +67,16 @@ void centredString(const char *stringPointer, unsigned char line) {
 
 void splash(const char* text)
 {
+    // Used to prevent splash being overwritten
+    gSplashActive = true;
+
     int len = strlen(text);
     fillBlock(0x00, 3, 5, 60-3*len, 6*len+8);
     centredString(text, 4);
     DelayMS(1000);
     drawUI(gWhereAmI);
+
+    gSplashActive = false;
 }
 
 void drawStep(int line, double stepSize)
@@ -192,22 +198,25 @@ void drawUI(fsmStates location)
     safeFont57(127, 1, 0);
     safeFont57(131, 1, 128-6);
 
-    switch(location)
+    if(!gSplashActive)
     {
-        case DisclaimerScreen:
-            drawDisclaimer();
-            break;
-        case HomeScreen:
-            drawHomescreen();
-            break;
-        case SynthScreen:
-            drawSynthMenu();
-            break;
-        default:
-            // Looks like we're lost! Go back home.
-            gWhereAmI = DisclaimerScreen;
-            drawDisclaimer();
-            break;
+        switch(location)
+        {
+            case DisclaimerScreen:
+                drawDisclaimer();
+                break;
+            case HomeScreen:
+                drawHomescreen();
+                break;
+            case SynthScreen:
+                drawSynthMenu();
+                break;
+            default:
+                // Looks like we're lost! Go back home.
+                gWhereAmI = DisclaimerScreen;
+                drawDisclaimer();
+                break;
+        }
     }
 }
 

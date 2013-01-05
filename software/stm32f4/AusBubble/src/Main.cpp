@@ -87,7 +87,7 @@ void vADCTask(void *pvParameters)
             gPDETVoltage = 3.0*((float)gADC3ConvertedValue/(float)0xFFF);
 
             // Re-draw home screen
-            drawHomescreen();
+            drawUI(gWhereAmI);
         }
         DelayMS(250);
     }
@@ -113,7 +113,7 @@ void vUITask(void *pvParameters)
                 // Special case for SELECT: toggle the RF output
                 else if(gPendingButton == ButtonEnter)
                 {
-                	// If we're in a setting, get out of it
+                    // If we're in a setting, get out of it
                     gInSetting = false;
 
                     if(gEnabled)
