@@ -70,7 +70,6 @@ void splash(const char* text)
     fillBlock(0x00, 3, 5, 60-3*len, 6*len+8);
     centredString(text, 4);
     DelayMS(1000);
-    cursorPos = 0;
     drawUI(gWhereAmI);
 }
 
@@ -175,11 +174,13 @@ void drawSynthMenu()
     drawAlgorithm(4, gScanSettings.algorithm);
     drawStep(5, gScanSettings.stepSize);
 
-    if(gInSetting) {
+    if(gInSetting)
+    {
         safeFont57(131, cursorPos+2, 6);
     } else {
         safeFont57(131, cursorPos+2, 4);
     }
+
 }
 
 void drawUI(fsmStates location)
