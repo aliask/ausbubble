@@ -32,6 +32,9 @@
 /*                                                                      */
 /************************************************************************/
 
+#ifndef _INCLUDES_H
+#define _INCLUDES_H
+
 // Standard libraries
 #include <stdlib.h>
 #include <string.h>
@@ -126,3 +129,5 @@
 #define VARGAINAMP_DATA_PIN             GPIO_Pin_8
 #define VARGAINAMP_LE_PORT              GPIOD
 #define VARGAINAMP_LE_PIN               GPIO_Pin_9
+
+#endif
