@@ -38,6 +38,7 @@
 #include "UI.h"
 #include "ScanAlgorithms.h"
 #include "VarGainAmp.h"
+#include "AmpLUT.h"
 
 /* ADC3 Data Register Address */
 #define ADC3_DR_ADDRESS    ((uint32_t)0x4001224C)

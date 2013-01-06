@@ -32,11 +32,19 @@
 /*                                                                      */
 /************************************************************************/
 
-struct ampDataPoint_t
+#ifndef _AMPLUT_H
+#define _AMPLUT_H
+
+#define N_DATA_POINTS 619
+
+/* Structure definition */
+struct AmpDataPoint_t
 {
+	float Pout_dBm;
 	int frequency_MHz;
 	float PDET_V;
 	float gain_dB;
 	int temperature_C;
-	float Pout_dBm;
 };
+
+#endif
