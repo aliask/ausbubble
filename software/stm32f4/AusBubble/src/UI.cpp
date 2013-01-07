@@ -58,7 +58,8 @@ void safeFont57(char ascii, unsigned char row, unsigned char xPos)
     taskEXIT_CRITICAL();
 }
 
-void centredString(const char *stringPointer, unsigned char line) {
+void centredString(const char *stringPointer, unsigned char line)
+{
     unsigned char len = strlen(stringPointer);
 
     if(len<22)
@@ -74,9 +75,9 @@ void splash(const char* text)
     fillBlock(0x00, 3, 5, 60-3*len, 6*len+8);
     centredString(text, 4);
     DelayMS(1000);
-    drawUI(gWhereAmI);
 
     gSplashActive = false;
+    drawUI(gWhereAmI);
 }
 
 void drawStep(int line, double stepSize)

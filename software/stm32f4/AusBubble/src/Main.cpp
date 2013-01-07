@@ -616,11 +616,10 @@ void ADC3_CH12_DMA_Config(void)
 
 void RNG_Config(void)
 {
- /* Enable RNG clock source */
-  RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_RNG, ENABLE);
-
-  /* RNG Peripheral enable */
-  RNG_Cmd(ENABLE);
+	/* Enable RNG clock source */
+	RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_RNG, ENABLE);
+	/* RNG Peripheral enable */
+	RNG_Cmd(ENABLE);
 }
 
 extern "C"
