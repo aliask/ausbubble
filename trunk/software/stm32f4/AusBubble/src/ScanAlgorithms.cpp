@@ -49,6 +49,7 @@ void AdvanceScan(scanSettings_t* settings)
     static double freq = settings->start;
     static bool direction = DIR_UP;
     float newFreq = -1;
+    uint32_t random32bit = 0;
 
     switch(settings->algorithm)
     {
@@ -83,8 +84,12 @@ void AdvanceScan(scanSettings_t* settings)
             }
             break;
         case ScanRandom:
-            // Get random floating point number between START AND STOP frequency range
-            newFreq = settings->start + (float)rand()/((float)RAND_MAX/(settings->stop-settings->start));
+        	/* Wait until one RNG number is ready */
+        	while(RNG_GetFlagStatus(RNG_FLAG_DRDY)== RESET);
+            /* Get a 32bit Random number */
+        	random32bit = RNG_GetRandomNumber();
+            /* Get random floating point number between START and STOP frequency range */
+            newFreq = settings->start + (float)random32bit/((float)UINT32_MAX/(settings->stop-settings->start));
             break;
         default:
             newFreq = freq;

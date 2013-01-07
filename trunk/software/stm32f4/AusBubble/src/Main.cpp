@@ -58,6 +58,7 @@ void SetupJoystick(void);
 void NVIC_Config(void);
 void SPI1_Config(void);
 void ADC3_CH12_DMA_Config(void);
+void RNG_Config(void);
 
 /* RTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds)
@@ -233,6 +234,9 @@ void prvSetupHardware(void)
     #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
         SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));    // Set CP10 and CP11 Full Access
     #endif
+
+    /* Enable RNG */
+    RNG_Config();
 
     /* RTOS "heartbeat" LED */
     GPIO_InitStructure.GPIO_Pin     = RTOS_LED_PIN;
@@ -608,6 +612,15 @@ void ADC3_CH12_DMA_Config(void)
 
     /* Enable ADC3 */
     ADC_Cmd(ADC3, ENABLE);
+}
+
+void RNG_Config(void)
+{
+ /* Enable RNG clock source */
+  RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_RNG, ENABLE);
+
+  /* RNG Peripheral enable */
+  RNG_Cmd(ENABLE);
 }
 
 extern "C"
