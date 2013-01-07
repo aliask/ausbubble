@@ -46,7 +46,7 @@
 //#include "stm32f4xx_iwdg.h"
 //#include "stm32f4xx_pwr.h"
 #include "stm32f4xx_rcc.h"
-//#include "stm32f4xx_rng.h"
+#include "stm32f4xx_rng.h"
 //#include "stm32f4xx_rtc.h"
 //#include "stm32f4xx_sdio.h"
 #include "stm32f4xx_spi.h"
