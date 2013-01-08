@@ -127,6 +127,7 @@ void SynthWrite(uint32_t dataBits);
 void SynthSendAddress(bool write, uint8_t address);
 void SynthSendData(uint16_t data);
 uint16_t SynthReceiveData();
+uint16_t SynthRead(uint8_t address);
 void SynthSetFreq(float newFreq);
 
 #endif

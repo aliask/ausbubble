@@ -67,6 +67,7 @@
 #define SYNTH_SCLK_PIN                  GPIO_Pin_13
 #define SYNTH_SDATA_PORT                GPIOB
 #define SYNTH_SDATA_PIN                 GPIO_Pin_15
+#define SYNTH_SDATA_PIN_N               15
 #define SYNTH_ENX_PORT                  GPIOB
 #define SYNTH_ENX_PIN                   GPIO_Pin_12
 #define SYNTH_RESETX_PORT               GPIOB
