@@ -51,16 +51,16 @@ void SynthInit(void)
     GPIO_SetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
 
     /* Software Reset */
-    SynthWrite((REG_SDI_CTRL<<16) | (1<<SHIFT_RESET));		// [1] When this bit is taken high the part is reset
+    SynthWrite((REG_SDI_CTRL<<16) | (1<<SHIFT_RESET));      // [1] When this bit is taken high the part is reset
 
     /* Configure device */
     // Set GPO4 to output LOCK flag
-    SynthWrite((REG_GPO<<16) | (1<<SHIFT_LOCK));			// [0] Sends LOCK flag to GPO4
+    SynthWrite((REG_GPO<<16) | (1<<SHIFT_LOCK));            // [0] Sends LOCK flag to GPO4
     // Enable frequency modulation
-    SynthWrite((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |	// [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
-                             	   (1<<SHIFT_MODSTEP));		// [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
+    SynthWrite((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |    // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
+                                   (1<<SHIFT_MODSTEP));     // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
     // Bypass the mixer
-    SynthWrite((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));		// [1] If high, offsets mixer so that LO signal can be viewed at mixer output
+    SynthWrite((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
     /* Set frequency to 2450 MHz */
     SynthSetFreq(2450);
@@ -315,11 +315,11 @@ void SynthSetFreq(float f_lo)
 
     /* Reset FMOD (so that the desired frequency is set if frequency modulation is/was being used)
     Note: This register sets the Frequency Deviation applied to frac-N */
-    SynthWrite((REG_FMOD<<16) | 0);	// [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
+    SynthWrite((REG_FMOD<<16) | 0); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
 
     // Re-lock the PLL
-    SynthWrite((REG_PLL_CTRL<<16) | (1<<SHIFT_DIVBY) |	// [15] Force reference divider to divide by 1
-                                    (8<<SHIFT_TVCO) |	// [10:6] VCO warm-up time. warm-up time [s] = tvco * 1/[fref*256]
-                                    (1<<SHIFT_LDEN) |	// [5] Enable lock detector circuitry
-                                    (1<<SHIFT_RELOK));	// [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
+    SynthWrite((REG_PLL_CTRL<<16) | (1<<SHIFT_DIVBY) |  // [15] Force reference divider to divide by 1
+                                    (8<<SHIFT_TVCO) |   // [10:6] VCO warm-up time. warm-up time [s] = tvco * 1/[fref*256]
+                                    (1<<SHIFT_LDEN) |   // [5] Enable lock detector circuitry
+                                    (1<<SHIFT_RELOK));  // [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
 }
