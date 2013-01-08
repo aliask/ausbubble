@@ -51,25 +51,29 @@ void SynthInit(void)
     GPIO_SetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
 
     /* Software Reset */
-    SynthWrite(REG_SDI_CTRL | (1<<SHIFT_RESET));
+    SynthWrite(REG_SDI_CTRL | (1<<SHIFT_RESET));	// [1] When this bit is taken high the part is reset
 
     /* Configure device */
-    // Set GPO4 LED (Lock)
-    SynthWrite(REG_GPO | (1<<SHIFT_LOCK));
-    // Enable modulation: MODULATION<<7
-    SynthWrite(REG_EXT_MOD | (1<<SHIFT_MODSETUP) |
-                             (7<<SHIFT_MODSTEP));
+    // Set GPO4 to output LOCK flag
+    SynthWrite(REG_GPO | (1<<SHIFT_LOCK));			// [0] Sends LOCK flag to GPO4
+    // Enable frequency modulation
+    SynthWrite(REG_EXT_MOD | (1<<SHIFT_MODSETUP) |	// [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
+                             (7<<SHIFT_MODSTEP));	// [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
     // Bypass the mixer
-    SynthWrite(REG_DEV_CTRL | (1<<SHIFT_BYPASS));
-    // Enable device
+    SynthWrite(REG_DEV_CTRL | (1<<SHIFT_BYPASS));	// [1] If high, offsets mixer so that LO signal can be viewed at mixer output
+
+    /* Set frequency to 2450 MHz */
+    SynthSetFreq(2450);
+
+    /* Enable device */
     SynthEnable(true);
 }
 
 void SynthEnable(bool enable)
 {
     #if USE_SW_CONTROL
-        SynthWrite(REG_SDI_CTRL | (1<<SHIFT_SIPIN) |       // SW control
-                                  (enable<<SHIFT_ENBL));   // Enable
+        SynthWrite(REG_SDI_CTRL | (1<<SHIFT_SIPIN) |       // [15] 1=ENBL and MODE pins are ignored and become available as GPO5 and GPO6
+                                  (enable<<SHIFT_ENBL));   // [14] If sipin=1 this field will replace the functionality of the ENBL pin
     #else
         if(enable)
             GPIO_WriteBit(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN, Bit_SET);
@@ -256,14 +260,16 @@ uint16_t SynthReceiveData(void)
     uint8_t count = 0;
     uint16_t read_data = 0;
 
-    // TODO: Set SDATA as input
+    // Set SDATA as input
+    SYNTH_SDATA_PORT->MODER  &= ~(GPIO_MODER_MODER0 << (SYNTH_SDATA_PIN_N * 2));
+    SYNTH_SDATA_PORT->MODER |= (((uint32_t)GPIO_Mode_IN) << (SYNTH_SDATA_PIN_N * 2));
 
     while (count < 16)
     {
         // Build data word, MSB read back first
         asm volatile("nop");
         GPIO_WriteBit(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN, Bit_RESET);
-        read_data = (read_data << 1) | ((SYNTH_SDATA_PORT->IDR & SYNTH_SDATA_PIN) == 1);
+        read_data |= ((SYNTH_SDATA_PORT->IDR & SYNTH_SDATA_PIN) != 0) << (15 - count);
         asm volatile("nop");
         GPIO_WriteBit(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN, Bit_SET);
         count++;
@@ -274,9 +280,17 @@ uint16_t SynthReceiveData(void)
     asm volatile("nop");
     GPIO_WriteBit(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN, Bit_RESET);
 
-    // TODO: Set SDATA as output
+    // Set SDATA as output
+    SYNTH_SDATA_PORT->MODER  &= ~(GPIO_MODER_MODER0 << (SYNTH_SDATA_PIN_N * 2));
+    SYNTH_SDATA_PORT->MODER |= (((uint32_t)GPIO_Mode_OUT) << (SYNTH_SDATA_PIN_N * 2));
 
     return read_data;
+}
+
+uint16_t SynthRead(uint8_t address)
+{
+    SynthSendAddress(false, address);
+    return SynthReceiveData();
 }
 
 void SynthSetFreq(float f_lo)
@@ -296,17 +310,16 @@ void SynthSetFreq(float f_lo)
     SynthWrite(REG_P1_FREQ1 | (n<<SHIFT_NDIV) |
                               ((int)log2(lodiv)<<SHIFT_LODIV) |
                               (2<<SHIFT_PRESC));
-
     SynthWrite(REG_P1_FREQ2 | (int)nummsb);
     SynthWrite(REG_P1_FREQ3 | numlsb);
 
     /* Reset FMOD (so that the desired frequency is set if frequency modulation is/was being used)
     Note: This register sets the Frequency Deviation applied to frac-N */
-    SynthWrite(REG_FMOD | 0);
+    SynthWrite(REG_FMOD | 0);	// [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
 
     // Re-lock the PLL
-    SynthWrite(REG_PLL_CTRL | (1<<SHIFT_DIVBY) |
-                              (8<<SHIFT_TVCO) |
-                              (1<<SHIFT_LDEN) |
-                              (1<<SHIFT_RELOK));
+    SynthWrite(REG_PLL_CTRL | (1<<SHIFT_DIVBY) |	// [15] Force reference divider to divide by 1
+                              (8<<SHIFT_TVCO) |		// [10:6] VCO warm-up time. warm-up time [s] = tvco * 1/[fref*256]
+                              (1<<SHIFT_LDEN) |		// [5] Enable lock detector circuitry
+                              (1<<SHIFT_RELOK));	// [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
 }
