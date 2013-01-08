@@ -43,38 +43,38 @@
 #define USE_SW_CONTROL      1       // Software Control=1, Hardware Control=0 (via ENBL and MODE pins)
 
 // Synthesizer register defines
-#define REG_LF       (0x00 << 16)
-#define REG_XO       (0x01 << 16)
-#define REG_CAL_TIME (0x02 << 16)
-#define REG_VCO_CTRL (0x03 << 16)
-#define REG_CT_CAL1  (0x04 << 16)
-#define REG_CT_CAL2  (0x05 << 16)
-#define REG_PLL_CAL1 (0x06 << 16)
-#define REG_PLL_CAL2 (0x07 << 16)
-#define REG_VCO_AUTO (0x08 << 16)
-#define REG_PLL_CTRL (0x09 << 16)
-#define REG_PLL_BIAS (0x0A << 16)
-#define REG_MIX_CONT (0x0B << 16)
-#define REG_P1_FREQ1 (0x0C << 16)
-#define REG_P1_FREQ2 (0x0D << 16)
-#define REG_P1_FREQ3 (0x0E << 16)
-#define REG_P2_FREQ1 (0x0F << 16)
-#define REG_P2_FREQ2 (0x10 << 16)
-#define REG_P2_FREQ3 (0x11 << 16)
-#define REG_FN_CTRL  (0x12 << 16)
-#define REG_EXT_MOD  (0x13 << 16)
-#define REG_FMOD     (0x14 << 16)
-#define REG_SDI_CTRL (0x15 << 16)
-#define REG_GPO      (0x16 << 16)
-#define REG_T_VCO    (0x17 << 16)
-#define REG_IQMOD1   (0x18 << 16)
-#define REG_IQMOD2   (0x19 << 16)
-#define REG_IQMOD3   (0x1A << 16)
-#define REG_IQMOD4   (0x1B << 16)
-#define REG_T_CTRL   (0x1C << 16)
-#define REG_DEV_CTRL (0x1D << 16)
-#define REG_TEST     (0x1E << 16)
-#define REG_READBACK (0x1F << 16)
+#define REG_LF        0x00
+#define REG_XO        0x01
+#define REG_CAL_TIME  0x02
+#define REG_VCO_CTRL  0x03
+#define REG_CT_CAL1   0x04
+#define REG_CT_CAL2   0x05
+#define REG_PLL_CAL1  0x06
+#define REG_PLL_CAL2  0x07
+#define REG_VCO_AUTO  0x08
+#define REG_PLL_CTRL  0x09
+#define REG_PLL_BIAS  0x0A
+#define REG_MIX_CONT  0x0B
+#define REG_P1_FREQ1  0x0C
+#define REG_P1_FREQ2  0x0D
+#define REG_P1_FREQ3  0x0E
+#define REG_P2_FREQ1  0x0F
+#define REG_P2_FREQ2  0x10
+#define REG_P2_FREQ3  0x11
+#define REG_FN_CTRL   0x12
+#define REG_EXT_MOD   0x13
+#define REG_FMOD      0x14
+#define REG_SDI_CTRL  0x15
+#define REG_GPO       0x16
+#define REG_T_VCO     0x17
+#define REG_IQMOD1    0x18
+#define REG_IQMOD2    0x19
+#define REG_IQMOD3    0x1A
+#define REG_IQMOD4    0x1B
+#define REG_T_CTRL    0x1C
+#define REG_DEV_CTRL  0x1D
+#define REG_TEST      0x1E
+#define REG_READBACK  0x1F
 
 // PLL_CTRL fields
 #define SHIFT_DIVBY  15
