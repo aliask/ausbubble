@@ -58,7 +58,7 @@ void SynthInit(void)
     SynthWrite((REG_GPO<<16) | (1<<SHIFT_LOCK));			// [0] Sends LOCK flag to GPO4
     // Enable frequency modulation
     SynthWrite((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |	// [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
-                             	   (7<<SHIFT_MODSTEP));		// [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
+                             	   (1<<SHIFT_MODSTEP));		// [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
     // Bypass the mixer
     SynthWrite((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));		// [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
