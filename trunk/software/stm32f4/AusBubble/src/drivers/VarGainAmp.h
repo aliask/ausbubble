@@ -38,7 +38,7 @@
 #include "Includes.h"
 
 /* Gain Limits (DO NOT MODIFY) */
-#define VARGAINAMP_MAX_GAIN_LIMIT_DB    18.0    // Permanent damage to the RF5652 may result if this value is too HIGH
+#define VARGAINAMP_MAX_GAIN_LIMIT_DB    0.0    // Permanent damage to the RF5652 may result if this value is too HIGH
 #define VARGAINAMP_MIN_GAIN_LIMIT_DB    -13.5
 #define VARGAINAMP_MAX_GAIN_DB          18.0
 
