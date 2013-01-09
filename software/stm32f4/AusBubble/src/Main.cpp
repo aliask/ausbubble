@@ -413,8 +413,8 @@ void prvSetupHardware(void)
     GPIO_Init(VARGAINAMP_LE_PORT, &GPIO_InitStructure);
     // Initially set LOW
     GPIO_ResetBits(VARGAINAMP_LE_PORT, VARGAINAMP_LE_PIN);
-    // Set gain to minimum (-13.5dB)
-    VarGainAmpSetGain(-13.5);
+    // Set gain to zero (0.0 dB)
+    VarGainAmpSetGain(0.0);
 
     /* ADC */
     ADC3_CH12_DMA_Config();
