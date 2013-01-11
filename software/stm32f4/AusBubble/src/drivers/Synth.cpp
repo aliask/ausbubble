@@ -63,10 +63,7 @@ void SynthInit(void)
     SynthWrite((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
     /* Set frequency to 2450 MHz */
-    SynthSetFreq(2450);
-
-    /* Enable device */
-    SynthEnable(true);
+    SynthSetFreq(2450, true);
 }
 
 void SynthEnable(bool enable)
@@ -293,7 +290,7 @@ uint16_t SynthRead(uint8_t address)
     return SynthReceiveData();
 }
 
-void SynthSetFreq(float f_lo)
+void SynthSetFreq(float f_lo, bool waitForLock)
 {
     /* Register calculations taken from RFMD Programming Guide
     Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
@@ -305,6 +302,9 @@ void SynthSetFreq(float f_lo)
     double nummsb;
     float fraction  = modf((1<<16)*(n_div-n), &nummsb);
     uint16_t numlsb = (1<<8)*fraction;
+
+    // Disable device
+    SynthEnable(false);
 
     // Set N divider, LO path divider and feedback divider
     SynthWrite((REG_P1_FREQ1<<16) | (n<<SHIFT_NDIV) |
@@ -322,4 +322,10 @@ void SynthSetFreq(float f_lo)
                                     (8<<SHIFT_TVCO) |   // [10:6] VCO warm-up time. warm-up time [s] = tvco * 1/[fref*256]
                                     (1<<SHIFT_LDEN) |   // [5] Enable lock detector circuitry
                                     (1<<SHIFT_RELOK));  // [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
+
+    // Enable device
+    SynthEnable(true);
+
+    // Wait for lock
+    while(waitForLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
 }

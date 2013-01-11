@@ -38,10 +38,10 @@ struct scanSettings_t gScanSettings;
 
 void ScanInit(scanSettings_t* settings)
 {
-    settings->algorithm = ScanRandom;
+    settings->algorithm = ScanTriangle;
     settings->start     = 2400.0;
     settings->stop      = 2500.0;
-    settings->stepSize  = STEP_10K;
+    settings->stepSize  = STEP_1M;
 }
 
 void AdvanceScan(scanSettings_t* settings)
@@ -98,10 +98,8 @@ void AdvanceScan(scanSettings_t* settings)
 
     if(newFreq != freq)
     {
-        // Set frequency in synth
-        taskENTER_CRITICAL();
-        SynthSetFreq(newFreq);
-        taskEXIT_CRITICAL();
+        // Set synth frequency
+        SynthSetFreq(newFreq, true);
         freq = newFreq;
     }
 }

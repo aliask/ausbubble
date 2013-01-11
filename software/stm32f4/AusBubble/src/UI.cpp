@@ -35,7 +35,7 @@
 #include "UI.h"
 
 // Global variables
-int gEnabled = 0;
+bool gEnabled = false;
 fsmStates gWhereAmI = DisclaimerScreen;
 int gPendingButton = ButtonNone;
 float gPDETVoltage;
