@@ -60,7 +60,7 @@ typedef enum {
 } fsmStates;
 
 /* Global Variables */
-extern int gEnabled;
+extern bool gEnabled;
 extern fsmStates gWhereAmI;
 extern int gPendingButton;
 extern float gPDETVoltage;
@@ -74,7 +74,5 @@ void safeString(const char *dataPointer, unsigned char row, unsigned char xPos);
 void splash(const char* text);
 void doMenu(int buttons);
 void drawHomescreen(void);
-// FreeRTOS millisecond delay function
-void DelayMS(uint32_t t);
 
 #endif

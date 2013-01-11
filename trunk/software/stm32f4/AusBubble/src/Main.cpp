@@ -51,14 +51,17 @@
 
 /* Global Variables */
 __IO uint16_t gADC3ConvertedValue = 0;
+xSemaphoreHandle xSemaphoreJam;
 
 /* Function Prototypes */
+void JammingEnable(bool enable, int updateRate_Hz);
 void prvSetupHardware(void);
 void SetupJoystick(void);
 void NVIC_Config(void);
 void SPI1_Config(void);
 void ADC3_CH12_DMA_Config(void);
 void RNG_Config(void);
+void INTTIM_Config(void);
 
 /* RTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds)
@@ -118,23 +121,19 @@ void vUITask(void *pvParameters)
                     // If we're in a setting, get out of it
                     gInSetting = false;
 
+                    // Disable jamming
                     if(gEnabled)
                     {
-                        gEnabled = 0;
-                        // Disable synthesizer
-                        SynthEnable(false);
-                        // Disable amplifier
-                        GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_RESET);
+                        JammingEnable(false, 100);
                         splash("RF output DISABLED");
+                        gEnabled = false;
                     }
+                    // Enable jamming (provided not at Disclaimer screen)
                     else if(gWhereAmI != DisclaimerScreen)
                     {
-                        gEnabled = 1;
-                        // Enable synthesizer
-                        SynthEnable(true);
-                        // Enable amplifier
-                        GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_SET);
+                        JammingEnable(true, 100); // 100 Hz advance rate
                         splash("RF output ENABLED");
+                        gEnabled = true;
                     }
                 }
             }
@@ -162,11 +161,13 @@ void vUITask(void *pvParameters)
 /* Jamming task */
 void vJammingTask(void *pvParameters)
 {
+    /* Create semaphore */
+    vSemaphoreCreateBinary(xSemaphoreJam);
     while(1)
     {
-        if(gEnabled)
+        // Wait on semaphore
+        if(xSemaphoreTake(xSemaphoreJam, portMAX_DELAY) == pdTRUE)
             AdvanceScan(&gScanSettings);
-        taskYIELD();
     }
 }
 
@@ -216,6 +217,39 @@ int main(void)
     /* Main never returns */
     while(1);
     return 0;
+}
+
+void JammingEnable(bool enable, int updateRate_Hz)
+{
+    if(enable)
+    {
+        // Enable synthesizer
+        SynthEnable(true);
+        // Enable amplifier
+        GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_SET);
+        /* Time base configuration */
+        TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+        TIM_TimeBaseStructure.TIM_Period = (1000000/updateRate_Hz) - 1; // 1 MHz timer clock
+        TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;                   // 1 MHz timer clock
+        TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+        TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+        TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+        /* TIM IT enable */
+        TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+        /* TIM2 enable counter */
+        TIM_Cmd(TIM2, ENABLE);
+    }
+    else
+    {
+        // Disable synthesizer
+        SynthEnable(false);
+        // Disable amplifier
+        GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_RESET);
+        /* TIM IT enable */
+        TIM_ITConfig(TIM2, TIM_IT_Update, DISABLE);
+        /* TIM2 enable counter */
+        TIM_Cmd(TIM2, DISABLE);
+    }
 }
 
 /* Initialize necessary hardware */
@@ -423,6 +457,9 @@ void prvSetupHardware(void)
 
     /* Nested Vectored Interrupt Controller */
     NVIC_Config();
+
+    /* Timer for vJammingTask() semaphore */
+    INTTIM_Config();
 }
 
 void SetupJoystick(void)
@@ -498,10 +535,10 @@ void NVIC_Config(void)
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
     /* Enable the EXTI15_10 Interrupt */
-    NVIC_InitStructure.NVIC_IRQChannel                  = EXTI15_10_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel                      = EXTI15_10_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority    = 2;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority       = 1;
-    NVIC_InitStructure.NVIC_IRQChannelCmd               = ENABLE;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority           = 1;
+    NVIC_InitStructure.NVIC_IRQChannelCmd                   = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 }
 
@@ -622,6 +659,20 @@ void RNG_Config(void)
     RNG_Cmd(ENABLE);
 }
 
+void INTTIM_Config(void)
+{
+    /* Enable the TIM2 global Interrupt */
+    NVIC_InitTypeDef NVIC_InitStructure;
+    NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority =  2;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    /* TIM2 clock enable */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+}
+
 extern "C"
 void EXTI15_10_IRQHandler(void)
 {
@@ -669,6 +720,24 @@ void EXTI15_10_IRQHandler(void)
         else
             gPendingButton &= ~ButtonEnter;
         EXTI_ClearITPendingBit(EXTI_Line14);
+    }
+}
+
+extern "C"
+void TIM2_IRQHandler(void)
+{
+    static signed portBASE_TYPE xHigherPriorityTaskWoken;
+
+    /* Is it time for vJammingTask() to run? */
+    xHigherPriorityTaskWoken = pdFALSE;
+    if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
+    {
+        /* Unblock the task by releasing the semaphore. */
+        xSemaphoreGiveFromISR(xSemaphoreJam, &xHigherPriorityTaskWoken);
+        /* Clear TIM2 line pending bit */
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+        /* If xHigherPriorityTaskWoken was set to true we should yield */
+        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
 }
 

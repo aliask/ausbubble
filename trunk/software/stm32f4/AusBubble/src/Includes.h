@@ -45,6 +45,7 @@
 // FreeRTOS
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
 
 /* Synth Allowable Frequency Range (DO NOT MODIFY) */
 #define MIN_FREQ_MHZ                    2400
@@ -78,8 +79,8 @@
 #define SYNTH_GPO2ADD2_PIN              GPIO_Pin_2
 #define SYNTH_GPO3FM_PORT               GPIOB
 #define SYNTH_GPO3FM_PIN                GPIO_Pin_5
-#define SYNTH_GPO4LDDO_PORT             GPIOB
-#define SYNTH_GPO4LDDO_PIN              GPIO_Pin_6
+#define SYNTH_GPO4LDDO_PORT             GPIOE
+#define SYNTH_GPO4LDDO_PIN              GPIO_Pin_9
 #define SYNTH_ENBLGPO5_PORT             GPIOB
 #define SYNTH_ENBLGPO5_PIN              GPIO_Pin_7
 #define SYNTH_MODEGPO6_PORT             GPIOB
@@ -130,5 +131,8 @@
 #define VARGAINAMP_DATA_PIN             GPIO_Pin_8
 #define VARGAINAMP_LE_PORT              GPIOD
 #define VARGAINAMP_LE_PIN               GPIO_Pin_9
+
+/* RTOS millisecond delay function */
+void DelayMS(uint32_t milliseconds);
 
 #endif
