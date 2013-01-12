@@ -44,24 +44,25 @@
 #define ADC3_DR_ADDRESS    ((uint32_t)0x4001224C)
 
 /* Defines for the button hold behaviour */
+#define TICK_RATE_1         200 // Slowest
+#define TICK_RATE_2         100
+#define TICK_RATE_3         50
+#define TICK_RATE_4         25
+#define TICK_RATE_5         10  // Fastest
 #define TICK_INITIALRATE    200
-#define TICK_FAST           25
-#define TICK_SLOW           200
-#define TICK_HOLDCOUNT      400
+#define TICK_HOLDCOUNT      1000
 
 /* Global Variables */
 __IO uint16_t gADC3ConvertedValue = 0;
-xSemaphoreHandle xSemaphoreJam;
 
 /* Function Prototypes */
-void JammingEnable(bool enable, int updateRate_Hz);
+void JammingEnable(bool enable, int updateRate_Hz=DEFAULT_JAM_UPDATE_RATE_HZ);
 void prvSetupHardware(void);
 void SetupJoystick(void);
 void NVIC_Config(void);
 void SPI1_Config(void);
 void ADC3_CH12_DMA_Config(void);
 void RNG_Config(void);
-void INTTIM_Config(void);
 
 /* RTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds)
@@ -101,37 +102,55 @@ void vADCTask(void *pvParameters)
 /* User interface task */
 void vUITask(void *pvParameters)
 {
-    static int tickRate = TICK_INITIALRATE;
-    static uint32_t holdCount = 0;
+    int tickRate = TICK_INITIALRATE;
+    uint32_t holdCount = 0;
 
     while(1)
     {
         // Some button must be currently down
         if(gPendingButton)
         {
-            /* Button is being held down, work out what we want to do
-            based on which button is being held */
-            if(holdCount == TICK_HOLDCOUNT)
+            /* Button is being held down */
+            if(((holdCount % TICK_HOLDCOUNT) == 0) && holdCount>0)
             {
+                // UP/DOWN: Increase tick rate
                 if((gPendingButton == ButtonUp)||(gPendingButton == ButtonDown))
-                    tickRate = TICK_FAST;
-                // Special case for SELECT: toggle the RF output
+                {
+                    switch(tickRate)
+                    {
+                        case TICK_RATE_1:
+                            tickRate = TICK_RATE_2;
+                            break;
+                        case TICK_RATE_2:
+                            tickRate = TICK_RATE_3;
+                            break;
+                        case TICK_RATE_3:
+                            tickRate = TICK_RATE_4;
+                            break;
+                        case TICK_RATE_4:
+                            tickRate = TICK_RATE_5;
+                            break;
+                        case TICK_RATE_5:
+                            break;
+                    }
+                }
+                // SELECT: Toggle the RF output
                 else if(gPendingButton == ButtonEnter)
                 {
-                    // If we're in a setting, get out of it
+                    // Exit selected setting
                     gInSetting = false;
 
                     // Disable jamming
                     if(gEnabled)
                     {
-                        JammingEnable(false, 100);
+                        JammingEnable(false);
                         splash("RF output DISABLED");
                         gEnabled = false;
                     }
-                    // Enable jamming (provided not at Disclaimer screen)
+                    // Enable jamming (if not at Disclaimer screen)
                     else if(gWhereAmI != DisclaimerScreen)
                     {
-                        JammingEnable(true, 100); // 100 Hz advance rate
+                        JammingEnable(true, 1000); // 1000 Hz update rate
                         splash("RF output ENABLED");
                         gEnabled = true;
                     }
@@ -140,34 +159,33 @@ void vUITask(void *pvParameters)
 
             /* Take care of button de-bouncing and call the button handler
             when the button has been held down long enough */
-            if(holdCount % tickRate == 10)
+            // Button must be LOW for at least 5ms
+            if(holdCount % tickRate == 5)
                 doMenu(gPendingButton);
 
-            if(holdCount == UINT32_MAX)
-                holdCount = 0;
-            else
-                holdCount++;
+            holdCount++;
         }
         // No buttons held down
         else
         {
             holdCount = 0;
-            tickRate = TICK_SLOW;
+            tickRate = TICK_RATE_1;
         }
-        DelayMS(5);
+        DelayMS(1);
     }
 }
 
 /* Jamming task */
 void vJammingTask(void *pvParameters)
 {
-    /* Create semaphore */
-    vSemaphoreCreateBinary(xSemaphoreJam);
     while(1)
     {
-        // Wait on semaphore
-        if(xSemaphoreTake(xSemaphoreJam, portMAX_DELAY) == pdTRUE)
+        if(TIM_GetFlagStatus(TIM2, TIM_FLAG_Update) != RESET)
+        {
             AdvanceScan(&gScanSettings);
+            TIM_ClearFlag(TIM2, TIM_IT_Update);
+        }
+        taskYIELD();
     }
 }
 
@@ -227,6 +245,7 @@ void JammingEnable(bool enable, int updateRate_Hz)
         SynthEnable(true);
         // Enable amplifier
         GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_SET);
+
         /* Time base configuration */
         TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
         TIM_TimeBaseStructure.TIM_Period = (1000000/updateRate_Hz) - 1; // 1 MHz timer clock
@@ -245,9 +264,10 @@ void JammingEnable(bool enable, int updateRate_Hz)
         SynthEnable(false);
         // Disable amplifier
         GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_RESET);
-        /* TIM IT enable */
+
+        /* TIM IT disable */
         TIM_ITConfig(TIM2, TIM_IT_Update, DISABLE);
-        /* TIM2 enable counter */
+        /* TIM2 disable counter */
         TIM_Cmd(TIM2, DISABLE);
     }
 }
@@ -273,6 +293,7 @@ void prvSetupHardware(void)
     RNG_Config();
 
     /* RTOS "heartbeat" LED */
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = RTOS_LED_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
@@ -458,17 +479,19 @@ void prvSetupHardware(void)
     /* Nested Vectored Interrupt Controller */
     NVIC_Config();
 
-    /* Timer for vJammingTask() semaphore */
-    INTTIM_Config();
+    /* Enable clock for timer used in vJammingTask() */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 }
 
 void SetupJoystick(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
+    EXTI_InitTypeDef EXTI_InitStructure;
 
     // Note: Internal pull-ups are used on each button input (i.e. external pull-ups not required)
 
     // Configure LEFT as input floating
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_LEFT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
@@ -476,6 +499,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_LEFT_PORT, &GPIO_InitStructure);
     // Configure RIGHT as input floating
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_RIGHT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
@@ -483,6 +507,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_RIGHT_PORT, &GPIO_InitStructure);
     // Configure UP as input floating
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_UP_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
@@ -490,6 +515,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_UP_PORT, &GPIO_InitStructure);
     // Configure DOWN as input floating
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_DOWN_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
@@ -497,6 +523,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_DOWN_PORT, &GPIO_InitStructure);
     // Configure SEL as input floating
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_SELECT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
@@ -516,7 +543,7 @@ void SetupJoystick(void)
     SYSCFG_EXTILineConfig(JOYSTICK_SELECT_PORT_SOURCE, JOYSTICK_SELECT_PIN_SOURCE);
 
     // Configure EXTI
-    EXTI_InitTypeDef EXTI_InitStructure;
+    EXTI_StructInit(&EXTI_InitStructure);
     EXTI_InitStructure.EXTI_Line    = JOYSTICK_LEFT_EXTI_LINE | JOYSTICK_RIGHT_EXTI_LINE | JOYSTICK_UP_EXTI_LINE | JOYSTICK_DOWN_EXTI_LINE | JOYSTICK_SELECT_EXTI_LINE;
     EXTI_InitStructure.EXTI_Mode    = EXTI_Mode_Interrupt;
     EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
@@ -549,6 +576,7 @@ void SPI1_Config(void)
 
     /* Configure SPI1 pins: SCK and MOSI */
     // SCK=PA5, MOSI=PA7
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = GPIO_Pin_5 | GPIO_Pin_7;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_AF;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
@@ -559,6 +587,7 @@ void SPI1_Config(void)
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_SPI1);
 
     /* Configure CS pin */
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = OLED_CS_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
@@ -571,6 +600,7 @@ void SPI1_Config(void)
 
     /* SPI1 Config */
     // Note: OLED has maximum allowable clock speed = 10 MHz (i.e. minimum Tcycle=100ns)
+    SPI_StructInit(&SPI_InitStructure);
     SPI_InitStructure.SPI_Direction         = SPI_Direction_1Line_Tx;
     SPI_InitStructure.SPI_Mode              = SPI_Mode_Master;
     SPI_InitStructure.SPI_DataSize          = SPI_DataSize_8b;
@@ -598,6 +628,7 @@ void ADC3_CH12_DMA_Config(void)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC3, ENABLE);
 
     /* DMA2 Stream0 channel0 configuration */
+    DMA_StructInit(&DMA_InitStructure);
     DMA_InitStructure.DMA_Channel               = DMA_Channel_2;
     DMA_InitStructure.DMA_PeripheralBaseAddr    = (uint32_t)ADC3_DR_ADDRESS;
     DMA_InitStructure.DMA_Memory0BaseAddr       = (uint32_t)&gADC3ConvertedValue;
@@ -617,12 +648,14 @@ void ADC3_CH12_DMA_Config(void)
     DMA_Cmd(DMA2_Stream0, ENABLE);
 
     /* Configure ADC3 Channel12 pin as analog input */
+    GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = GPIO_Pin_2;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_AN;
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 
     /* ADC Common Init */
+    ADC_CommonStructInit(&ADC_CommonInitStructure);
     ADC_CommonInitStructure.ADC_Mode                = ADC_Mode_Independent;
     ADC_CommonInitStructure.ADC_Prescaler           = ADC_Prescaler_Div2;
     ADC_CommonInitStructure.ADC_DMAAccessMode       = ADC_DMAAccessMode_Disabled;
@@ -630,6 +663,7 @@ void ADC3_CH12_DMA_Config(void)
     ADC_CommonInit(&ADC_CommonInitStructure);
 
     /* ADC3 Init */
+    ADC_StructInit(&ADC_InitStructure);
     ADC_InitStructure.ADC_Resolution            = ADC_Resolution_12b;
     ADC_InitStructure.ADC_ScanConvMode          = DISABLE;
     ADC_InitStructure.ADC_ContinuousConvMode    = ENABLE;
@@ -657,20 +691,6 @@ void RNG_Config(void)
     RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_RNG, ENABLE);
     /* RNG Peripheral enable */
     RNG_Cmd(ENABLE);
-}
-
-void INTTIM_Config(void)
-{
-    /* Enable the TIM2 global Interrupt */
-    NVIC_InitTypeDef NVIC_InitStructure;
-    NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority =  2;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
-
-    /* TIM2 clock enable */
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 }
 
 extern "C"
@@ -720,24 +740,6 @@ void EXTI15_10_IRQHandler(void)
         else
             gPendingButton &= ~ButtonEnter;
         EXTI_ClearITPendingBit(EXTI_Line14);
-    }
-}
-
-extern "C"
-void TIM2_IRQHandler(void)
-{
-    static signed portBASE_TYPE xHigherPriorityTaskWoken;
-
-    /* Is it time for vJammingTask() to run? */
-    xHigherPriorityTaskWoken = pdFALSE;
-    if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
-    {
-        /* Unblock the task by releasing the semaphore. */
-        xSemaphoreGiveFromISR(xSemaphoreJam, &xHigherPriorityTaskWoken);
-        /* Clear TIM2 line pending bit */
-        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-        /* If xHigherPriorityTaskWoken was set to true we should yield */
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
 }
 
