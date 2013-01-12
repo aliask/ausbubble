@@ -150,7 +150,7 @@ void vUITask(void *pvParameters)
                     // Enable jamming (if not at Disclaimer screen)
                     else if(gWhereAmI != DisclaimerScreen)
                     {
-                        JammingEnable(true, 1000); // 1000 Hz update rate
+                        JammingEnable(true, 500); // 500 Hz update rate
                         splash("RF output ENABLED");
                         gEnabled = true;
                     }
@@ -402,11 +402,13 @@ void prvSetupHardware(void)
     // MODE/GPO6
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = SYNTH_MODEGPO6_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
     GPIO_Init(SYNTH_MODEGPO6_PORT, &GPIO_InitStructure);
+    // Set low
+    GPIO_ResetBits(SYNTH_MODEGPO6_PORT, SYNTH_MODEGPO6_PIN);
     // Initialize device
     SynthInit();
 
@@ -476,11 +478,11 @@ void prvSetupHardware(void)
     // Start ADC3 Software Conversion
     ADC_SoftwareStartConv(ADC3);
 
-    /* Nested Vectored Interrupt Controller */
-    NVIC_Config();
-
     /* Enable clock for timer used in vJammingTask() */
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+
+    /* Nested Vectored Interrupt Controller */
+    NVIC_Config();
 }
 
 void SetupJoystick(void)
