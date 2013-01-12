@@ -47,6 +47,9 @@
 #include "task.h"
 #include "semphr.h"
 
+/* Default jam update rate (Hz) */
+#define DEFAULT_JAM_UPDATE_RATE_HZ      1000
+
 /* Synth Allowable Frequency Range (DO NOT MODIFY) */
 #define MIN_FREQ_MHZ                    2400
 #define MAX_FREQ_MHZ                    2500

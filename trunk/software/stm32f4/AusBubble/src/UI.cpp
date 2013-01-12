@@ -286,7 +286,7 @@ void doSynthMin(buttonStates action)
         case ButtonUp:
             if(gScanSettings.start < gScanSettings.stop)
             {
-                gScanSettings.start += 1.0;
+                gScanSettings.start += 0.5;
                 snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start);
                 safeString(menuText, 2, 14);
             }
@@ -294,7 +294,7 @@ void doSynthMin(buttonStates action)
         case ButtonDown:
             if(gScanSettings.start > MIN_FREQ_MHZ)
             {
-                gScanSettings.start -= 1.0;
+                gScanSettings.start -= 0.5;
                 snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start);
                 safeString(menuText, 2, 14);
             }
@@ -323,7 +323,7 @@ void doSynthMax(buttonStates action)
         case ButtonUp:
             if(gScanSettings.stop < MAX_FREQ_MHZ)
             {
-                gScanSettings.stop += 1.0;
+                gScanSettings.stop += 0.5;
                 snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop);
                 safeString(menuText, 3, 14);
             }
@@ -337,7 +337,7 @@ void doSynthMax(buttonStates action)
         case ButtonDown:
             if(gScanSettings.stop>gScanSettings.start)
             {
-                gScanSettings.stop -= 1.0;
+                gScanSettings.stop -= 0.5;
                 snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop);
                 safeString(menuText, 3, 14);
             }
