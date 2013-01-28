@@ -48,7 +48,7 @@
 #include "semphr.h"
 
 /* Default jam update rate (Hz) */
-#define DEFAULT_JAM_UPDATE_RATE_HZ      1000
+#define DEFAULT_JAM_UPDATE_RATE_HZ      500
 
 /* Synth Allowable Frequency Range (DO NOT MODIFY) */
 #define MIN_FREQ_MHZ                    2400
