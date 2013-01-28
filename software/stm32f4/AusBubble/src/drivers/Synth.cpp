@@ -56,14 +56,11 @@ void SynthInit(void)
     /* Configure device */
     // Set GPO4 to output LOCK flag
     SynthWrite((REG_GPO<<16) | (1<<SHIFT_LOCK));            // [0] Sends LOCK flag to GPO4
-    // Enable frequency modulation
-    SynthWrite((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |    // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
-                                   (1<<SHIFT_MODSTEP));     // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
     // Bypass the mixer
     SynthWrite((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
     /* Set frequency to 2450 MHz */
-    SynthSetFreq(2450, true);
+    SynthSet_Freq(2450);
 }
 
 void SynthEnable(bool enable)
@@ -290,7 +287,7 @@ uint16_t SynthRead(uint8_t address)
     return SynthReceiveData();
 }
 
-void SynthSetFreq(float f_lo, bool waitForLock)
+void SynthSet_FreqLO(float f_lo, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
 {
     /* Register calculations taken from RFMD Programming Guide
     Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
@@ -302,16 +299,19 @@ void SynthSetFreq(float f_lo, bool waitForLock)
     double nummsb;
     float fraction  = modf((1<<16)*(n_div-n), &nummsb);
     uint16_t numlsb = (1<<8)*fraction;
+    // Save values
+    nummsb_ref = (uint16_t) nummsb;
+    numlsb_ref = numlsb;
 
     // Disable device
     SynthEnable(false);
 
     // Set N divider, LO path divider and feedback divider
-    SynthWrite((REG_P1_FREQ1<<16) | (n<<SHIFT_NDIV) |
-                                    ((int)log2(lodiv)<<SHIFT_LODIV) |
-                                    (2<<SHIFT_PRESC));
-    SynthWrite((REG_P1_FREQ2<<16) | (int)nummsb);
-    SynthWrite((REG_P1_FREQ3<<16) | numlsb);
+    SynthWrite((REG_P1_FREQ1<<16) | (n<<SHIFT_N) |                      // Path 1 VCO divider integer value
+                                    ((int)log2(lodiv)<<SHIFT_LODIV) |   // Path 1 LO path divider setting: divide by 2^n (i.e. divide  by 1 to divide by 32). 110 and 111 are reserved
+                                    (2<<SHIFT_PRESC));                  // Path 1 VCO PLL feedback path divider setting: 01 = divide by 2, 10 = divide by 4 (00 and 11 are reserved)
+    SynthWrite((REG_P1_FREQ2<<16) | (uint16_t)nummsb);                  // Path 1 N divider numerator value, most significant 16 bits
+    SynthWrite((REG_P1_FREQ3<<16) | numlsb);                            // Path 1 N divider numerator value, least significant 8 bits
 
     /* Reset FMOD (so that the desired frequency is set if frequency modulation is/was being used)
     Note: This register sets the Frequency Deviation applied to frac-N */
@@ -328,4 +328,120 @@ void SynthSetFreq(float f_lo, bool waitForLock)
 
     // Wait for lock
     while(waitForLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
+}
+
+void SynthSet_Freq(float freq)
+{
+    static float f_lo = 0;
+    static float freq_prev = 0;
+    static int16_t max_fmod = 0;
+    static int16_t cur_fmod = 0;
+    static int16_t fmod_step = 0;
+    static uint16_t nummsb = 0;
+    static uint16_t numlsb = 0;
+    static float freq_delta = 0;
+
+    /* FREQUENCY MODULATION */
+    // Check 1 : fmod_step > 0                      : Valid frequency delta (i.e. step size)
+    // Check 2 : (cur_fmod + fmod_step) <= max_fmod : Modulation in range (upper bound)
+    // Check 3 : (cur_fmod + fmod_step) >=0         : Modulation in range (lower bound)
+    // Check 4 : (freq - freq_prev) == freq_delta   : Has step size changed? (i.e. are current modulation settings valid?)
+    if((fmod_step > 0) && (((cur_fmod + fmod_step) <= max_fmod) && ((cur_fmod + fmod_step) >= 0)) && ((freq-freq_prev)==freq_delta))
+    {
+        cur_fmod += fmod_step;
+        SynthWrite((REG_FMOD<<16) | cur_fmod); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
+    }
+    /* SET FREQUENCY BY WRITING TO FREQ1, FREQ2, FREQ3 REGISTERS */
+    else
+    {
+        // Set frequency (wait for PLL lock)
+        f_lo = freq;
+        SynthSet_FreqLO(f_lo, true, nummsb, numlsb);
+        cur_fmod = 0; // FMOD reset to 0
+        // Set optimum modulation parameters depending on frequency delta
+        // Note: Frequency modulation is only used for valid frequency deltas (i.e. step sizes)
+        uint8_t modstep;
+        freq_delta = freq - freq_prev;
+        SynthGet_ModParams(freq_delta, modstep, fmod_step);
+        // Valid frequency delta
+        if(fmod_step > 0)
+        {
+            // Calculate maximum FMOD
+            uint32_t mask = 0xFFFFFF >> (9 - modstep);
+            uint32_t n_24bit_masked = ((((uint16_t)nummsb)<<8) | (numlsb>>8)) & mask;
+            max_fmod = mask - n_24bit_masked;
+
+            // Enable frequency modulation
+            SynthWrite((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
+                                           (modstep<<SHIFT_MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
+        }
+    }
+    freq_prev = freq;
+}
+
+void SynthGet_ModParams(float freq_delta, uint8_t &modstep, int16_t &fmod_step)
+{
+    // Fmod = ( (2^MODSTEP)*Fpd*MOD ) / (2^16)  where Fpd = phase detector frequency
+
+    // 1 kHz
+    // Fpd = 26 MHz : Fmod = 793.45703125 Hz
+    if(freq_delta == STEP_1K)
+    {
+        modstep = 1;
+        fmod_step = 1*(freq_delta > 0 ? 1 : -1);
+    }
+    // 10 kHz
+    // Fpd = 26 MHz : Fmod = 9521.484375 Hz
+    else if(freq_delta == STEP_10K)
+    {
+        modstep = 3;
+        fmod_step = 3*(freq_delta > 0 ? 1 : -1);
+    }
+    // 25 kHz
+    // Fpd = 26 MHz : Fmod = 25390.625 Hz
+    else if(freq_delta == STEP_25K)
+    {
+        modstep = 6;
+        fmod_step = 1*(freq_delta > 0 ? 1 : -1);
+    }
+    // 50 kHz
+    // Fpd = 26 MHz : Fmod = 50781.25 Hz
+    else if(freq_delta == STEP_50K)
+    {
+        modstep = 7;
+        fmod_step = 1*(freq_delta > 0 ? 1 : -1);
+    }
+    // 100 kHz
+    // Fpd = 26 MHz : Fmod = 101562.5 Hz
+    else if(freq_delta == STEP_100K)
+    {
+        modstep = 7;
+        fmod_step = 2*(freq_delta > 0 ? 1 : -1);
+    }
+    // 250 kHz
+    // Fpd = 26 MHz : Fmod = 253906.25 Hz
+    else if(freq_delta == STEP_250K)
+    {
+        modstep = 7;
+        fmod_step = 5*(freq_delta > 0 ? 1 : -1);
+    }
+    // 500 kHz
+    // Fpd = 26 MHz : Fmod = 507812.5 Hz
+    else if(freq_delta == STEP_500K)
+    {
+        modstep = 8;
+        fmod_step = 5*(freq_delta > 0 ? 1 : -1);
+    }
+    // 1 MHz
+    // Fpd = 26 MHz : Fmod = 1015625 Hz
+    else if(freq_delta == STEP_1M)
+    {
+        modstep = 8;
+        fmod_step = 10*(freq_delta > 0 ? 1 : -1);
+    }
+    // Unsupported frequency delta
+    else
+    {
+        fmod_step = 0;
+    }
 }

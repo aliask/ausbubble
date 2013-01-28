@@ -36,6 +36,7 @@
 #define SYNTH_H
 
 #include "Includes.h"
+#include "ScanAlgorithms.h"
 
 #define F_VCO_MAX_MHZ       5400.0
 #define F_REFERENCE_MHZ     26.0
@@ -88,7 +89,7 @@
 #define SHIFT_PLLDY  0
 
 // P[12]_FREQ1 fields
-#define SHIFT_NDIV   7
+#define SHIFT_N      7
 #define SHIFT_LODIV  4
 #define SHIFT_PRESC  2
 #define SHIFT_VCOSEL 0
@@ -128,6 +129,8 @@ void SynthSendAddress(bool write, uint8_t address);
 void SynthSendData(uint16_t data);
 uint16_t SynthReceiveData();
 uint16_t SynthRead(uint8_t address);
-void SynthSetFreq(float newFreq, bool waitForLock);
+void SynthSet_Freq(float freq);
+void SynthSet_FreqLO(float f_lo, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
+void SynthGet_ModParams(float freq_delta, uint8_t &modstep, int16_t &fmod_step);
 
 #endif
