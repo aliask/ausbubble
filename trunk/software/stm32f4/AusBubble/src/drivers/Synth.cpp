@@ -347,10 +347,11 @@ void SynthSet_Freq(uint32_t freq_Hz)
     static int32_t cur_freq_delta_Hz = 0;
 
     /* FREQUENCY MODULATION */
-    // Check 1 : fmod_step > 0                              : Valid frequency delta (i.e. step size)
+    // Check 1 : fmod_step != 0                             : Valid frequency delta (i.e. step size)
     // Check 2 : (freq_Hz - freq_prev_Hz) == freq_delta_Hz  : Has frequency step size or direction changed? (i.e. are modulation setting still valid?)
     // Check 3 : (cur_fmod + fmod_step) <= fmod_upper_bound : New modulation setting less than or equal to upper bound
     // Check 4 : (cur_fmod + fmod_step) >= fmod_lower_bound : New modulation setting greater than or equal to lower bound
+    cur_freq_delta_Hz = freq_Hz - freq_prev_Hz;
     if((fmod_step != 0) && (cur_freq_delta_Hz == freq_delta_Hz) && ((cur_fmod + fmod_step) <= fmod_upper_bound) && ((cur_fmod + fmod_step) >= fmod_lower_bound))
     {
         cur_fmod += fmod_step;
@@ -371,7 +372,7 @@ void SynthSet_Freq(uint32_t freq_Hz)
         // Valid frequency delta
         if(fmod_step != 0)
         {
-            uint32_t n_24bit = (((uint16_t)nummsb)<<8) | (numlsb>>8);
+            uint32_t n_24bit = (nummsb<<8) | (numlsb>>8);
             uint32_t max_fmod = 0x7FFF << modstep;
             // LOWER BOUND
             if(max_fmod <= n_24bit)
@@ -389,7 +390,6 @@ void SynthSet_Freq(uint32_t freq_Hz)
                                            (modstep<<SHIFT_MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
         }
     }
-    cur_freq_delta_Hz = freq_Hz - freq_prev_Hz;
     freq_prev_Hz = freq_Hz;
 }
 
