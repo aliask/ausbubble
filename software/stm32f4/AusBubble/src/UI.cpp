@@ -82,21 +82,21 @@ void splash(const char* text)
 
 void drawStep(int line, double stepSize)
 {
-    if(stepSize == STEP_1K)
+    if(stepSize == STEP_1K_HZ)
         safeString("Step Size:   1 kHz", line, 14);
-    else if(stepSize == STEP_10K)
+    else if(stepSize == STEP_10K_HZ)
         safeString("Step Size:  10 kHz", line, 14);
-    else if(stepSize == STEP_25K)
+    else if(stepSize == STEP_25K_HZ)
         safeString("Step Size:  25 kHz", line, 14);
-    else if(stepSize == STEP_50K)
+    else if(stepSize == STEP_50K_HZ)
         safeString("Step Size:  50 kHz", line, 14);
-    else if(stepSize == STEP_100K)
+    else if(stepSize == STEP_100K_HZ)
         safeString("Step Size: 100 kHz", line, 14);
-    else if(stepSize == STEP_250K)
+    else if(stepSize == STEP_250K_HZ)
         safeString("Step Size: 250 kHz", line, 14);
-    else if(stepSize == STEP_500K)
+    else if(stepSize == STEP_500K_HZ)
         safeString("Step Size: 500 kHz", line, 14);
-    else if(stepSize == STEP_1M)
+    else if(stepSize == STEP_1M_HZ)
         safeString("Step Size:   1 MHz", line, 14);
 }
 
@@ -174,9 +174,9 @@ void drawSynthMenu()
 
     centredString("Synth Settings", 1);
 
-    snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start);
+    snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", (float) (gScanSettings.start / 1000000.0f));
     safeString(menuText, 2, 14);
-    snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop);
+    snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", (float) (gScanSettings.stop / 1000000.0f));
     safeString(menuText, 3, 14);
     drawAlgorithm(4, gScanSettings.algorithm);
     drawStep(5, gScanSettings.stepSize);
@@ -184,7 +184,9 @@ void drawSynthMenu()
     if(gInSetting)
     {
         safeFont57(131, cursorPos+2, 6);
-    } else {
+    }
+    else
+    {
         safeFont57(131, cursorPos+2, 4);
     }
 
@@ -286,22 +288,22 @@ void doSynthMin(buttonStates action)
         case ButtonUp:
             if(gScanSettings.start < gScanSettings.stop)
             {
-                gScanSettings.start += 0.5;
-                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start);
+                gScanSettings.start += 500000;
+                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start / 1000000.0f);
                 safeString(menuText, 2, 14);
             }
             break;
         case ButtonDown:
-            if(gScanSettings.start > MIN_FREQ_MHZ)
+            if(gScanSettings.start > MIN_FREQ_HZ)
             {
-                gScanSettings.start -= 0.5;
-                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start);
+                gScanSettings.start -= 500000;
+                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start / 1000000.0f);
                 safeString(menuText, 2, 14);
             }
             else
             {
-                gScanSettings.start = MIN_FREQ_MHZ;
-                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start);
+                gScanSettings.start = MIN_FREQ_HZ;
+                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start / 1000000.0f);
                 safeString(menuText, 2, 14);
             }
             break;
@@ -321,24 +323,24 @@ void doSynthMax(buttonStates action)
     switch(action)
     {
         case ButtonUp:
-            if(gScanSettings.stop < MAX_FREQ_MHZ)
+            if(gScanSettings.stop < MAX_FREQ_HZ)
             {
-                gScanSettings.stop += 0.5;
-                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop);
+                gScanSettings.stop += 500000;
+                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop / 1000000.0f);
                 safeString(menuText, 3, 14);
             }
             else
             {
-                gScanSettings.stop = MAX_FREQ_MHZ;
-                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop);
+                gScanSettings.stop = MAX_FREQ_HZ;
+                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop / 1000000.0f);
                 safeString(menuText, 3, 14);
             }
             break;
         case ButtonDown:
             if(gScanSettings.stop>gScanSettings.start)
             {
-                gScanSettings.stop -= 0.5;
-                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop);
+                gScanSettings.stop -= 500000;
+                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop / 1000000.0f);
                 safeString(menuText, 3, 14);
             }
             break;
@@ -410,42 +412,42 @@ void doStepSize(buttonStates action)
             break;
         case ButtonUp:
             // Step forwards through the cycle
-            if(gScanSettings.stepSize == STEP_1K)
-                gScanSettings.stepSize = STEP_10K;
-            else if(gScanSettings.stepSize == STEP_10K)
-                gScanSettings.stepSize = STEP_25K;
-            else if(gScanSettings.stepSize == STEP_25K)
-                gScanSettings.stepSize = STEP_50K;
-            else if(gScanSettings.stepSize == STEP_50K)
-                gScanSettings.stepSize = STEP_100K;
-            else if(gScanSettings.stepSize == STEP_100K)
-                gScanSettings.stepSize = STEP_250K;
-            else if(gScanSettings.stepSize == STEP_250K)
-                gScanSettings.stepSize = STEP_500K;
-            else if(gScanSettings.stepSize == STEP_500K)
-                gScanSettings.stepSize = STEP_1M;
-            else if(gScanSettings.stepSize == STEP_1M)
-                gScanSettings.stepSize = STEP_1K;
+            if(gScanSettings.stepSize == STEP_1K_HZ)
+                gScanSettings.stepSize = STEP_10K_HZ;
+            else if(gScanSettings.stepSize == STEP_10K_HZ)
+                gScanSettings.stepSize = STEP_25K_HZ;
+            else if(gScanSettings.stepSize == STEP_25K_HZ)
+                gScanSettings.stepSize = STEP_50K_HZ;
+            else if(gScanSettings.stepSize == STEP_50K_HZ)
+                gScanSettings.stepSize = STEP_100K_HZ;
+            else if(gScanSettings.stepSize == STEP_100K_HZ)
+                gScanSettings.stepSize = STEP_250K_HZ;
+            else if(gScanSettings.stepSize == STEP_250K_HZ)
+                gScanSettings.stepSize = STEP_500K_HZ;
+            else if(gScanSettings.stepSize == STEP_500K_HZ)
+                gScanSettings.stepSize = STEP_1M_HZ;
+            else if(gScanSettings.stepSize == STEP_1M_HZ)
+                gScanSettings.stepSize = STEP_1K_HZ;
             drawStep(5,gScanSettings.stepSize);
             break;
         case ButtonDown:
             // Step backwards through the cycle
-            if(gScanSettings.stepSize == STEP_1M)
-                gScanSettings.stepSize = STEP_500K;
-            else if(gScanSettings.stepSize == STEP_500K)
-                gScanSettings.stepSize = STEP_250K;
-            else if(gScanSettings.stepSize == STEP_250K)
-                gScanSettings.stepSize = STEP_100K;
-            else if(gScanSettings.stepSize == STEP_100K)
-                gScanSettings.stepSize = STEP_50K;
-            else if(gScanSettings.stepSize == STEP_50K)
-                gScanSettings.stepSize = STEP_25K;
-            else if(gScanSettings.stepSize == STEP_25K)
-                gScanSettings.stepSize = STEP_10K;
-            else if(gScanSettings.stepSize == STEP_10K)
-                gScanSettings.stepSize = STEP_1K;
-            else if(gScanSettings.stepSize == STEP_1K)
-                gScanSettings.stepSize = STEP_1M;
+            if(gScanSettings.stepSize == STEP_1M_HZ)
+                gScanSettings.stepSize = STEP_500K_HZ;
+            else if(gScanSettings.stepSize == STEP_500K_HZ)
+                gScanSettings.stepSize = STEP_250K_HZ;
+            else if(gScanSettings.stepSize == STEP_250K_HZ)
+                gScanSettings.stepSize = STEP_100K_HZ;
+            else if(gScanSettings.stepSize == STEP_100K_HZ)
+                gScanSettings.stepSize = STEP_50K_HZ;
+            else if(gScanSettings.stepSize == STEP_50K_HZ)
+                gScanSettings.stepSize = STEP_25K_HZ;
+            else if(gScanSettings.stepSize == STEP_25K_HZ)
+                gScanSettings.stepSize = STEP_10K_HZ;
+            else if(gScanSettings.stepSize == STEP_10K_HZ)
+                gScanSettings.stepSize = STEP_1K_HZ;
+            else if(gScanSettings.stepSize == STEP_1K_HZ)
+                gScanSettings.stepSize = STEP_1M_HZ;
             drawStep(5,gScanSettings.stepSize);
             break;
         default:

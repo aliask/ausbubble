@@ -51,8 +51,8 @@
 #define DEFAULT_JAM_UPDATE_RATE_HZ      500
 
 /* Synth Allowable Frequency Range (DO NOT MODIFY) */
-#define MIN_FREQ_MHZ                    2400
-#define MAX_FREQ_MHZ                    2500
+#define MIN_FREQ_HZ                     2400000000
+#define MAX_FREQ_HZ                     2500000000
 
 /* OLED */
 #define OLED_CS_PORT                    GPIOA

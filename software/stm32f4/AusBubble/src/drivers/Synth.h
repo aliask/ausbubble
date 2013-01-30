@@ -129,8 +129,8 @@ void SynthSendAddress(bool write, uint8_t address);
 void SynthSendData(uint16_t data);
 uint16_t SynthReceiveData();
 uint16_t SynthRead(uint8_t address);
-void SynthSet_Freq(float freq);
-void SynthSet_FreqLO(float f_lo, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
-void SynthGet_ModParams(float freq_delta, uint8_t &modstep, int16_t &fmod_step);
+void SynthSet_Freq(uint32_t freq_Hz);
+void SynthSet_FreqLO(uint32_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
+void SynthGet_ModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step);
 
 #endif
