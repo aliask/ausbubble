@@ -47,14 +47,14 @@
 #define DIR_DOWN  false
 
 // Valid step sizes
-#define STEP_1K   0.001
-#define STEP_10K  0.010
-#define STEP_25K  0.025
-#define STEP_50K  0.050
-#define STEP_100K 0.100
-#define STEP_250K 0.250
-#define STEP_500K 0.500
-#define STEP_1M   1.000
+#define STEP_1K_HZ      1000
+#define STEP_10K_HZ     10000
+#define STEP_25K_HZ     25000
+#define STEP_50K_HZ     50000
+#define STEP_100K_HZ    100000
+#define STEP_250K_HZ    250000
+#define STEP_500K_HZ    500000
+#define STEP_1M_HZ      1000000
 
 /* Enumerations */
 typedef enum {
@@ -66,9 +66,9 @@ typedef enum {
 /* Structures */
 extern struct scanSettings_t {
     ScanAlgorithms_t algorithm;
-    float stepSize;
-    float start;
-    float stop;
+    uint32_t stepSize;
+    uint32_t start;
+    uint32_t stop;
 } gScanSettings;
 
 /* Function prototypes */

@@ -39,16 +39,16 @@ struct scanSettings_t gScanSettings;
 void ScanInit(scanSettings_t* settings)
 {
     settings->algorithm = ScanTriangle;
-    settings->start     = 2400.0;
-    settings->stop      = 2500.0;
-    settings->stepSize  = STEP_1M;
+    settings->start     = 2400000000;
+    settings->stop      = 2500000000;
+    settings->stepSize  = STEP_100K_HZ;
 }
 
 void AdvanceScan(scanSettings_t* settings)
 {
-    static double freq = settings->start;
+    static uint32_t freq = settings->start;
     static bool direction = DIR_UP;
-    float newFreq = -1;
+    uint32_t newFreq = -1;
     uint32_t random32bit = 0;
 
     switch(settings->algorithm)
@@ -63,7 +63,7 @@ void AdvanceScan(scanSettings_t* settings)
             if(direction == DIR_UP)
             {
                 // Going up
-                if((freq + settings->stepSize) > settings->stop)
+                if((freq + settings->stepSize) >= settings->stop)
                 {
                     newFreq = settings->stop;
                     direction = DIR_DOWN;
@@ -74,7 +74,7 @@ void AdvanceScan(scanSettings_t* settings)
             else
             {
                 // Going down
-                if((freq - settings->stepSize) < settings->start)
+                if((freq - settings->stepSize) <= settings->start)
                 {
                     newFreq = settings->start;
                     direction = DIR_UP;
