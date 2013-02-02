@@ -5,7 +5,9 @@
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153" moduleId="org.eclipse.cdt.core.settings" name="Debug">
-				<externalSettings/>
+				<externalSettings>
+					<externalSetting/>
+				</externalSettings>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
@@ -35,9 +37,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/STM32_USB_OTG_Driver/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/FreeRTOS/Source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/system}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/usb}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/drivers}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/system}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src}&quot;"/>
 								</option>
 								<option id="org.eclipse.cdt.cross.arm.gnu.assembler.option.preprocessor.def.2044484839" name="Defined symbols (-D)" superClass="org.eclipse.cdt.cross.arm.gnu.assembler.option.preprocessor.def" valueType="definedSymbols">
@@ -58,9 +60,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/STM32_USB_OTG_Driver/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/FreeRTOS/Source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/system}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/usb}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/drivers}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/system}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src}&quot;"/>
 								</option>
 								<option id="org.eclipse.cdt.cross.arm.gnu.c.compiler.option.preprocessor.def.1013126540" name="Defined symbols (-D)" superClass="org.eclipse.cdt.cross.arm.gnu.c.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -85,9 +87,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/STM32_USB_OTG_Driver/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/FreeRTOS/Source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/lib/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/system}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/usb}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/drivers}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src/system}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/AusBubble/src}&quot;"/>
 								</option>
 								<option id="org.eclipse.cdt.cross.arm.gnu.cpp.compiler.option.preprocessor.def.636618822" name="Defined symbols (-D)" superClass="org.eclipse.cdt.cross.arm.gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -118,6 +120,7 @@
 								<option id="org.eclipse.cdt.cross.arm.gnu.cpp.link.option.printgcsections.503822356" name="Print removed sections (-Xlinker --print-gc-sections)" superClass="org.eclipse.cdt.cross.arm.gnu.cpp.link.option.printgcsections" value="false" valueType="boolean"/>
 								<option id="org.eclipse.cdt.cross.arm.gnu.cpp.linker.option.other.verbose.110453632" name="Verbose (-v)" superClass="org.eclipse.cdt.cross.arm.gnu.cpp.linker.option.other.verbose" value="true" valueType="boolean"/>
 								<option id="org.eclipse.cdt.cross.arm.gnu.cpp.link.option.other.printmap.1340601826" name="Print link map (-Xlinker --print-map)" superClass="org.eclipse.cdt.cross.arm.gnu.cpp.link.option.other.printmap" value="false" valueType="boolean"/>
+								<option id="org.eclipse.cdt.cross.arm.gnu.cpp.link.option.other.cref.2100148385" name="Cross Reference (-Xlinker --cref)" superClass="org.eclipse.cdt.cross.arm.gnu.cpp.link.option.other.cref" value="false" valueType="boolean"/>
 								<inputType id="org.eclipse.cdt.cross.arm.gnu.cpp.linker.input.75509372" superClass="org.eclipse.cdt.cross.arm.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -130,7 +133,6 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src|lib/" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
 						<entry excluding="portable/MemMang/heap_4.c|portable/MemMang/heap_3.c|portable/MemMang/heap_1.c|portable/BCC/|portable/CCS/|portable/CodeWarrior/|portable/GCC/ARM_CM0/|portable/GCC/ARM_CM3/|portable/GCC/ARM_CM3_MPU/|portable/GCC/ARM7_AT91FR40008/|portable/GCC/ARM7_AT91SAM7S/|portable/GCC/ARM7_LPC2000/|portable/GCC/ARM7_LPC23xx/|portable/GCC/ATMega323/|portable/GCC/AVR32_UC3/|portable/GCC/ColdFire_V2/|portable/GCC/CORTUS_APS3/|portable/GCC/H8S2329/|portable/GCC/HCS12/|portable/GCC/MCF5235/|portable/GCC/MicroBlaze/|portable/GCC/MicroBlazeV8/|portable/GCC/MSP430F449/|portable/GCC/NiosII/|portable/GCC/PPC405_Xilinx/|portable/GCC/PPC440_Xilinx/|portable/GCC/RX600/|portable/GCC/STR75x/|portable/GCC/TriCore_1782/|portable/IAR/|portable/Keil/|portable/MPLAB/|portable/MSVC-MingW/|portable/oWatcom/|portable/Paradigm/|portable/Renesas/|portable/Rowley/|portable/RVDS/|portable/SDCC/|portable/Softune/|portable/Tasking/|portable/WizC/" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="lib/FreeRTOS/Source"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="lib/STM32F4xx_StdPeriph_Driver/src"/>
 						<entry excluding="usbd_cdc_if_template.c" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="lib/STM32_USB_Device_Library/Class/cdc/src"/>
@@ -165,4 +167,5 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>
