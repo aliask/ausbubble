@@ -376,14 +376,14 @@ void SynthSet_Freq(uint32_t freq_Hz)
             uint32_t max_fmod = 0x7FFF << modstep;
             // LOWER BOUND
             if(max_fmod <= n_24bit)
-                fmod_lower_bound = -1*(max_fmod >> modstep);
+                fmod_lower_bound = -1*0x7FFF;
             else
-                fmod_lower_bound = -1*(n_24bit >> modstep);
+                fmod_lower_bound = -1*((n_24bit & max_fmod) >> modstep);
             // UPPER BOUND
             if((n_24bit + max_fmod) <= 0xFFFFFF)
-                fmod_upper_bound = (max_fmod >> modstep);
+                fmod_upper_bound = 0x7FFF;
             else
-                fmod_upper_bound = (0xFFFFFF - n_24bit) >> modstep;
+                fmod_upper_bound = (~(0xFFFFFF-n_24bit) & max_fmod) >> modstep;
 
             // Enable frequency modulation
             SynthWrite((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N

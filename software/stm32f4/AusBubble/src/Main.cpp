@@ -40,15 +40,27 @@
 #include "VarGainAmp.h"
 #include "AmpLUT.h"
 
+// USB
+#include "usbd_cdc_core.h"
+#include "usbd_usr.h"
+#include "usbd_desc.h"
+#include "usbd_cdc_vcp.h"
+#ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
+    #if defined ( __ICCARM__ ) /*!< IAR Compiler */
+        #pragma data_alignment = 4
+    #endif
+#endif /* USB_OTG_HS_INTERNAL_DMA_ENABLED */
+__ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
+
 /* ADC3 Data Register Address */
 #define ADC3_DR_ADDRESS    ((uint32_t)0x4001224C)
 
 /* Defines for the button hold behaviour */
-#define TICK_RATE_1         200 // Slowest
+#define TICK_RATE_1         200     // Slowest
 #define TICK_RATE_2         100
 #define TICK_RATE_3         50
 #define TICK_RATE_4         25
-#define TICK_RATE_5         10  // Fastest
+#define TICK_RATE_5         10      // Fastest
 #define TICK_INITIALRATE    200
 #define TICK_HOLDCOUNT      1000
 
@@ -76,9 +88,9 @@ void vHeartbeatTask(void *pvParameters)
     while(1)
     {
         DelayMS(500);
-        GPIO_WriteBit(RTOS_LED_PORT,RTOS_LED_PIN, Bit_SET);
+        GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_SET);
         DelayMS(500);
-        GPIO_WriteBit(RTOS_LED_PORT,RTOS_LED_PIN, Bit_RESET);
+        GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_RESET);
     }
 }
 
@@ -288,6 +300,9 @@ void prvSetupHardware(void)
     #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
         SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));    // Set CP10 and CP11 Full Access
     #endif
+
+    /* Enable USB */
+    USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
 
     /* Enable RNG */
     RNG_Config();
