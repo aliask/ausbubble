@@ -29,9 +29,13 @@ C_UPPER_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+src/usb \
 src/system \
 src/drivers \
 src \
+lib/STM32_USB_OTG_Driver/src \
+lib/STM32_USB_Device_Library/Core/src \
+lib/STM32_USB_Device_Library/Class/cdc/src \
 lib/STM32F4xx_StdPeriph_Driver/src \
 lib/FreeRTOS/Source \
 lib/FreeRTOS/Source/portable/MemMang \
