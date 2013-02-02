@@ -40,17 +40,19 @@
 #include "VarGainAmp.h"
 #include "AmpLUT.h"
 
-// USB
-#include "usbd_cdc_core.h"
-#include "usbd_usr.h"
-#include "usbd_desc.h"
-#include "usbd_cdc_vcp.h"
+/* USB */
+extern "C" {
+    #include "usbd_cdc_core.h"
+    #include "usbd_usr.h"
+    #include "usbd_desc.h"
+    #include "usbd_cdc_vcp.h"
+}
 #ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
     #if defined ( __ICCARM__ ) /*!< IAR Compiler */
         #pragma data_alignment = 4
     #endif
 #endif /* USB_OTG_HS_INTERNAL_DMA_ENABLED */
-__ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
+__ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 
 /* ADC3 Data Register Address */
 #define ADC3_DR_ADDRESS    ((uint32_t)0x4001224C)
