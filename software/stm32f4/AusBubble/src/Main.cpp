@@ -164,7 +164,7 @@ void vUITask(void *pvParameters)
                     // Enable jamming (if not at Disclaimer screen)
                     else if(gWhereAmI != DisclaimerScreen)
                     {
-                        JammingEnable(true, 500); // 500 Hz update rate
+                        JammingEnable(true, 10); // 500 Hz update rate
                         splash("RF output ENABLED");
                         gEnabled = true;
                     }
@@ -302,9 +302,6 @@ void prvSetupHardware(void)
     #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
         SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));    // Set CP10 and CP11 Full Access
     #endif
-
-    /* Enable USB */
-    USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
 
     /* Enable RNG */
     RNG_Config();
@@ -497,6 +494,16 @@ void prvSetupHardware(void)
 
     /* Enable clock for timer used in vJammingTask() */
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+
+    /* Enable USB */
+    USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
+    /*
+     * Disable STDOUT buffering. Otherwise nothing will be printed
+     * before a newline character or when the buffer is flushed.
+     */
+    setbuf(stdout, NULL);
+    // Startup print
+    printf("Welcome to AusBubble!");
 
     /* Nested Vectored Interrupt Controller */
     NVIC_Config();

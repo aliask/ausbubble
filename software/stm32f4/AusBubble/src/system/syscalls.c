@@ -2,6 +2,9 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "stm32f4xx.h"
+#include "stm32f4xx_conf.h"
+#include "usbd_cdc_vcp.h"
 
 #undef errno
 extern int errno;
@@ -51,12 +54,24 @@ int _lseek(int file, int ptr, int dir)
 
 int _read(int file, char *ptr, int len)
 {
-	return 0;
+    if (file != 0)
+    {
+        return 0;
+    }
+
+    // Use USB CDC Port for stdin
+    while(!VCP_get_char((uint8_t*)ptr)){};
+
+    // Echo typed characters
+    VCP_put_char((uint8_t)*ptr);
+
+    return 1;
 }
 
 int _write(int file, char *ptr, int len)
 {
-	return len;
+    VCP_send_buffer((uint8_t*)ptr, len);
+    return len;
 }
 
 void abort(void)
