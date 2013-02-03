@@ -164,7 +164,7 @@ void vUITask(void *pvParameters)
                     // Enable jamming (if not at Disclaimer screen)
                     else if(gWhereAmI != DisclaimerScreen)
                     {
-                        JammingEnable(true, 10); // 500 Hz update rate
+                        JammingEnable(true, 500);
                         splash("RF output ENABLED");
                         gEnabled = true;
                     }

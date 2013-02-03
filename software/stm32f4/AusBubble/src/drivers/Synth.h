@@ -38,8 +38,8 @@
 #include "Includes.h"
 #include "ScanAlgorithms.h"
 
-#define F_VCO_MAX_MHZ       5400.0
-#define F_REFERENCE_MHZ     26.0
+#define F_VCO_MAX_HZ        5400000000
+#define F_REFERENCE_HZ      26000000
 #define FBKDIV_2            2       // Prescaler divider (fvco<3.2GHz: 2)
 #define FBKDIV_4            4       // Prescaler divider (fvco>3.2GHz: 4)
 #define USE_SW_CONTROL      0       // Software Control=1, Hardware Control=0 (via ENBL and MODE pins)
@@ -136,8 +136,8 @@ void SynthSendAddress(bool write, uint8_t address);
 void SynthSendData(uint16_t data);
 uint16_t SynthReceiveData();
 uint16_t SynthRead(uint8_t address);
-void SynthSet_Freq(uint32_t freq_Hz);
-void SynthSet_FreqLO(uint32_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
+void SynthSet_Freq(uint64_t freq_Hz);
+void SynthSet_FreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
 void SynthGet_ModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step);
 
 #endif

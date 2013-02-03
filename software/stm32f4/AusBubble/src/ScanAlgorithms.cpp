@@ -46,9 +46,9 @@ void ScanInit(scanSettings_t* settings)
 
 void AdvanceScan(scanSettings_t* settings)
 {
-    static uint32_t freq = settings->start;
+    static uint64_t freq = settings->start;
     static bool direction = DIR_UP;
-    uint32_t newFreq = -1;
+    uint64_t newFreq = -1;
     uint32_t random32bit = 0;
 
     switch(settings->algorithm)

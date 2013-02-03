@@ -67,8 +67,8 @@ typedef enum {
 extern struct scanSettings_t {
     ScanAlgorithms_t algorithm;
     uint32_t stepSize;
-    uint32_t start;
-    uint32_t stop;
+    uint64_t start;
+    uint64_t stop;
 } gScanSettings;
 
 /* Function prototypes */
