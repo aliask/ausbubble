@@ -40,7 +40,8 @@
 
 #define F_VCO_MAX_MHZ       5400.0
 #define F_REFERENCE_MHZ     26.0
-#define FBKDIV              4       // Prescaler divider (fvco<3.2GHz: 2, fvco>3.2GHz: 4)
+#define FBKDIV_2            2       // Prescaler divider (fvco<3.2GHz: 2)
+#define FBKDIV_4            4       // Prescaler divider (fvco>3.2GHz: 4)
 #define USE_SW_CONTROL      0       // Software Control=1, Hardware Control=0 (via ENBL and MODE pins)
 
 // Synthesizer register defines
@@ -76,6 +77,12 @@
 #define REG_DEV_CTRL  0x1D
 #define REG_TEST      0x1E
 #define REG_READBACK  0x1F
+
+// LF fields
+#define SHIFT_LFACT     15
+#define SHIFT_P2CPDEF   9
+#define SHIFT_P1CPDEF   3
+#define SHIFT_PLLCPL    0
 
 // PLL_CTRL fields
 #define SHIFT_DIVBY  15
