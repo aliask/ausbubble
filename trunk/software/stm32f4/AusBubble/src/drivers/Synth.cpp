@@ -287,20 +287,17 @@ uint16_t SynthRead(uint8_t address)
     return SynthReceiveData();
 }
 
-void SynthSet_FreqLO(uint32_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
+void SynthSet_FreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
 {
-    // Convert from Hz to MHz
-    float f_lo = f_lo_Hz / 1000000.0f;
-
     /* Register calculations taken from RFMD Programming Guide
     Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
-    int n_lo        = log2f((float)(F_VCO_MAX_MHZ/f_lo));
+    int n_lo        = log2f((float)(F_VCO_MAX_HZ/f_lo_Hz));
     int lodiv       = 1<<n_lo;
-    int f_vco       = lodiv*f_lo;
+    uint64_t f_vco  = lodiv*f_lo_Hz;
     /* If the VCO frequency is above 3.2GHz it is necessary to set the prescaler to /4
     and charge pump leakage to 3 for the CT_cal to work correctly */
     int fbkdiv;
-    if(f_vco > 3200)
+    if(f_vco > 3200000000)
     {
         fbkdiv      = FBKDIV_4;
         SynthWrite((REG_LF<<16) | (1<<SHIFT_LFACT)      // Active loop filter enable, 1=active 0=passive
@@ -316,7 +313,7 @@ void SynthSet_FreqLO(uint32_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, u
                                 | (32<<SHIFT_P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
                                 | (2<<SHIFT_PLLCPL));   // Charge pump leakage settings
     }
-    float n_div     = f_vco/(float)(fbkdiv*F_REFERENCE_MHZ);
+    float n_div     = f_vco/(float)(fbkdiv*F_REFERENCE_HZ);
     int n           = n_div;
     double nummsb;
     float fraction  = modf((1<<16)*(n_div-n), &nummsb);
@@ -352,10 +349,10 @@ void SynthSet_FreqLO(uint32_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, u
     while(waitForLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
 }
 
-void SynthSet_Freq(uint32_t freq_Hz)
+void SynthSet_Freq(uint64_t freq_Hz)
 {
-    static uint32_t f_lo_Hz = 0;
-    static uint32_t freq_prev_Hz = 0;
+    static uint64_t f_lo_Hz = 0;
+    static uint64_t freq_prev_Hz = 0;
     static int16_t fmod_lower_bound = 0;
     static int16_t fmod_upper_bound = 0;
     static int16_t cur_fmod = 0;
@@ -366,15 +363,15 @@ void SynthSet_Freq(uint32_t freq_Hz)
     static int32_t cur_freq_delta_Hz = 0;
 
     /* FREQUENCY MODULATION */
-    // Check 1 : fmod_step != 0                             : Valid frequency delta (i.e. step size)
-    // Check 2 : (freq_Hz - freq_prev_Hz) == freq_delta_Hz  : Has frequency step size or direction changed? (i.e. are modulation setting still valid?)
-    // Check 3 :                                            : Is the PLL still locked?
+    // Check 1 :                                            : Is the PLL still locked?
+    // Check 2 : fmod_step != 0                             : Valid frequency delta (i.e. step size)
+    // Check 3 : (freq_Hz - freq_prev_Hz) == freq_delta_Hz  : Has frequency step size or direction changed? (i.e. are modulation setting still valid?)
     // Check 4 : (cur_fmod + fmod_step) <= fmod_upper_bound : New modulation setting less than or equal to upper bound
     // Check 5 : (cur_fmod + fmod_step) >= fmod_lower_bound : New modulation setting greater than or equal to lower bound
     cur_freq_delta_Hz = freq_Hz - freq_prev_Hz;
-    if( (fmod_step != 0) &&
+    if( ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) == SYNTH_GPO4LDDO_PIN) &&
+        (fmod_step != 0) &&
         (cur_freq_delta_Hz == freq_delta_Hz) &&
-        ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) == SYNTH_GPO4LDDO_PIN) &&
         ((cur_fmod + fmod_step) <= fmod_upper_bound) &&
         ((cur_fmod + fmod_step) >= fmod_lower_bound))
     {
