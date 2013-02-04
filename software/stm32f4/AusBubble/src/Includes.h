@@ -47,12 +47,43 @@
 #include "task.h"
 #include "semphr.h"
 
-/* Default jam update rate (Hz) */
-#define DEFAULT_JAM_UPDATE_RATE_HZ      500
+/* Enumerations */
+typedef enum {
+    ScanSawtooth = 0,
+    ScanTriangle,
+    ScanRandom
+} ScanAlgorithms_t;
 
-/* Synth Allowable Frequency Range (DO NOT MODIFY) */
-#define MIN_FREQ_HZ                     2400000000
-#define MAX_FREQ_HZ                     2500000000
+/* Valid step sizes */
+#define STEP_1K_HZ      1000
+#define STEP_10K_HZ     10000
+#define STEP_25K_HZ     25000
+#define STEP_50K_HZ     50000
+#define STEP_100K_HZ    100000
+#define STEP_250K_HZ    250000
+#define STEP_500K_HZ    500000
+#define STEP_1M_HZ      1000000
+
+/* Scan settings defaults */
+#define SCAN_SETTINGS_DEFAULT_START_FREQ_HZ     2400000000      /* DO NOT MODIFY */
+#define SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ      2500000000      /* DO NOT MODIFY */
+#define SCAN_SETTINGS_DEFAULT_ALGO              ScanTriangle
+#define SCAN_SETTINGS_DEFAULT_STEPSIZE          STEP_100K_HZ
+#define SCAN_SETTINGS_DEFAULT_RATE_HZ           500
+
+/* Synth Frequency */
+// Allowable range
+#define MIN_FREQ_HZ                     2400000000  /* DO NOT MODIFY */
+#define MAX_FREQ_HZ                     2500000000  /* DO NOT MODIFY */
+
+/* Jamming Update Rate */
+// Allowable range
+#define MIN_RATE_HZ                     1           /* DO NOT MODIFY */
+#define MAX_RATE_HZ                     1000        /* DO NOT MODIFY */
+
+/* UI settings */
+#define FREQ_STEP_HZ                    500000
+#define RATE_STEP_HZ                    1
 
 /* OLED */
 #define OLED_CS_PORT                    GPIOA

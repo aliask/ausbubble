@@ -25,6 +25,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_vcp.h"
+// Specifies the MCU peripherals to use
 #include "stm32f4xx_conf.h"
 
 /* Private variables ---------------------------------------------------------*/

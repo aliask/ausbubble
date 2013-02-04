@@ -70,7 +70,8 @@ __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 __IO uint16_t gADC3ConvertedValue = 0;
 
 /* Function Prototypes */
-void JammingEnable(bool enable, int updateRate_Hz=DEFAULT_JAM_UPDATE_RATE_HZ);
+void JammingEnable(bool enable);
+void SetUpdateRate(uint16_t updateRate_Hz);
 void prvSetupHardware(void);
 void SetupJoystick(void);
 void NVIC_Config(void);
@@ -164,7 +165,7 @@ void vUITask(void *pvParameters)
                     // Enable jamming (if not at Disclaimer screen)
                     else if(gWhereAmI != DisclaimerScreen)
                     {
-                        JammingEnable(true, 500);
+                        JammingEnable(true);
                         splash("RF output ENABLED");
                         gEnabled = true;
                     }
@@ -196,6 +197,9 @@ void vJammingTask(void *pvParameters)
     {
         if(TIM_GetFlagStatus(TIM2, TIM_FLAG_Update) != RESET)
         {
+            // Set jam update rate (in case setting has changed)
+            SetUpdateRate(gScanSettings.rate);
+            // Update frequency
             AdvanceScan(&gScanSettings);
             TIM_ClearFlag(TIM2, TIM_IT_Update);
         }
@@ -251,7 +255,7 @@ int main(void)
     return 0;
 }
 
-void JammingEnable(bool enable, int updateRate_Hz)
+void JammingEnable(bool enable)
 {
     if(enable)
     {
@@ -260,17 +264,8 @@ void JammingEnable(bool enable, int updateRate_Hz)
         // Enable amplifier
         GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_SET);
 
-        /* Time base configuration */
-        TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-        TIM_TimeBaseStructure.TIM_Period = (1000000/updateRate_Hz) - 1; // 1 MHz timer clock
-        TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;                   // 1 MHz timer clock
-        TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-        TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-        TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
-        /* TIM IT enable */
-        TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-        /* TIM2 enable counter */
-        TIM_Cmd(TIM2, ENABLE);
+        // Set jam update rate
+        SetUpdateRate(gScanSettings.rate);
     }
     else
     {
@@ -284,6 +279,21 @@ void JammingEnable(bool enable, int updateRate_Hz)
         /* TIM2 disable counter */
         TIM_Cmd(TIM2, DISABLE);
     }
+}
+
+void SetUpdateRate(uint16_t updateRate_Hz)
+{
+    /* Time base configuration */
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+    TIM_TimeBaseStructure.TIM_Period = (1000000/updateRate_Hz) - 1; // 1 MHz timer clock
+    TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;                   // 1 MHz timer clock
+    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+    /* TIM IT enable */
+    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+    /* TIM2 enable counter */
+    TIM_Cmd(TIM2, ENABLE);
 }
 
 /* Initialize necessary hardware */
