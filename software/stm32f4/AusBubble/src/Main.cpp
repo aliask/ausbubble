@@ -71,7 +71,7 @@ __IO uint16_t gADC3ConvertedValue = 0;
 
 /* Function Prototypes */
 void JammingEnable(bool enable);
-void SetUpdateRate(uint16_t updateRate_Hz);
+void SetJamUpdateRate(uint16_t updateRate_Hz);
 void prvSetupHardware(void);
 void SetupJoystick(void);
 void NVIC_Config(void);
@@ -122,13 +122,13 @@ void vUITask(void *pvParameters)
 
     while(1)
     {
-        // Some button must be currently down
+        /* Some button must be currently down */
         if(gPendingButton)
         {
             /* Button is being held down */
             if(((holdCount % TICK_HOLDCOUNT) == 0) && holdCount>0)
             {
-                // UP/DOWN: Increase tick rate
+                /* UP/DOWN: Increase tick rate */
                 if((gPendingButton == ButtonUp)||(gPendingButton == ButtonDown))
                 {
                     switch(tickRate)
@@ -149,20 +149,20 @@ void vUITask(void *pvParameters)
                             break;
                     }
                 }
-                // SELECT: Toggle the RF output
+                /* SELECT: Toggle the RF output */
                 else if(gPendingButton == ButtonEnter)
                 {
-                    // Exit selected setting
+                    /* Exit selected setting */
                     gInSetting = false;
 
-                    // Disable jamming
+                    /* Disable jamming */
                     if(gEnabled)
                     {
                         JammingEnable(false);
                         splash("RF output DISABLED");
                         gEnabled = false;
                     }
-                    // Enable jamming (if not at Disclaimer screen)
+                    /* Enable jamming (if not at Disclaimer screen) */
                     else if(gWhereAmI != DisclaimerScreen)
                     {
                         JammingEnable(true);
@@ -174,13 +174,12 @@ void vUITask(void *pvParameters)
 
             /* Take care of button de-bouncing and call the button handler
             when the button has been held down long enough */
-            // Button must be LOW for at least 5ms
             if(holdCount % tickRate == 5)
                 doMenu(gPendingButton);
 
             holdCount++;
         }
-        // No buttons held down
+        /* No buttons held down */
         else
         {
             holdCount = 0;
@@ -197,9 +196,9 @@ void vJammingTask(void *pvParameters)
     {
         if(TIM_GetFlagStatus(TIM2, TIM_FLAG_Update) != RESET)
         {
-            // Set jam update rate (in case setting has changed)
-            SetUpdateRate(gScanSettings.rate);
-            // Update synthesizer frequency
+            /* Set jam update rate (in case setting has changed) */
+            SetJamUpdateRate(gScanSettings.rate);
+            /* Update synthesizer frequency */
             AdvanceScan(&gScanSettings);
             TIM_ClearFlag(TIM2, TIM_IT_Update);
         }
@@ -216,7 +215,7 @@ int main(void)
     To reconfigure the default setting of SystemInit() function, refer to
     system_stm32f4xx.c file */
 
-    // Initialize scan settings with defaults
+    /* Initialize scan settings with defaults */
     ScanInit(&gScanSettings);
 
     /* Setup STM32 hardware */
@@ -259,23 +258,23 @@ void JammingEnable(bool enable)
 {
     if(enable)
     {
-        // Enable amplifier
+        /* Enable amplifier */
         GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_SET);
-        // Set gain to maximum allowable
+        /* Set gain to maximum allowable */
         VarGainAmpSetGain(VARGAINAMP_MAX_GAIN_LIMIT_DB);
-        // Enable synthesizer
+        /* Enable synthesizer */
         SynthEnable(true);
 
-        // Set jam update rate
-        SetUpdateRate(gScanSettings.rate);
+        /* Set jam update rate */
+        SetJamUpdateRate(gScanSettings.rate);
     }
     else
     {
-        // Disable synthesizer
+        /* Disable synthesizer */
         SynthEnable(false);
-        // Set gain to minimum allowable
+        /* Set gain to minimum allowable */
         VarGainAmpSetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
-        // Disable amplifier
+        /* Disable amplifier */
         GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_RESET);
 
         /* TIM IT disable */
@@ -285,7 +284,7 @@ void JammingEnable(bool enable)
     }
 }
 
-void SetUpdateRate(uint16_t updateRate_Hz)
+void SetJamUpdateRate(uint16_t updateRate_Hz)
 {
     /* Time base configuration */
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
@@ -511,12 +510,10 @@ void prvSetupHardware(void)
 
     /* Enable USB */
     USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
-    /*
-     * Disable STDOUT buffering. Otherwise nothing will be printed
-     * before a newline character or when the buffer is flushed.
-     */
+    /* Disable STDOUT buffering. Otherwise nothing will be printed
+    before a newline character or when the buffer is flushed */
     setbuf(stdout, NULL);
-    // Startup print
+    /* Startup print */
     printf("Welcome to AusBubble!");
 
     /* Nested Vectored Interrupt Controller */
@@ -528,9 +525,9 @@ void SetupJoystick(void)
     GPIO_InitTypeDef GPIO_InitStructure;
     EXTI_InitTypeDef EXTI_InitStructure;
 
-    // Note: Internal pull-ups are used on each button input (i.e. external pull-ups not required)
+    /* Note: Internal pull-ups are used on each button input (i.e. external pull-up resistors not required) */
 
-    // Configure LEFT as input floating
+    /* Configure LEFT as input floating */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_LEFT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -538,7 +535,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_LEFT_PORT, &GPIO_InitStructure);
-    // Configure RIGHT as input floating
+    /* Configure RIGHT as input floating */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_RIGHT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -546,7 +543,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_RIGHT_PORT, &GPIO_InitStructure);
-    // Configure UP as input floating
+    /* Configure UP as input floating */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_UP_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -554,7 +551,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_UP_PORT, &GPIO_InitStructure);
-    // Configure DOWN as input floating
+    /* Configure DOWN as input floating */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_DOWN_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -562,7 +559,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_DOWN_PORT, &GPIO_InitStructure);
-    // Configure SEL as input floating
+    /* Configure SEL as input floating */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_SELECT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -571,18 +568,18 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_SELECT_PORT, &GPIO_InitStructure);
 
-    // LEFT Button
+    /* LEFT Button */
     SYSCFG_EXTILineConfig(JOYSTICK_LEFT_PORT_SOURCE, JOYSTICK_LEFT_PIN_SOURCE);
-    // RIGHT Button
+    /* RIGHT Button */
     SYSCFG_EXTILineConfig(JOYSTICK_RIGHT_PORT_SOURCE, JOYSTICK_RIGHT_PIN_SOURCE);
-    // DOWN Button
+    /* DOWN Button */
     SYSCFG_EXTILineConfig(JOYSTICK_DOWN_PORT_SOURCE, JOYSTICK_DOWN_PIN_SOURCE);
-    // UP Button
+    /* UP Button */
     SYSCFG_EXTILineConfig(JOYSTICK_UP_PORT_SOURCE, JOYSTICK_UP_PIN_SOURCE);
-    // SEL Button
+    /* SEL Button */
     SYSCFG_EXTILineConfig(JOYSTICK_SELECT_PORT_SOURCE, JOYSTICK_SELECT_PIN_SOURCE);
 
-    // Configure EXTI
+    /* Configure EXTI */
     EXTI_StructInit(&EXTI_InitStructure);
     EXTI_InitStructure.EXTI_Line    = JOYSTICK_LEFT_EXTI_LINE | JOYSTICK_RIGHT_EXTI_LINE | JOYSTICK_UP_EXTI_LINE | JOYSTICK_DOWN_EXTI_LINE | JOYSTICK_SELECT_EXTI_LINE;
     EXTI_InitStructure.EXTI_Mode    = EXTI_Mode_Interrupt;
