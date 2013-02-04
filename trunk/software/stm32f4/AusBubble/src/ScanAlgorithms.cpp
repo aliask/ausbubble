@@ -38,10 +38,11 @@ struct scanSettings_t gScanSettings;
 
 void ScanInit(scanSettings_t* settings)
 {
-    settings->algorithm = ScanTriangle;
-    settings->start     = 2400000000;
-    settings->stop      = 2500000000;
-    settings->stepSize  = STEP_100K_HZ;
+    settings->start     = SCAN_SETTINGS_DEFAULT_START_FREQ_HZ;
+    settings->stop      = SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ;
+    settings->algorithm = SCAN_SETTINGS_DEFAULT_ALGO;
+    settings->stepSize  = SCAN_SETTINGS_DEFAULT_STEPSIZE;
+    settings->rate      = SCAN_SETTINGS_DEFAULT_RATE_HZ;
 }
 
 void AdvanceScan(scanSettings_t* settings)
@@ -59,6 +60,7 @@ void AdvanceScan(scanSettings_t* settings)
             else
                 newFreq = freq + settings->stepSize;
             break;
+
         case ScanTriangle:
             if(direction == DIR_UP)
             {
@@ -83,6 +85,7 @@ void AdvanceScan(scanSettings_t* settings)
                     newFreq = freq - settings->stepSize;
             }
             break;
+
         case ScanRandom:
         	/* Wait until one RNG number is ready */
         	while(RNG_GetFlagStatus(RNG_FLAG_DRDY)== RESET);
@@ -91,6 +94,7 @@ void AdvanceScan(scanSettings_t* settings)
             /* Get random floating point number between START and STOP frequency range */
             newFreq = settings->start + (float)random32bit/((float)UINT32_MAX/(settings->stop-settings->start));
             break;
+
         default:
             newFreq = freq;
             break;

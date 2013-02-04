@@ -176,10 +176,15 @@ void drawSynthMenu()
 
     snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", (float) (gScanSettings.start / 1000000.0f));
     safeString(menuText, 2, 14);
+
     snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", (float) (gScanSettings.stop / 1000000.0f));
     safeString(menuText, 3, 14);
+
     drawAlgorithm(4, gScanSettings.algorithm);
     drawStep(5, gScanSettings.stepSize);
+
+    snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", gScanSettings.rate);
+    safeString(menuText, 6, 14);
 
     if(gInSetting)
     {
@@ -286,17 +291,17 @@ void doSynthMin(buttonStates action)
     switch(action)
     {
         case ButtonUp:
-            if(gScanSettings.start < gScanSettings.stop)
+            if((gScanSettings.start + FREQ_STEP_HZ) <= gScanSettings.stop)
             {
-                gScanSettings.start += 500000;
+                gScanSettings.start += FREQ_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start / 1000000.0f);
                 safeString(menuText, 2, 14);
             }
             break;
         case ButtonDown:
-            if(gScanSettings.start > MIN_FREQ_HZ)
+            if((gScanSettings.start - FREQ_STEP_HZ) >= MIN_FREQ_HZ)
             {
-                gScanSettings.start -= 500000;
+                gScanSettings.start -= FREQ_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", gScanSettings.start / 1000000.0f);
                 safeString(menuText, 2, 14);
             }
@@ -323,9 +328,9 @@ void doSynthMax(buttonStates action)
     switch(action)
     {
         case ButtonUp:
-            if(gScanSettings.stop < MAX_FREQ_HZ)
+            if((gScanSettings.stop + FREQ_STEP_HZ) <= MAX_FREQ_HZ)
             {
-                gScanSettings.stop += 500000;
+                gScanSettings.stop += FREQ_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop / 1000000.0f);
                 safeString(menuText, 3, 14);
             }
@@ -337,11 +342,48 @@ void doSynthMax(buttonStates action)
             }
             break;
         case ButtonDown:
-            if(gScanSettings.stop>gScanSettings.start)
+            if((gScanSettings.stop - FREQ_STEP_HZ) >= gScanSettings.start)
             {
-                gScanSettings.stop -= 500000;
+                gScanSettings.stop -= FREQ_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", gScanSettings.stop / 1000000.0f);
                 safeString(menuText, 3, 14);
+            }
+            break;
+        case ButtonEnter:
+        case ButtonLeft:
+        case ButtonRight:
+        default:
+            toggleSetting(cursorPos);
+            break;
+    }
+}
+
+void doRate(buttonStates action)
+{
+    char menuText[21];
+
+    switch(action)
+    {
+        case ButtonUp:
+            if((gScanSettings.rate + RATE_STEP_HZ) <= MAX_RATE_HZ)
+            {
+                gScanSettings.rate += RATE_STEP_HZ;
+                snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", gScanSettings.rate);
+                safeString(menuText, 6, 14);
+            }
+            else
+            {
+                gScanSettings.rate = MAX_RATE_HZ;
+                snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", gScanSettings.rate);
+                safeString(menuText, 6, 14);
+            }
+            break;
+        case ButtonDown:
+            if((gScanSettings.rate - RATE_STEP_HZ) >= MIN_RATE_HZ)
+            {
+                gScanSettings.rate -= RATE_STEP_HZ;
+                snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", gScanSettings.rate);
+                safeString(menuText, 6, 14);
             }
             break;
         case ButtonEnter:
@@ -426,8 +468,6 @@ void doStepSize(buttonStates action)
                 gScanSettings.stepSize = STEP_500K_HZ;
             else if(gScanSettings.stepSize == STEP_500K_HZ)
                 gScanSettings.stepSize = STEP_1M_HZ;
-            else if(gScanSettings.stepSize == STEP_1M_HZ)
-                gScanSettings.stepSize = STEP_1K_HZ;
             drawStep(5,gScanSettings.stepSize);
             break;
         case ButtonDown:
@@ -446,8 +486,6 @@ void doStepSize(buttonStates action)
                 gScanSettings.stepSize = STEP_10K_HZ;
             else if(gScanSettings.stepSize == STEP_10K_HZ)
                 gScanSettings.stepSize = STEP_1K_HZ;
-            else if(gScanSettings.stepSize == STEP_1K_HZ)
-                gScanSettings.stepSize = STEP_1M_HZ;
             drawStep(5,gScanSettings.stepSize);
             break;
         default:
@@ -474,6 +512,9 @@ void doSynthMenu(buttonStates action)
             case 3:
                 doStepSize(action);
                 break;
+            case 4:
+                doRate(action);
+                break;
             default:
                 break;
         }
@@ -492,7 +533,7 @@ void doSynthMenu(buttonStates action)
             }
             break;
         case ButtonDown:
-            if(cursorPos<3)
+            if(cursorPos<4)
             {
                 safeFont57(' ', cursorPos+2, 4);
                 cursorPos++;
@@ -516,6 +557,7 @@ void doSynthMenu(buttonStates action)
                 case 1:
                 case 2:
                 case 3:
+                case 4:
                     toggleSetting(cursorPos);
                     break;
             }
@@ -547,8 +589,9 @@ void doHomeScreen(buttonStates action)
 void doMenu(int buttons)
 {
     buttonStates action;
-    // The if statements below dictate the button priority if multiple are
-    // held down - highest priority at the top
+
+    /* The if statements below dictate the button priority if multiple are
+    held down - highest priority at the top */
     if(buttons & ButtonLeft)
         action = ButtonLeft;
     else if(buttons & ButtonRight)

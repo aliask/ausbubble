@@ -35,6 +35,8 @@
 #ifndef _SCANALGORITHMS_H
 #define _SCANALGORITHMS_H
 
+#include "Includes.h"
+
 // Standard libraries
 #include <stdlib.h>
 // FreeRTOS
@@ -43,32 +45,16 @@
 // Peripheral libraries
 #include "Synth.h"
 
-#define DIR_UP    true
-#define DIR_DOWN  false
-
-// Valid step sizes
-#define STEP_1K_HZ      1000
-#define STEP_10K_HZ     10000
-#define STEP_25K_HZ     25000
-#define STEP_50K_HZ     50000
-#define STEP_100K_HZ    100000
-#define STEP_250K_HZ    250000
-#define STEP_500K_HZ    500000
-#define STEP_1M_HZ      1000000
-
-/* Enumerations */
-typedef enum {
-    ScanSawtooth = 0,
-    ScanTriangle,
-    ScanRandom
-} ScanAlgorithms_t;
+#define DIR_UP          true
+#define DIR_DOWN        false
 
 /* Structures */
 extern struct scanSettings_t {
-    ScanAlgorithms_t algorithm;
-    uint32_t stepSize;
     uint64_t start;
     uint64_t stop;
+    ScanAlgorithms_t algorithm;
+    uint32_t stepSize;
+    uint16_t rate;
 } gScanSettings;
 
 /* Function prototypes */

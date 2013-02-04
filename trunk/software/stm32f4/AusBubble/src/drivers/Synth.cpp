@@ -421,12 +421,12 @@ void SynthGet_ModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_s
 
           where     step_size  =   (Fpd * P) / (R * (2^24) * LO_DIV)
 
-          where     Fpd        =   phase detector frequency
-                    MODSTEP    =   modulation scale factor
-                    MOD        =   frequency deviation applied to frac-N
-                    P          =   prescaler division ratio    (VARIABLE:   2,4)
-                    R          =   reference division ratio    (FIXED:      1)
-                    LO_DIV     =   low divider value           (VARIABLE:   2,4,8,16,32)
+          where     Fpd        =   Phase detector frequency
+                    MODSTEP    =   Modulation scale factor
+                    MOD        =   Frequency deviation applied to frac-N
+                    P          =   Prescaler division ratio    (VARIABLE:   2,4)
+                    R          =   Reference division ratio    (FIXED:      1)
+                    LO_DIV     =   Low divider value           (VARIABLE:   2,4,8,16,32)
     */
 
     // Assume P=4, R=1, LO_DIV=2

@@ -24,7 +24,7 @@
 #include "usb_bsp.h"
 #include "usbd_conf.h"
 
-//Library config for this project!!!!!!!!!!!
+// Specifies the MCU peripherals to use
 #include "stm32f4xx_conf.h"
 
 
