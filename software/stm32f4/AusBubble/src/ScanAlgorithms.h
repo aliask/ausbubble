@@ -45,9 +45,6 @@
 // Peripheral libraries
 #include "Synth.h"
 
-#define DIR_UP          true
-#define DIR_DOWN        false
-
 /* Structures */
 extern struct scanSettings_t {
     uint64_t start;
