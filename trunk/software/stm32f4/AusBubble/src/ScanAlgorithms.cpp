@@ -48,7 +48,7 @@ void ScanInit(scanSettings_t* settings)
 void AdvanceScan(scanSettings_t* settings)
 {
     static uint64_t freq = settings->start;
-    static bool direction = DIR_UP;
+    static ScanDirection_t direction = Up;
     uint64_t newFreq = -1;
     uint32_t random32bit = 0;
 
@@ -62,13 +62,13 @@ void AdvanceScan(scanSettings_t* settings)
             break;
 
         case ScanTriangle:
-            if(direction == DIR_UP)
+            if(direction == Up)
             {
                 // Going up
                 if((freq + settings->stepSize) >= settings->stop)
                 {
                     newFreq = settings->stop;
-                    direction = DIR_DOWN;
+                    direction = Down;
                 }
                 else
                     newFreq = freq + settings->stepSize;
@@ -79,7 +79,7 @@ void AdvanceScan(scanSettings_t* settings)
                 if((freq - settings->stepSize) <= settings->start)
                 {
                     newFreq = settings->start;
-                    direction = DIR_UP;
+                    direction = Up;
                 }
                 else
                     newFreq = freq - settings->stepSize;
@@ -100,9 +100,9 @@ void AdvanceScan(scanSettings_t* settings)
             break;
     }
 
+    // Set synthesizer frequency (if different for current)
     if(newFreq != freq)
     {
-        // Set synth frequency
         SynthSet_Freq(newFreq);
         freq = newFreq;
     }

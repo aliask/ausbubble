@@ -199,7 +199,7 @@ void vJammingTask(void *pvParameters)
         {
             // Set jam update rate (in case setting has changed)
             SetUpdateRate(gScanSettings.rate);
-            // Update frequency
+            // Update synthesizer frequency
             AdvanceScan(&gScanSettings);
             TIM_ClearFlag(TIM2, TIM_IT_Update);
         }
@@ -216,7 +216,7 @@ int main(void)
     To reconfigure the default setting of SystemInit() function, refer to
     system_stm32f4xx.c file */
 
-    // Initialize the scan settings with defaults
+    // Initialize scan settings with defaults
     ScanInit(&gScanSettings);
 
     /* Setup STM32 hardware */
@@ -259,10 +259,12 @@ void JammingEnable(bool enable)
 {
     if(enable)
     {
-        // Enable synthesizer
-        SynthEnable(true);
         // Enable amplifier
         GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_SET);
+        // Set gain to maximum allowable
+        VarGainAmpSetGain(VARGAINAMP_MAX_GAIN_LIMIT_DB);
+        // Enable synthesizer
+        SynthEnable(true);
 
         // Set jam update rate
         SetUpdateRate(gScanSettings.rate);
@@ -271,6 +273,8 @@ void JammingEnable(bool enable)
     {
         // Disable synthesizer
         SynthEnable(false);
+        // Set gain to minimum allowable
+        VarGainAmpSetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
         // Disable amplifier
         GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_RESET);
 
@@ -494,8 +498,8 @@ void prvSetupHardware(void)
     GPIO_Init(VARGAINAMP_LE_PORT, &GPIO_InitStructure);
     // Initially set LOW
     GPIO_ResetBits(VARGAINAMP_LE_PORT, VARGAINAMP_LE_PIN);
-    // Set gain to zero (0.0 dB)
-    VarGainAmpSetGain(0.0);
+    // Set gain to minimum
+    VarGainAmpSetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
 
     /* ADC */
     ADC3_CH12_DMA_Config();

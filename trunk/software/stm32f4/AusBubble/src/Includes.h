@@ -54,6 +54,11 @@ typedef enum {
     ScanRandom
 } ScanAlgorithms_t;
 
+typedef enum {
+    Down = 0,
+    Up
+} ScanDirection_t;
+
 /* Valid step sizes */
 #define STEP_1K_HZ      1000
 #define STEP_10K_HZ     10000
