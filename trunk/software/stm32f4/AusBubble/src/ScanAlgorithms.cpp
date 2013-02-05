@@ -103,7 +103,7 @@ void AdvanceScan(scanSettings_t* settings)
     // Set synthesizer frequency (if different for current)
     if(newFreq != freq)
     {
-        SynthSet_Freq(newFreq);
+        SynthSetFreq(newFreq);
         freq = newFreq;
     }
 }

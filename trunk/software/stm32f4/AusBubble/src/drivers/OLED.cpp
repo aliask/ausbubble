@@ -51,11 +51,12 @@
 #include "OLED.h"
 
 /* Write a command to the OLED */
-void writeCommand(unsigned char data)
+void writeCommand(uint8_t data)
 {
     // CS=0, DC=0
     GPIO_WriteBit(OLED_CS_PORT, OLED_CS_PIN, Bit_RESET);
     GPIO_WriteBit(OLED_DC_PORT, OLED_DC_PIN, Bit_RESET);
+
     // Write data to SPI
     SPI_I2S_SendData(SPI1, data);
     // Wait until SPI is ready
@@ -66,11 +67,12 @@ void writeCommand(unsigned char data)
 }
 
 /* Write data to the OLED */
-void writeData(unsigned char data)
+void writeData(uint8_t data)
 {
     // CS=0, DC=1
     GPIO_WriteBit(OLED_CS_PORT, OLED_CS_PIN, Bit_RESET);
     GPIO_WriteBit(OLED_DC_PORT, OLED_DC_PIN, Bit_SET);
+
     // Write data to SPI
     SPI_I2S_SendData(SPI1, data);
     // Wait until SPI is ready
