@@ -54,7 +54,8 @@ extern "C" {
 #endif /* USB_OTG_HS_INTERNAL_DMA_ENABLED */
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 
-/* ADC3 Data Register Address */
+/* ADC Data Register Addresses */
+#define ADC1_DR_ADDRESS    ((uint32_t)0x4001204C)
 #define ADC3_DR_ADDRESS    ((uint32_t)0x4001224C)
 
 /* Defines for the button hold behaviour */
@@ -66,17 +67,26 @@ __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 #define TICK_INITIALRATE    200
 #define TICK_HOLDCOUNT      1000
 
+/* On-chip temperature sensor properties */
+#define V25                 0.760
+#define AVG_SLOPE           25.0
+
+/* ADC1 Buffer Length */
+#define ADC1_BUFFER_LENGTH  2
+
 /* Global Variables */
+__IO uint16_t gADC1ConvertedValue[ADC1_BUFFER_LENGTH];
 __IO uint16_t gADC3ConvertedValue = 0;
 
 /* Function Prototypes */
-void JammingEnable(bool enable);
+void SetJammingEnabled(bool enable);
 void SetJamUpdateRate(uint16_t updateRate_Hz);
 void prvSetupHardware(void);
 void SetupJoystick(void);
 void NVIC_Config(void);
 void SPI1_Config(void);
-void ADC3_CH12_DMA_Config(void);
+void ADC1_DMA_Config(void);
+void ADC3_DMA_Config(void);
 void RNG_Config(void);
 
 /* RTOS millisecond delay function */
@@ -88,29 +98,14 @@ void DelayMS(uint32_t milliseconds)
 /* RTOS "heartbeat" LED task */
 void vHeartbeatTask(void *pvParameters)
 {
+    uint8_t toggle = 0;
     while(1)
     {
+        if(toggle ^= 1)
+            GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_RESET);
+        else
+            GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_SET);
         DelayMS(500);
-        GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_SET);
-        DelayMS(500);
-        GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_RESET);
-    }
-}
-
-/* Read/save the various analog inputs */
-void vADCTask(void *pvParameters)
-{
-    while(1)
-    {
-        if(gWhereAmI == HomeScreen)
-        {
-            // RF Amplifier Power Detection (PDET)
-            gPDETVoltage = 3.0*((float)gADC3ConvertedValue/(float)0xFFF);
-
-            // Re-draw home screen
-            drawUI(gWhereAmI);
-        }
-        DelayMS(250);
     }
 }
 
@@ -158,14 +153,14 @@ void vUITask(void *pvParameters)
                     /* Disable jamming */
                     if(gEnabled)
                     {
-                        JammingEnable(false);
+                        SetJammingEnabled(false);
                         splash("RF output DISABLED");
                         gEnabled = false;
                     }
                     /* Enable jamming (if not at Disclaimer screen) */
                     else if(gWhereAmI != DisclaimerScreen)
                     {
-                        JammingEnable(true);
+                        SetJammingEnabled(true);
                         splash("RF output ENABLED");
                         gEnabled = true;
                     }
@@ -186,6 +181,36 @@ void vUITask(void *pvParameters)
             tickRate = TICK_RATE_1;
         }
         DelayMS(1);
+    }
+}
+
+/* Read/save the various analog inputs */
+void vADCTask(void *pvParameters)
+{
+    uint32_t ADC1ConvertedVoltage0 = 0;
+    uint32_t ADC1ConvertedVoltage1 = 0;
+    float Vsense = 0.0;
+    float TCelsius = 0.0;
+    float VBATVoltage = 0.0;
+
+    while(1)
+    {
+        /* 1. RF Amplifier Power Detection (PDET) */
+        gPDETVoltage = 3.0*((float)gADC3ConvertedValue/(float)0xFFF);
+        /* 2. VBAT */
+        ADC1ConvertedVoltage0 = (uint32_t)(gADC1ConvertedValue[0] * 2) * 3000 / 0xFFF;
+        VBATVoltage = (float)(ADC1ConvertedVoltage0 / 1000.0);
+        /* 3. On-chip Temperature Sensor */
+        ADC1ConvertedVoltage1 = (uint32_t)(gADC1ConvertedValue[1] * 3000 / 0xFFF);
+        Vsense = (float)(ADC1ConvertedVoltage1 / 1000.0);
+        TCelsius = ((Vsense - V25) / AVG_SLOPE) + 25.0 ;
+
+        if(gWhereAmI == HomeScreen)
+        {
+            // Re-draw home screen
+            drawUI(gWhereAmI);
+        }
+        DelayMS(250);
     }
 }
 
@@ -234,14 +259,14 @@ int main(void)
                 NULL,
                 tskIDLE_PRIORITY + 2,
                 NULL);
-    xTaskCreate(vJammingTask,
-                (signed portCHAR *)"vJammingTask",
+    xTaskCreate(vADCTask,
+                (signed portCHAR *)"vADCTask",
                 512,
                 NULL,
                 tskIDLE_PRIORITY + 2,
                 NULL);
-    xTaskCreate(vADCTask,
-                (signed portCHAR *)"vADCTask",
+    xTaskCreate(vJammingTask,
+                (signed portCHAR *)"vJammingTask",
                 512,
                 NULL,
                 tskIDLE_PRIORITY + 2,
@@ -254,7 +279,7 @@ int main(void)
     return 0;
 }
 
-void JammingEnable(bool enable)
+void SetJammingEnabled(bool enable)
 {
     if(enable)
     {
@@ -500,8 +525,13 @@ void prvSetupHardware(void)
     // Set gain to minimum
     VarGainAmpSetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
 
-    /* ADC */
-    ADC3_CH12_DMA_Config();
+    /* ADC1 (VBAT and Temperature Sensor) */
+    ADC1_DMA_Config();
+    // Start ADC3 Software Conversion
+    ADC_SoftwareStartConv(ADC1);
+
+    /* ADC3 (PDET) */
+    ADC3_DMA_Config();
     // Start ADC3 Software Conversion
     ADC_SoftwareStartConv(ADC3);
 
@@ -513,8 +543,6 @@ void prvSetupHardware(void)
     /* Disable STDOUT buffering. Otherwise nothing will be printed
     before a newline character or when the buffer is flushed */
     setbuf(stdout, NULL);
-    /* Startup print */
-    printf("Welcome to AusBubble!");
 
     /* Nested Vectored Interrupt Controller */
     NVIC_Config();
@@ -608,8 +636,8 @@ void NVIC_Config(void)
 
 void SPI1_Config(void)
 {
-    GPIO_InitTypeDef  GPIO_InitStructure;
-    SPI_InitTypeDef   SPI_InitStructure;
+    GPIO_InitTypeDef    GPIO_InitStructure;
+    SPI_InitTypeDef     SPI_InitStructure;
 
     /* Configure SPI1 pins: SCK and MOSI */
     // SCK=PA5, MOSI=PA7
@@ -653,7 +681,76 @@ void SPI1_Config(void)
     SPI_Cmd(SPI1, ENABLE);
 }
 
-void ADC3_CH12_DMA_Config(void)
+void ADC1_DMA_Config(void)
+{
+    ADC_InitTypeDef       ADC_InitStructure;
+    ADC_CommonInitTypeDef ADC_CommonInitStructure;
+    DMA_InitTypeDef       DMA_InitStructure;
+
+    /* Enable ADC1, DMA2 clocks */
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+
+    /* DMA2 Stream4 Channel0 configuration */
+    DMA_StructInit(&DMA_InitStructure);
+    DMA_InitStructure.DMA_Channel               = DMA_Channel_0;
+    DMA_InitStructure.DMA_PeripheralBaseAddr    = (uint32_t)ADC1_DR_ADDRESS;
+    DMA_InitStructure.DMA_Memory0BaseAddr       = (uint32_t)&gADC1ConvertedValue;
+    DMA_InitStructure.DMA_DIR                   = DMA_DIR_PeripheralToMemory;
+    DMA_InitStructure.DMA_BufferSize            = 1;
+    DMA_InitStructure.DMA_PeripheralInc         = DMA_PeripheralInc_Disable;
+    DMA_InitStructure.DMA_MemoryInc             = DMA_MemoryInc_Disable;
+    DMA_InitStructure.DMA_PeripheralDataSize    = DMA_PeripheralDataSize_HalfWord;
+    DMA_InitStructure.DMA_MemoryDataSize        = DMA_MemoryDataSize_HalfWord;
+    DMA_InitStructure.DMA_Mode                  = DMA_Mode_Circular;
+    DMA_InitStructure.DMA_Priority              = DMA_Priority_Low;
+    DMA_InitStructure.DMA_FIFOMode              = DMA_FIFOMode_Disable;
+    DMA_InitStructure.DMA_FIFOThreshold         = DMA_FIFOThreshold_HalfFull;
+    DMA_InitStructure.DMA_MemoryBurst           = DMA_MemoryBurst_Single;
+    DMA_InitStructure.DMA_PeripheralBurst       = DMA_PeripheralBurst_Single;
+    DMA_Init(DMA2_Stream4, &DMA_InitStructure);
+    DMA_Cmd(DMA2_Stream4, ENABLE);
+
+    /* ADC Common Init */
+    ADC_CommonStructInit(&ADC_CommonInitStructure);
+    ADC_CommonInitStructure.ADC_Mode                = ADC_Mode_Independent;
+    ADC_CommonInitStructure.ADC_Prescaler           = ADC_Prescaler_Div2;
+    ADC_CommonInitStructure.ADC_DMAAccessMode       = ADC_DMAAccessMode_Disabled;
+    ADC_CommonInitStructure.ADC_TwoSamplingDelay    = ADC_TwoSamplingDelay_20Cycles;
+    ADC_CommonInit(&ADC_CommonInitStructure);
+
+    /* ADC1 Init */
+    ADC_StructInit(&ADC_InitStructure);
+    ADC_InitStructure.ADC_Resolution            = ADC_Resolution_12b;
+    ADC_InitStructure.ADC_ScanConvMode          = ENABLE;
+    ADC_InitStructure.ADC_ContinuousConvMode    = ENABLE;
+    ADC_InitStructure.ADC_ExternalTrigConvEdge  = ADC_ExternalTrigConvEdge_None;
+    ADC_InitStructure.ADC_ExternalTrigConv      = 0;
+    ADC_InitStructure.ADC_DataAlign             = ADC_DataAlign_Right;
+    ADC_InitStructure.ADC_NbrOfConversion       = ADC1_BUFFER_LENGTH;
+    ADC_Init(ADC1, &ADC_InitStructure);
+
+    /* ADC1 regular channel18 (VBAT) & channel16 (TempSensor) configuration */
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_Vbat, 1, ADC_SampleTime_480Cycles);
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_TempSensor, 2, ADC_SampleTime_480Cycles);
+
+    /* Enable VBAT channel: channel18 */
+    ADC_VBATCmd(ENABLE);
+
+    /* Enable TempSensor and Vrefint channels: channel16 and channel17 */
+    ADC_TempSensorVrefintCmd(ENABLE);
+
+    /* Enable DMA request after last transfer (Single-ADC mode) */
+    ADC_DMARequestAfterLastTransferCmd(ADC1, ENABLE);
+
+    /* Enable ADC1 DMA */
+    ADC_DMACmd(ADC1, ENABLE);
+
+    /* Enable ADC1 */
+    ADC_Cmd(ADC1, ENABLE);
+}
+
+void ADC3_DMA_Config(void)
 {
     ADC_InitTypeDef       ADC_InitStructure;
     ADC_CommonInitTypeDef ADC_CommonInitStructure;
@@ -664,7 +761,7 @@ void ADC3_CH12_DMA_Config(void)
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOC, ENABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC3, ENABLE);
 
-    /* DMA2 Stream0 channel0 configuration */
+    /* DMA2 Stream0 Channel2 configuration */
     DMA_StructInit(&DMA_InitStructure);
     DMA_InitStructure.DMA_Channel               = DMA_Channel_2;
     DMA_InitStructure.DMA_PeripheralBaseAddr    = (uint32_t)ADC3_DR_ADDRESS;
@@ -696,7 +793,7 @@ void ADC3_CH12_DMA_Config(void)
     ADC_CommonInitStructure.ADC_Mode                = ADC_Mode_Independent;
     ADC_CommonInitStructure.ADC_Prescaler           = ADC_Prescaler_Div2;
     ADC_CommonInitStructure.ADC_DMAAccessMode       = ADC_DMAAccessMode_Disabled;
-    ADC_CommonInitStructure.ADC_TwoSamplingDelay    = ADC_TwoSamplingDelay_5Cycles;
+    ADC_CommonInitStructure.ADC_TwoSamplingDelay    = ADC_TwoSamplingDelay_20Cycles;
     ADC_CommonInit(&ADC_CommonInitStructure);
 
     /* ADC3 Init */
@@ -705,6 +802,7 @@ void ADC3_CH12_DMA_Config(void)
     ADC_InitStructure.ADC_ScanConvMode          = DISABLE;
     ADC_InitStructure.ADC_ContinuousConvMode    = ENABLE;
     ADC_InitStructure.ADC_ExternalTrigConvEdge  = ADC_ExternalTrigConvEdge_None;
+    ADC_InitStructure.ADC_ExternalTrigConv      = 0;
     ADC_InitStructure.ADC_DataAlign             = ADC_DataAlign_Right;
     ADC_InitStructure.ADC_NbrOfConversion       = 1;
     ADC_Init(ADC3, &ADC_InitStructure);

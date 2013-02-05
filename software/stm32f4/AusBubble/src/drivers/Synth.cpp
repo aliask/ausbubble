@@ -60,7 +60,7 @@ void SynthInit(void)
     SynthWrite((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
     /* Set frequency to 2450 MHz */
-    SynthSet_Freq(2450000000);
+    SynthSetFreq(2450000000);
 }
 
 void SynthEnable(bool enable)
@@ -287,7 +287,7 @@ uint16_t SynthRead(uint8_t address)
     return SynthReceiveData();
 }
 
-void SynthSet_FreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
+void SynthSetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
 {
     /* Register calculations taken from RFMD Programming Guide
     Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
@@ -349,7 +349,7 @@ void SynthSet_FreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, u
     while(waitForLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
 }
 
-void SynthSet_Freq(uint64_t freq_Hz)
+void SynthSetFreq(uint64_t freq_Hz)
 {
     static uint64_t f_lo_Hz = 0;
     static uint64_t freq_prev_Hz = 0;
@@ -383,13 +383,13 @@ void SynthSet_Freq(uint64_t freq_Hz)
     {
         // Set frequency (wait for PLL lock)
         f_lo_Hz = freq_Hz;
-        SynthSet_FreqLO(f_lo_Hz, true, nummsb, numlsb);
+        SynthSetFreqLO(f_lo_Hz, true, nummsb, numlsb);
         cur_fmod = 0; // FMOD reset to 0
         // Set optimum modulation parameters depending on frequency delta
         // Note: Frequency modulation is only used for valid frequency deltas (i.e. step sizes)
         uint8_t modstep;
         freq_delta_Hz = freq_Hz - freq_prev_Hz;
-        SynthGet_ModParams(freq_delta_Hz, modstep, fmod_step);
+        SynthGetModParams(freq_delta_Hz, modstep, fmod_step);
         // Valid frequency delta
         if(fmod_step != 0)
         {
@@ -414,7 +414,7 @@ void SynthSet_Freq(uint64_t freq_Hz)
     freq_prev_Hz = freq_Hz;
 }
 
-void SynthGet_ModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step)
+void SynthGetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step)
 {
     /*
           Fmod = MOD * (2^MODSTEP) * step_size
