@@ -34,15 +34,14 @@
 
 #include "UI.h"
 
-// Global variables
+int cursorPos = 0;
+
+/* Global variables */
 bool gEnabled = false;
 fsmStates gWhereAmI = DisclaimerScreen;
 int gPendingButton = ButtonNone;
-float gPDETVoltage;
 bool gInSetting = false;
 bool gSplashActive = false;
-
-int cursorPos = 0;
 
 void safeString(const char *dataPointer, unsigned char row, unsigned char xPos)
 {
@@ -155,17 +154,14 @@ void drawHomescreen()
 
     centredString("Home Screen", 1);
 
-    if(gEnabled)
-        centredString("JAMMING ENABLED", 3);
-    else
-        centredString("JAMMING DISABLED", 3);
-
-    snprintf(menuText, sizeof(menuText), "Battery: %d%%", 15);
-    centredString(menuText, 4);
+    snprintf(menuText, sizeof(menuText), "Battery:  %d%%", 15);
+    safeString(menuText, 3, 14);
     snprintf(menuText, sizeof(menuText), "Batt Rem: %d:%d", 1, 13);
-    centredString(menuText, 5);
-    snprintf(menuText, sizeof(menuText), "PDET Voltage: %1.2fv", gPDETVoltage);
-    centredString(menuText, 6);
+    safeString(menuText, 4, 14);
+    snprintf(menuText, sizeof(menuText), "PDET:     %1.2fv", gPDETVoltage);
+    safeString(menuText, 5, 14);
+    snprintf(menuText, sizeof(menuText), "VBAT:     %1.2fv", VBATVoltage);
+    safeString(menuText, 6, 14);
 }
 
 void drawSynthMenu()

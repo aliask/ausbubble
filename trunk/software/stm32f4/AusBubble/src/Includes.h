@@ -59,9 +59,46 @@ typedef enum {
     Up
 } ScanDirection_t;
 
+typedef enum {
+    ButtonNone  = 0,
+    ButtonUp    = 1<<0,
+    ButtonDown  = 1<<1,
+    ButtonLeft  = 1<<2,
+    ButtonRight = 1<<3,
+    ButtonEnter = 1<<4
+} buttonStates;
+
+typedef enum {
+    DisclaimerScreen = 0,
+    HomeScreen,
+    SynthScreen
+} fsmStates;
+
 /* Macro for crude FreeRTOS-safe printf() */
 #define vDebugPrintf(A,...)    taskENTER_CRITICAL(); printf(A,##__VA_ARGS__); taskEXIT_CRITICAL();
 
+/* ADC Data Register Addresses */
+#define ADC1_DR_ADDRESS    ((uint32_t)0x4001204C)
+#define ADC3_DR_ADDRESS    ((uint32_t)0x4001224C)
+/* On-chip temperature sensor properties */
+#define V25                 0.760
+#define AVG_SLOPE           25.0
+/* ADC1 Buffer Length */
+#define ADC1_BUFFER_LENGTH  2
+
+/* UI settings */
+#define FREQ_STEP_HZ        500000
+#define RATE_STEP_HZ        1
+#define DISP_MAX            2
+/* Defines for the button hold behaviour */
+#define TICK_RATE_1         200     // Slowest
+#define TICK_RATE_2         100
+#define TICK_RATE_3         50
+#define TICK_RATE_4         25
+#define TICK_RATE_5         10      // Fastest
+#define TICK_INITIALRATE    200
+#define TICK_HOLDCOUNT      1000
+#define DO_MENU_HOLD_COUNT  5
 /* Valid step sizes */
 #define STEP_1K_HZ      1000
 #define STEP_10K_HZ     10000
@@ -71,7 +108,6 @@ typedef enum {
 #define STEP_250K_HZ    250000
 #define STEP_500K_HZ    500000
 #define STEP_1M_HZ      1000000
-
 /* Scan settings defaults */
 #define SCAN_SETTINGS_DEFAULT_START_FREQ_HZ     2400000000      /* DO NOT MODIFY */
 #define SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ      2500000000      /* DO NOT MODIFY */
@@ -83,15 +119,10 @@ typedef enum {
 // Allowable range
 #define MIN_FREQ_HZ                     2400000000  /* DO NOT MODIFY */
 #define MAX_FREQ_HZ                     2500000000  /* DO NOT MODIFY */
-
 /* Jamming Update Rate */
 // Allowable range
 #define MIN_RATE_HZ                     1           /* DO NOT MODIFY */
 #define MAX_RATE_HZ                     1000        /* DO NOT MODIFY */
-
-/* UI settings */
-#define FREQ_STEP_HZ                    500000
-#define RATE_STEP_HZ                    1
 
 /* OLED */
 #define OLED_CS_PORT                    GPIOA
@@ -100,11 +131,9 @@ typedef enum {
 #define OLED_RST_PIN                    GPIO_Pin_10
 #define OLED_DC_PORT                    GPIOB
 #define OLED_DC_PIN                     GPIO_Pin_11
-
 /* RTOS Heartbeat LED */
 #define RTOS_LED_PORT                   GPIOD
 #define RTOS_LED_PIN                    GPIO_Pin_12
-
 /* Synth */
 #define SYNTH_SCLK_PORT                 GPIOB
 #define SYNTH_SCLK_PIN                  GPIO_Pin_13
@@ -127,7 +156,6 @@ typedef enum {
 #define SYNTH_ENBLGPO5_PIN              GPIO_Pin_7
 #define SYNTH_MODEGPO6_PORT             GPIOB
 #define SYNTH_MODEGPO6_PIN              GPIO_Pin_8
-
 /* Joystick */
 // Left
 #define JOYSTICK_LEFT_PORT              GPIOE
@@ -159,11 +187,9 @@ typedef enum {
 #define JOYSTICK_SELECT_PORT_SOURCE     EXTI_PortSourceGPIOE
 #define JOYSTICK_SELECT_PIN_SOURCE      EXTI_PinSource14
 #define JOYSTICK_SELECT_EXTI_LINE       EXTI_Line14
-
 /* RF Amplifier */
 #define AMP_PENABLE_PORT                GPIOB
 #define AMP_PENABLE_PIN                 GPIO_Pin_9
-
 /* Variable Gain Amplifier */
 #define VARGAINAMP_PUP_PORT             GPIOD
 #define VARGAINAMP_PUP_PIN              GPIO_Pin_6
@@ -173,6 +199,11 @@ typedef enum {
 #define VARGAINAMP_DATA_PIN             GPIO_Pin_8
 #define VARGAINAMP_LE_PORT              GPIOD
 #define VARGAINAMP_LE_PIN               GPIO_Pin_9
+
+/* Global variables */
+extern float gPDETVoltage;
+extern float TCelsius;
+extern float VBATVoltage;
 
 /* RTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds);
