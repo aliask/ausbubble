@@ -40,30 +40,10 @@
 #include "OLED.h"
 #include "ScanAlgorithms.h"
 
-// Used for information items handling
-#define DISP_MAX 2
-
-/* Enumerations */
-typedef enum {
-    ButtonNone =     0,
-    ButtonUp =    1<<0,
-    ButtonDown =  1<<1,
-    ButtonLeft =  1<<2,
-    ButtonRight = 1<<3,
-    ButtonEnter = 1<<4
-} buttonStates;
-
-typedef enum {
-    DisclaimerScreen = 0,
-    HomeScreen,
-    SynthScreen
-} fsmStates;
-
-/* Global Variables */
+/* Global variables */
 extern bool gEnabled;
 extern fsmStates gWhereAmI;
 extern int gPendingButton;
-extern float gPDETVoltage;
 extern bool gInSetting;
 extern bool gSplashActive;
 

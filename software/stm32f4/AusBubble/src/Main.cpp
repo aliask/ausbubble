@@ -54,29 +54,14 @@ extern "C" {
 #endif /* USB_OTG_HS_INTERNAL_DMA_ENABLED */
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 
-/* ADC Data Register Addresses */
-#define ADC1_DR_ADDRESS    ((uint32_t)0x4001204C)
-#define ADC3_DR_ADDRESS    ((uint32_t)0x4001224C)
-
-/* Defines for the button hold behaviour */
-#define TICK_RATE_1         200     // Slowest
-#define TICK_RATE_2         100
-#define TICK_RATE_3         50
-#define TICK_RATE_4         25
-#define TICK_RATE_5         10      // Fastest
-#define TICK_INITIALRATE    200
-#define TICK_HOLDCOUNT      1000
-
-/* On-chip temperature sensor properties */
-#define V25                 0.760
-#define AVG_SLOPE           25.0
-
-/* ADC1 Buffer Length */
-#define ADC1_BUFFER_LENGTH  2
-
-/* Global Variables */
+/* Volatiles */
 __IO uint16_t gADC1ConvertedValue[ADC1_BUFFER_LENGTH];
 __IO uint16_t gADC3ConvertedValue = 0;
+
+/* Global Variables */
+float gPDETVoltage;
+float TCelsius;
+float VBATVoltage;
 
 /* Function Prototypes */
 void SetJammingEnabled(bool enable);
@@ -89,7 +74,7 @@ void ADC1_DMA_Config(void);
 void ADC3_DMA_Config(void);
 void RNG_Config(void);
 
-/* RTOS millisecond delay function */
+/* FreeRTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds)
 {
     vTaskDelay(milliseconds / portTICK_RATE_MS);
@@ -112,16 +97,28 @@ void vHeartbeatTask(void *pvParameters)
 /* User interface task */
 void vUITask(void *pvParameters)
 {
+    /* Local variables */
     int tickRate = TICK_INITIALRATE;
     uint32_t holdCount = 0;
 
     while(1)
     {
-        /* Some button must be currently down */
+        /* Button press detected */
         if(gPendingButton)
         {
+            /* Disable RF output if enabled */
+            if(gEnabled)
+            {
+                /* Set hardware */
+                SetJammingEnabled(false);
+                /* Show splash text */
+                splash("RF output DISABLED");
+                /* Set flag */
+                gEnabled = false;
+            }
+
             /* Button is being held down */
-            if(((holdCount % TICK_HOLDCOUNT) == 0) && holdCount>0)
+            if(((holdCount % TICK_HOLDCOUNT) == 0) && (holdCount > 0))
             {
                 /* UP/DOWN: Increase tick rate */
                 if((gPendingButton == ButtonUp)||(gPendingButton == ButtonDown))
@@ -144,24 +141,22 @@ void vUITask(void *pvParameters)
                             break;
                     }
                 }
-                /* SELECT: Toggle the RF output */
+                /* SELECT: Enable RF output */
                 else if(gPendingButton == ButtonEnter)
                 {
                     /* Exit selected setting */
                     gInSetting = false;
 
-                    /* Disable jamming */
-                    if(gEnabled)
+                    /* Enable jamming if disabled (and if not at Disclaimer screen) */
+                    if(!gEnabled && gWhereAmI != DisclaimerScreen)
                     {
-                        SetJammingEnabled(false);
-                        splash("RF output DISABLED");
-                        gEnabled = false;
-                    }
-                    /* Enable jamming (if not at Disclaimer screen) */
-                    else if(gWhereAmI != DisclaimerScreen)
-                    {
+                        /* Enable hardware */
                         SetJammingEnabled(true);
+                        /* Show splash text */
                         splash("RF output ENABLED");
+                        /* Move to Home screen */
+                        drawUI(gWhereAmI = HomeScreen);
+                        /* Set flag */
                         gEnabled = true;
                     }
                 }
@@ -169,7 +164,7 @@ void vUITask(void *pvParameters)
 
             /* Take care of button de-bouncing and call the button handler
             when the button has been held down long enough */
-            if(holdCount % tickRate == 5)
+            if(holdCount % tickRate == DO_MENU_HOLD_COUNT)
                 doMenu(gPendingButton);
 
             holdCount++;
@@ -187,11 +182,10 @@ void vUITask(void *pvParameters)
 /* Read/save the various analog inputs */
 void vADCTask(void *pvParameters)
 {
+    /* Local variables */
     uint32_t ADC1ConvertedVoltage0 = 0;
     uint32_t ADC1ConvertedVoltage1 = 0;
     float Vsense = 0.0;
-    float TCelsius = 0.0;
-    float VBATVoltage = 0.0;
 
     while(1)
     {
@@ -204,12 +198,12 @@ void vADCTask(void *pvParameters)
         ADC1ConvertedVoltage1 = (uint32_t)(gADC1ConvertedValue[1] * 3000 / 0xFFF);
         Vsense = (float)(ADC1ConvertedVoltage1 / 1000.0);
         TCelsius = ((Vsense - V25) / AVG_SLOPE) + 25.0 ;
+        /* 4. RF Amplifier Thermistor */
 
+        /* Re-draw home screen */
         if(gWhereAmI == HomeScreen)
-        {
-            // Re-draw home screen
             drawUI(gWhereAmI);
-        }
+
         DelayMS(250);
     }
 }
@@ -527,7 +521,7 @@ void prvSetupHardware(void)
 
     /* ADC1 (VBAT and Temperature Sensor) */
     ADC1_DMA_Config();
-    // Start ADC3 Software Conversion
+    // Start ADC1 Software Conversion
     ADC_SoftwareStartConv(ADC1);
 
     /* ADC3 (PDET) */
