@@ -32,7 +32,7 @@
 /*                                                                      */
 /************************************************************************/
 
-#include "AmpLUT.h"
+#include "LUT_RF5652.h"
 
 /* WiFi 802.11n Performance Plots in 100% Duty Cycle */
 const AmpDataPoint_t wifiN100duty[N_DATA_POINTS] = {
