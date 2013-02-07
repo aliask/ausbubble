@@ -38,7 +38,6 @@
 #include "UI.h"
 #include "ScanAlgorithms.h"
 #include "VarGainAmp.h"
-#include "AmpLUT.h"
 
 /* USB */
 extern "C" {
@@ -716,7 +715,7 @@ void ADC1_DMA_Config(void)
     /* ADC1 Init */
     ADC_StructInit(&ADC_InitStructure);
     ADC_InitStructure.ADC_Resolution            = ADC_Resolution_12b;
-    ADC_InitStructure.ADC_ScanConvMode          = ENABLE;
+    ADC_InitStructure.ADC_ScanConvMode          = DISABLE;
     ADC_InitStructure.ADC_ContinuousConvMode    = ENABLE;
     ADC_InitStructure.ADC_ExternalTrigConvEdge  = ADC_ExternalTrigConvEdge_None;
     ADC_InitStructure.ADC_ExternalTrigConv      = 0;
@@ -767,7 +766,7 @@ void ADC3_DMA_Config(void)
     DMA_InitStructure.DMA_PeripheralDataSize    = DMA_PeripheralDataSize_HalfWord;
     DMA_InitStructure.DMA_MemoryDataSize        = DMA_MemoryDataSize_HalfWord;
     DMA_InitStructure.DMA_Mode                  = DMA_Mode_Circular;
-    DMA_InitStructure.DMA_Priority              = DMA_Priority_High;
+    DMA_InitStructure.DMA_Priority              = DMA_Priority_Low;
     DMA_InitStructure.DMA_FIFOMode              = DMA_FIFOMode_Disable;
     DMA_InitStructure.DMA_FIFOThreshold         = DMA_FIFOThreshold_HalfFull;
     DMA_InitStructure.DMA_MemoryBurst           = DMA_MemoryBurst_Single;

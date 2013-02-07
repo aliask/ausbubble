@@ -201,8 +201,6 @@ void drawUI(fsmStates location)
 
         drawFrame();
         centredString(" AusBubble ", 0);
-        safeFont57(127, 1, 0);
-        safeFont57(131, 1, 128-6);
 
         switch(location)
         {
@@ -210,9 +208,13 @@ void drawUI(fsmStates location)
                 drawDisclaimer();
                 break;
             case HomeScreen:
+                // Draw RIGHT arrow
+                safeFont57(131, 1, 128-6);
                 drawHomescreen();
                 break;
             case SynthScreen:
+                // Draw LEFT arrow
+                safeFont57(127, 1, 0);
                 drawSynthMenu();
                 break;
             default:
@@ -255,16 +257,9 @@ void doDisclaimer(buttonStates action)
             drawDisclaimer();
             break;
         case ButtonLeft:
-            if(cursorPos == 1)
-            {
-                gWhereAmI = SynthScreen;
-                cursorPos = 0;
-                drawUI(gWhereAmI);
-            }
-            else
-                splash("Please read");
             break;
         case ButtonRight:
+            break;
         case ButtonEnter:
             if(cursorPos == 1)
             {
@@ -542,9 +537,6 @@ void doSynthMenu(buttonStates action)
             drawUI(gWhereAmI);
             break;
         case ButtonRight:
-            gWhereAmI = HomeScreen;
-            cursorPos = 0;
-            drawUI(gWhereAmI);
             break;
         case ButtonEnter:
             switch(cursorPos)
@@ -568,9 +560,6 @@ void doHomeScreen(buttonStates action)
     switch(action)
     {
         case ButtonLeft:
-            gWhereAmI = SynthScreen;
-            cursorPos = 0;
-            drawUI(gWhereAmI);
             break;
         case ButtonRight:
             gWhereAmI = SynthScreen;
