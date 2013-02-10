@@ -39,7 +39,6 @@ int cursorPos = 0;
 /* Global variables */
 bool gEnabled = false;
 fsmStates gWhereAmI = DisclaimerScreen;
-int gPendingButton = ButtonNone;
 bool gInSetting = false;
 bool gSplashActive = false;
 

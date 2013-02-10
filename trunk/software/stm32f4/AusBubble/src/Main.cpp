@@ -97,83 +97,112 @@ void vHeartbeatTask(void *pvParameters)
 void vUITask(void *pvParameters)
 {
     /* Local variables */
+    uint8_t buttonState = ButtonNone;
+    uint8_t buttonState_prev = ButtonNone;
+    uint32_t debounceCount = 0;
     int tickRate = TICK_INITIALRATE;
     uint32_t holdCount = 0;
+    bool buttonReleased = false;
 
     while(1)
     {
-        /* Button press detected */
-        if(gPendingButton)
-        {
-            /* Disable RF output if enabled */
-            if(gEnabled)
-            {
-                /* Set hardware */
-                SetJammingEnabled(false);
-                /* Show splash text */
-                splash("RF output DISABLED");
-                /* Set flag */
-                gEnabled = false;
-            }
+        /* Read button state (5-bits) */
+        /* Note: [4:0] = {Select,Right,Left,Down,Up} */
+        buttonState = ButtonNone;
+        buttonState |= ((JOYSTICK_SELECT_PORT->IDR & JOYSTICK_SELECT_PIN) == 0) << 4;
+        buttonState |= ((JOYSTICK_RIGHT_PORT->IDR & JOYSTICK_RIGHT_PIN) == 0) << 3;
+        buttonState |= ((JOYSTICK_LEFT_PORT->IDR & JOYSTICK_LEFT_PIN) == 0) << 2;
+        buttonState |= ((JOYSTICK_DOWN_PORT->IDR & JOYSTICK_DOWN_PIN) == 0) << 1;
+        buttonState |= ((JOYSTICK_UP_PORT->IDR & JOYSTICK_UP_PIN) == 0) << 0;
 
-            /* Button is being held down */
-            if(((holdCount % TICK_HOLDCOUNT) == 0) && (holdCount > 0))
-            {
-                /* UP/DOWN: Increase tick rate */
-                if((gPendingButton == ButtonUp)||(gPendingButton == ButtonDown))
-                {
-                    switch(tickRate)
-                    {
-                        case TICK_RATE_1:
-                            tickRate = TICK_RATE_2;
-                            break;
-                        case TICK_RATE_2:
-                            tickRate = TICK_RATE_3;
-                            break;
-                        case TICK_RATE_3:
-                            tickRate = TICK_RATE_4;
-                            break;
-                        case TICK_RATE_4:
-                            tickRate = TICK_RATE_5;
-                            break;
-                        case TICK_RATE_5:
-                            break;
-                    }
-                }
-                /* SELECT: Enable RF output */
-                else if(gPendingButton == ButtonEnter)
-                {
-                    /* Exit selected setting */
-                    gInSetting = false;
-
-                    /* Enable jamming if disabled (and if not at Disclaimer screen) */
-                    if(!gEnabled && gWhereAmI != DisclaimerScreen)
-                    {
-                        /* Enable hardware */
-                        SetJammingEnabled(true);
-                        /* Show splash text */
-                        splash("RF output ENABLED");
-                        /* Move to Home screen */
-                        drawUI(gWhereAmI = HomeScreen);
-                        /* Set flag */
-                        gEnabled = true;
-                    }
-                }
-            }
-
-            /* Take care of button de-bouncing and call the button handler
-            when the button has been held down long enough */
-            if(holdCount % tickRate == DO_MENU_HOLD_COUNT)
-                doMenu(gPendingButton);
-
-            holdCount++;
-        }
-        /* No buttons held down */
+        /* Has button state changed since last check? */
+        if(buttonState_prev == buttonState)
+            debounceCount++;
         else
+            debounceCount=0;
+
+        /* Has button state been stable long enough? (de-bouncing) */
+        if(debounceCount >= DEBOUNCE_COUNT)
         {
-            holdCount = 0;
-            tickRate = TICK_RATE_1;
+            /* Button press(es) detected */
+            if(buttonState)
+            {
+                /* Button is being held down */
+                if(((holdCount % TICK_HOLDCOUNT) == 0) && (holdCount > 0))
+                {
+                    /* UP/DOWN: Increase tick rate */
+                    if((buttonState == ButtonUp)||(buttonState == ButtonDown))
+                    {
+                        switch(tickRate)
+                        {
+                            case TICK_RATE_1:
+                                tickRate = TICK_RATE_2;
+                                break;
+                            case TICK_RATE_2:
+                                tickRate = TICK_RATE_3;
+                                break;
+                            case TICK_RATE_3:
+                                tickRate = TICK_RATE_4;
+                                break;
+                            case TICK_RATE_4:
+                                tickRate = TICK_RATE_5;
+                                break;
+                            case TICK_RATE_5:
+                                break;
+                        }
+                    }
+                    /* SELECT: Enable RF output */
+                    else if(buttonState == ButtonSelect)
+                    {
+                        /* Exit selected setting */
+                        gInSetting = false;
+
+                        /* Enable jamming if disabled (and if not at Disclaimer screen) */
+                        if(!gEnabled && (gWhereAmI != DisclaimerScreen))
+                        {
+                            /* Enable hardware */
+                            SetJammingEnabled(true);
+                            /* Show splash text */
+                            splash("RF Output ENABLED");
+                            /* Move to Home screen */
+                            drawUI(gWhereAmI = HomeScreen);
+                            /* Set flags */
+                            gEnabled = true;
+                            buttonReleased = false;
+                        }
+                    }
+                }
+                else
+                {
+                    /* Disable RF output if enabled */
+                    if(gEnabled && buttonReleased)
+                    {
+                        /* Set hardware */
+                        SetJammingEnabled(false);
+                        /* Show splash text */
+                        splash("RF Output DISABLED");
+                        /* Set flag */
+                        gEnabled = false;
+                    }
+                }
+
+                /* Update UI */
+                if(holdCount % tickRate == DO_MENU_HOLD_COUNT)
+                    doMenu(buttonState);
+
+                holdCount++;
+            }
+            /* No button(s) held down */
+            else
+            {
+                buttonReleased = true;
+                holdCount = 0;
+                tickRate = TICK_RATE_1;
+            }
         }
+        /* Save button state */
+        buttonState_prev = buttonState;
+        /* Sleep for 1 ms */
         DelayMS(1);
     }
 }
@@ -544,7 +573,6 @@ void prvSetupHardware(void)
 void SetupJoystick(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
-    EXTI_InitTypeDef EXTI_InitStructure;
 
     /* Note: Internal pull-ups are used on each button input (i.e. external pull-up resistors not required) */
 
@@ -588,25 +616,6 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_SELECT_PORT, &GPIO_InitStructure);
-
-    /* LEFT Button */
-    SYSCFG_EXTILineConfig(JOYSTICK_LEFT_PORT_SOURCE, JOYSTICK_LEFT_PIN_SOURCE);
-    /* RIGHT Button */
-    SYSCFG_EXTILineConfig(JOYSTICK_RIGHT_PORT_SOURCE, JOYSTICK_RIGHT_PIN_SOURCE);
-    /* DOWN Button */
-    SYSCFG_EXTILineConfig(JOYSTICK_DOWN_PORT_SOURCE, JOYSTICK_DOWN_PIN_SOURCE);
-    /* UP Button */
-    SYSCFG_EXTILineConfig(JOYSTICK_UP_PORT_SOURCE, JOYSTICK_UP_PIN_SOURCE);
-    /* SEL Button */
-    SYSCFG_EXTILineConfig(JOYSTICK_SELECT_PORT_SOURCE, JOYSTICK_SELECT_PIN_SOURCE);
-
-    /* Configure EXTI */
-    EXTI_StructInit(&EXTI_InitStructure);
-    EXTI_InitStructure.EXTI_Line    = JOYSTICK_LEFT_EXTI_LINE | JOYSTICK_RIGHT_EXTI_LINE | JOYSTICK_UP_EXTI_LINE | JOYSTICK_DOWN_EXTI_LINE | JOYSTICK_SELECT_EXTI_LINE;
-    EXTI_InitStructure.EXTI_Mode    = EXTI_Mode_Interrupt;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
-    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-    EXTI_Init(&EXTI_InitStructure);
 }
 
 void NVIC_Config(void)
@@ -819,56 +828,6 @@ void RNG_Config(void)
     RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_RNG, ENABLE);
     /* RNG Peripheral enable */
     RNG_Cmd(ENABLE);
-}
-
-extern "C"
-void EXTI15_10_IRQHandler(void)
-{
-    /* Joystick LEFT */
-    if(EXTI_GetITStatus(EXTI_Line10) != RESET)
-    {
-        if(!GPIO_ReadInputDataBit(JOYSTICK_LEFT_PORT, JOYSTICK_LEFT_PIN))
-            gPendingButton |= ButtonLeft;
-        else
-            gPendingButton &= ~ButtonLeft;
-        EXTI_ClearITPendingBit(EXTI_Line10);
-    }
-    /* Joystick RIGHT */
-    if(EXTI_GetITStatus(EXTI_Line11) != RESET)
-    {
-        if(!GPIO_ReadInputDataBit(JOYSTICK_RIGHT_PORT, JOYSTICK_RIGHT_PIN))
-            gPendingButton |= ButtonRight;
-        else
-            gPendingButton &= ~ButtonRight;
-        EXTI_ClearITPendingBit(EXTI_Line11);
-    }
-    /* Joystick UP */
-    if(EXTI_GetITStatus(EXTI_Line12) != RESET)
-    {
-        if(!GPIO_ReadInputDataBit(JOYSTICK_UP_PORT, JOYSTICK_UP_PIN))
-            gPendingButton = ButtonUp;
-        else
-            gPendingButton &= ~ButtonUp;
-        EXTI_ClearITPendingBit(EXTI_Line12);
-    }
-    /* Joystick DOWN */
-    if(EXTI_GetITStatus(EXTI_Line13) != RESET)
-    {
-        if(!GPIO_ReadInputDataBit(JOYSTICK_DOWN_PORT, JOYSTICK_DOWN_PIN))
-            gPendingButton |= ButtonDown;
-        else
-            gPendingButton &= ~ButtonDown;
-        EXTI_ClearITPendingBit(EXTI_Line13);
-    }
-    /* Joystick SELECT */
-    if(EXTI_GetITStatus(EXTI_Line14) != RESET)
-    {
-        if(!GPIO_ReadInputDataBit(JOYSTICK_SELECT_PORT, JOYSTICK_SELECT_PIN))
-            gPendingButton |= ButtonEnter;
-        else
-            gPendingButton &= ~ButtonEnter;
-        EXTI_ClearITPendingBit(EXTI_Line14);
-    }
 }
 
 extern "C"

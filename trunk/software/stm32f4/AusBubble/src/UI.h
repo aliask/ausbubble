@@ -43,7 +43,6 @@
 /* Global variables */
 extern bool gEnabled;
 extern fsmStates gWhereAmI;
-extern int gPendingButton;
 extern bool gInSetting;
 extern bool gSplashActive;
 

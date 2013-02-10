@@ -60,12 +60,12 @@ typedef enum {
 } ScanDirection_t;
 
 typedef enum {
-    ButtonNone  = 0,
-    ButtonUp    = 1<<0,
-    ButtonDown  = 1<<1,
-    ButtonLeft  = 1<<2,
-    ButtonRight = 1<<3,
-    ButtonEnter = 1<<4
+    ButtonNone      = 0,
+    ButtonUp        = 1 << 0,
+    ButtonDown      = 1 << 1,
+    ButtonLeft      = 1 << 2,
+    ButtonRight     = 1 << 3,
+    ButtonSelect    = 1 << 4
 } buttonStates;
 
 typedef enum {
@@ -90,15 +90,16 @@ typedef enum {
 #define FREQ_STEP_HZ        500000
 #define RATE_STEP_HZ        1
 #define DISP_MAX            2
-/* Defines for the button hold behaviour */
+/* Button behaviour */
 #define TICK_RATE_1         200     // Slowest
 #define TICK_RATE_2         100
 #define TICK_RATE_3         50
 #define TICK_RATE_4         25
 #define TICK_RATE_5         10      // Fastest
-#define TICK_INITIALRATE    200
+#define TICK_INITIALRATE    TICK_RATE_1
 #define TICK_HOLDCOUNT      1000
 #define DO_MENU_HOLD_COUNT  5
+#define DEBOUNCE_COUNT      10
 /* Valid step sizes */
 #define STEP_1K_HZ      1000
 #define STEP_10K_HZ     10000
