@@ -465,8 +465,6 @@ void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz)
     {
         cur_fmod += fmod_step;
         Write((REG_FMOD<<16) | cur_fmod); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
-
-        vDebugPrintf("curfmod=%d\n", cur_fmod);
     }
     /* SET FREQUENCY BY WRITING TO FREQ1, FREQ2, FREQ3 REGISTERS */
     else
@@ -499,8 +497,6 @@ void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz)
             // Enable frequency modulation
             Write((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
                                       (modstep<<SHIFT_MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
-
-            vDebugPrintf("f=%lu l=%d u=%d n=%lu modstep=%d fmod_step=%d\n", (uint32_t)freq_Hz, fmod_lower_bound, fmod_upper_bound, n_24bit, modstep, fmod_step);
         }
     }
     freq_prev_Hz = freq_Hz;
