@@ -45,7 +45,7 @@
 class RDA1005L_VarGainAmp
 {
     public:
-        static void HWInit();
+        static void HWInit(void);
         static void SetGain(double gain_dB);
     private:
         static void Write(uint8_t data);

@@ -33,9 +33,9 @@
 /************************************************************************/
 
 #include "Includes.h"
-
 #include "UI.h"
 #include "Jammer.h"
+/* Peripheral libraries */
 #include "RDA1005L_VarGainAmp.h"
 #include "SSD1306_OLED.h"
 
@@ -68,7 +68,6 @@ void SetupJoystick(void);
 void NVIC_Config(void);
 void ADC1_DMA_Config(void);
 void ADC3_DMA_Config(void);
-void RNG_Config(void);
 
 /* FreeRTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds)
@@ -79,10 +78,12 @@ void DelayMS(uint32_t milliseconds)
 /* RTOS "heartbeat" LED task */
 void vHeartbeatTask(void *pvParameters)
 {
-    uint8_t toggle = 0;
+    /* Local variables */
+    bool toggle = false;
+
     while(1)
     {
-        if(toggle ^= 1)
+        if(toggle ^= true)
             GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_RESET);
         else
             GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_SET);
@@ -239,6 +240,7 @@ void vJammingTask(void *pvParameters)
         {
             /* Update synthesizer frequency */
             Jammer::Advance();
+            /* Clear timer flag */
             TIM_ClearFlag(TIM2, TIM_IT_Update);
         }
         taskYIELD();
@@ -310,8 +312,11 @@ void prvSetupHardware(void)
         SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));    // Set CP10 and CP11 Full Access
     #endif
 
-    /* Enable RNG */
-    RNG_Config();
+    /* Random Number Generator */
+    // Enable RNG clock source
+    RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_RNG, ENABLE);
+    // RNG Peripheral enable
+    RNG_Cmd(ENABLE);
 
     /* RTOS "heartbeat" LED */
     GPIO_StructInit(&GPIO_InitStructure);
@@ -321,7 +326,7 @@ void prvSetupHardware(void)
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
     GPIO_Init(RTOS_LED_PORT, &GPIO_InitStructure);
-    // Switch off LED
+    // Initially switch off LED
     GPIO_ResetBits(RTOS_LED_PORT, RTOS_LED_PIN);
 
     /* OLED */
@@ -333,9 +338,6 @@ void prvSetupHardware(void)
     RFFCx07x_Synth::HWInit();
     RFFCx07x_Synth::Init();
 
-    /* Joystick */
-    SetupJoystick();
-
     /* RF Amplifier */
     RF5652_Amp::HWInit();
     RF5652_Amp::SetEnabled(false);
@@ -344,6 +346,9 @@ void prvSetupHardware(void)
     RDA1005L_VarGainAmp::HWInit();
     // Set gain to minimum
     RDA1005L_VarGainAmp::SetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
+
+    /* Joystick */
+    SetupJoystick();
 
     /* ADC1 (VBAT and Temperature Sensor) */
     ADC1_DMA_Config();
@@ -571,14 +576,6 @@ void ADC3_DMA_Config(void)
 
     /* Enable ADC3 */
     ADC_Cmd(ADC3, ENABLE);
-}
-
-void RNG_Config(void)
-{
-    /* Enable RNG clock source */
-    RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_RNG, ENABLE);
-    /* RNG Peripheral enable */
-    RNG_Cmd(ENABLE);
 }
 
 extern "C"

@@ -38,7 +38,7 @@
 struct jamSettings_t Jammer::settings;
 bool Jammer::enabled = false;
 
-void Jammer::Init()
+void Jammer::Init(void)
 {
     /* Initialize settings with defaults */
     settings.start     = SCAN_SETTINGS_DEFAULT_START_FREQ_HZ;
@@ -64,9 +64,6 @@ void Jammer::SetEnabled(bool enable)
 
         /* Set jam update rate */
         SetUpdateRate(settings.rate);
-
-        /* Set flag */
-        enabled = true;
     }
     else
     {
@@ -81,13 +78,13 @@ void Jammer::SetEnabled(bool enable)
         TIM_ITConfig(TIM2, TIM_IT_Update, DISABLE);
         /* TIM2 disable counter */
         TIM_Cmd(TIM2, DISABLE);
-
-        /* Set flag */
-        enabled = false;
     }
+
+    /* Set internal flag */
+    enabled = enable;
 }
 
-bool Jammer::isEnabled()
+bool Jammer::isEnabled(void)
 {
     return enabled;
 }
@@ -107,7 +104,7 @@ void Jammer::SetUpdateRate(uint16_t updateRate_Hz)
     TIM_Cmd(TIM2, ENABLE);
 }
 
-void Jammer::Advance()
+void Jammer::Advance(void)
 {
     static uint64_t freq = settings.start;
     static ScanDirection_t direction = Up;

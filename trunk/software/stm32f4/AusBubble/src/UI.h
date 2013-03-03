@@ -36,8 +36,9 @@
 #define UI_H
 
 #include "Includes.h"
-#include "SSD1306_OLED.h"
 #include "Jammer.h"
+/* Peripheral libraries */
+#include "SSD1306_OLED.h"
 
 /* Enumerations */
 typedef enum {

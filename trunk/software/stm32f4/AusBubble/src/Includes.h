@@ -35,25 +35,26 @@
 #ifndef INCLUDES_H
 #define INCLUDES_H
 
-// Standard libraries
+/* Standard libraries */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
-// Specifies the MCU peripherals to use
+/* Specifies the MCU peripherals to use */
 #include "stm32f4xx_conf.h"
-// FreeRTOS
+/* FreeRTOS */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 
 /* Macro for crude FreeRTOS-safe printf() */
-#define vDebugPrintf(A,...)    taskENTER_CRITICAL(); printf(A,##__VA_ARGS__); taskEXIT_CRITICAL();
+// Note: Using the %llu print-specifier (e.g. for uint64_t) gives unpredictable behaviour
+#define vDebugPrintf(A,...)     taskENTER_CRITICAL(); printf(A,##__VA_ARGS__); taskEXIT_CRITICAL();
 
 /* ADC Data Register Addresses */
-#define ADC1_DR_ADDRESS    ((uint32_t)0x4001204C)
-#define ADC3_DR_ADDRESS    ((uint32_t)0x4001224C)
+#define ADC1_DR_ADDRESS     ((uint32_t)0x4001204C)
+#define ADC3_DR_ADDRESS     ((uint32_t)0x4001224C)
 /* On-chip temperature sensor properties */
 #define V25                 0.760
 #define AVG_SLOPE           25.0
@@ -89,7 +90,7 @@
 #define SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ      2500000000      /* DO NOT MODIFY */
 #define SCAN_SETTINGS_DEFAULT_ALGO              ScanTriangle
 #define SCAN_SETTINGS_DEFAULT_STEPSIZE          STEP_100K_HZ
-#define SCAN_SETTINGS_DEFAULT_RATE_HZ           1
+#define SCAN_SETTINGS_DEFAULT_RATE_HZ           500
 
 /* Synth Frequency */
 // Allowable range
@@ -176,7 +177,7 @@
 #define VARGAINAMP_LE_PORT              GPIOD
 #define VARGAINAMP_LE_PIN               GPIO_Pin_9
 
-/* Global variables */
+/* Global Variables */
 extern float gPDETVoltage;
 extern float TCelsius;
 extern float VBATVoltage;

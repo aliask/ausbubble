@@ -34,7 +34,7 @@
 
 #include "RDA1005L_VarGainAmp.h"
 
-void RDA1005L_VarGainAmp::HWInit()
+void RDA1005L_VarGainAmp::HWInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 

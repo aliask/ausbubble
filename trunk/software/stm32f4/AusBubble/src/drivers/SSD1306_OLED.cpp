@@ -124,7 +124,7 @@ void SSD1306_OLED::Init(void)
     GPIO_WriteBit(OLED_RST_PORT, OLED_RST_PIN, Bit_SET);
 
     setDisplayOnOff(0x00);              // Display Off (0x00/0x01)
-    setDisplayClock(0x80);              // Set Clock as 100 Frames/Sec
+    setDisplayClock(0xF0);              // Max display clock frequency, divide ratio=1
     setMultiplexRatio(0x3F);            // 1/64 Duty (0x0F~0x3F)
     setDisplayOffset(0x00);             // Shift Mapping RAM Counter (0x00~0x3F)
     setStartLine(0x00);                 // Set Mapping RAM Display Start Line (0x00~0x3F)
