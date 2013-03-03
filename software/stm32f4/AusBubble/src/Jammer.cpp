@@ -156,12 +156,12 @@ void Jammer::Advance()
             break;
 
         case ScanRandom:
-        	/* Wait until one RNG number is ready */
-        	while(RNG_GetFlagStatus(RNG_FLAG_DRDY)== RESET);
+            /* Wait until one RNG number is ready */
+            while(RNG_GetFlagStatus(RNG_FLAG_DRDY)== RESET);
             /* Get a 32bit Random number */
-        	random32bit = RNG_GetRandomNumber();
+            random32bit = RNG_GetRandomNumber();
             /* Get random number between START and STOP frequency range */
-            newFreq = settings.start + (random32bit / UINT32_MAX) * (settings.stop - settings.start);
+            newFreq = settings.start + (uint32_t)(((float) random32bit / (float) UINT32_MAX)*(settings.stop - settings.start));
             break;
 
         default:
