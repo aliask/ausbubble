@@ -34,10 +34,10 @@
 
 #include "Includes.h"
 
-#include "OLED.h"
 #include "UI.h"
-#include "ScanAlgorithms.h"
-#include "VarGainAmp.h"
+#include "Jammer.h"
+#include "RDA1005L_VarGainAmp.h"
+#include "SSD1306_OLED.h"
 
 /* USB */
 extern "C" {
@@ -63,12 +63,9 @@ float TCelsius;
 float VBATVoltage;
 
 /* Function Prototypes */
-void SetJammingEnabled(bool enable);
-void SetJamUpdateRate(uint16_t updateRate_Hz);
 void prvSetupHardware(void);
 void SetupJoystick(void);
 void NVIC_Config(void);
-void SPI1_Config(void);
 void ADC1_DMA_Config(void);
 void ADC3_DMA_Config(void);
 void RNG_Config(void);
@@ -154,20 +151,19 @@ void vUITask(void *pvParameters)
                     /* SELECT: Enable RF output */
                     else if(buttonState == ButtonSelect)
                     {
-                        /* Exit selected setting */
-                        gInSetting = false;
-
                         /* Enable jamming if disabled (and if not at Disclaimer screen) */
-                        if(!gEnabled && (gWhereAmI != DisclaimerScreen))
+                        if(!Jammer::isEnabled() && (UI::currentState != DisclaimerScreen))
                         {
+                            /* Set toggle off (de-selects setting if selected) */
+                            UI::setToggle(false);
+
                             /* Enable hardware */
-                            SetJammingEnabled(true);
+                            Jammer::SetEnabled(true);
                             /* Show splash text */
-                            splash("RF Output ENABLED");
-                            /* Move to Home screen */
-                            drawUI(gWhereAmI = HomeScreen);
-                            /* Set flags */
-                            gEnabled = true;
+                            UI::splash("RF Output ENABLED", 1000);
+                            /* Draw Home screen */
+                            UI::draw(HomeScreen);
+                            /* Set flag */
                             buttonReleased = false;
                         }
                     }
@@ -175,20 +171,18 @@ void vUITask(void *pvParameters)
                 else
                 {
                     /* Disable RF output if enabled */
-                    if(gEnabled && buttonReleased)
+                    if(Jammer::isEnabled() && buttonReleased)
                     {
                         /* Set hardware */
-                        SetJammingEnabled(false);
+                        Jammer::SetEnabled(false);
                         /* Show splash text */
-                        splash("RF Output DISABLED");
-                        /* Set flag */
-                        gEnabled = false;
+                        UI::splash("RF Output DISABLED", 1000);
                     }
                 }
 
                 /* Update UI */
                 if(holdCount % tickRate == DO_MENU_HOLD_COUNT)
-                    doMenu(buttonState);
+                    UI::doMenu(buttonState);
 
                 holdCount++;
             }
@@ -226,11 +220,11 @@ void vADCTask(void *pvParameters)
         ADC1ConvertedVoltage1 = (uint32_t)(gADC1ConvertedValue[1] * 3000 / 0xFFF);
         Vsense = (float)(ADC1ConvertedVoltage1 / 1000.0);
         TCelsius = ((Vsense - V25) / AVG_SLOPE) + 25.0 ;
-        /* 4. RF Amplifier Thermistor */
+        /* 4. TODO: RF Amplifier Thermistor */
 
         /* Re-draw home screen */
-        if(gWhereAmI == HomeScreen)
-            drawUI(gWhereAmI);
+        if(UI::currentState == HomeScreen)
+            UI::draw(HomeScreen);
 
         DelayMS(250);
     }
@@ -243,10 +237,8 @@ void vJammingTask(void *pvParameters)
     {
         if(TIM_GetFlagStatus(TIM2, TIM_FLAG_Update) != RESET)
         {
-            /* Set jam update rate (in case setting has changed) */
-            SetJamUpdateRate(gScanSettings.rate);
             /* Update synthesizer frequency */
-            AdvanceScan(&gScanSettings);
+            Jammer::Advance();
             TIM_ClearFlag(TIM2, TIM_IT_Update);
         }
         taskYIELD();
@@ -262,11 +254,11 @@ int main(void)
     To reconfigure the default setting of SystemInit() function, refer to
     system_stm32f4xx.c file */
 
-    /* Initialize scan settings with defaults */
-    ScanInit(&gScanSettings);
-
     /* Setup STM32 hardware */
     prvSetupHardware();
+
+    /* Initialize jammer */
+    Jammer::Init();
 
     /* Create FreeRTOS tasks */
     xTaskCreate(vHeartbeatTask,
@@ -301,51 +293,6 @@ int main(void)
     return 0;
 }
 
-void SetJammingEnabled(bool enable)
-{
-    if(enable)
-    {
-        /* Enable amplifier */
-        GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_SET);
-        /* Set gain to maximum allowable */
-        VarGainAmpSetGain(VARGAINAMP_MAX_GAIN_LIMIT_DB);
-        /* Enable synthesizer */
-        SynthEnable(true);
-
-        /* Set jam update rate */
-        SetJamUpdateRate(gScanSettings.rate);
-    }
-    else
-    {
-        /* Disable synthesizer */
-        SynthEnable(false);
-        /* Set gain to minimum allowable */
-        VarGainAmpSetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
-        /* Disable amplifier */
-        GPIO_WriteBit(AMP_PENABLE_PORT, AMP_PENABLE_PIN, Bit_RESET);
-
-        /* TIM IT disable */
-        TIM_ITConfig(TIM2, TIM_IT_Update, DISABLE);
-        /* TIM2 disable counter */
-        TIM_Cmd(TIM2, DISABLE);
-    }
-}
-
-void SetJamUpdateRate(uint16_t updateRate_Hz)
-{
-    /* Time base configuration */
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-    TIM_TimeBaseStructure.TIM_Period = (1000000/updateRate_Hz) - 1; // 1 MHz timer clock
-    TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;                   // 1 MHz timer clock
-    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
-    /* TIM IT enable */
-    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-    /* TIM2 enable counter */
-    TIM_Cmd(TIM2, ENABLE);
-}
-
 /* Initialize necessary hardware */
 void prvSetupHardware(void)
 {
@@ -378,174 +325,25 @@ void prvSetupHardware(void)
     GPIO_ResetBits(RTOS_LED_PORT, RTOS_LED_PIN);
 
     /* OLED */
-    // RST
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = OLED_RST_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(OLED_RST_PORT, &GPIO_InitStructure);
-    // DC
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = OLED_DC_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(OLED_DC_PORT, &GPIO_InitStructure);
-    // SPI1
-    SPI1_Config();
-    // Initialization
-    oledInit();
-    drawUI(gWhereAmI);
+    SSD1306_OLED::HWInit();
+    SSD1306_OLED::Init();
+    UI::draw(DisclaimerScreen);
 
     /* SYNTH */
-    // SCLK
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_SCLK_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_SCLK_PORT, &GPIO_InitStructure);
-    // SDATA
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_SDATA_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_SDATA_PORT, &GPIO_InitStructure);
-    // ENX
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_ENX_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_ENX_PORT, &GPIO_InitStructure);
-    // RESETX
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_RESETX_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_RESETX_PORT, &GPIO_InitStructure);
-    // GPO1/ADD1
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_GPO1ADD1_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_GPO1ADD1_PORT, &GPIO_InitStructure);
-    // GPO2/ADD2
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_GPO2ADD2_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_GPO2ADD2_PORT, &GPIO_InitStructure);
-    // GPO3/FM
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_GPO3FM_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_GPO3FM_PORT, &GPIO_InitStructure);
-    // GPO4/LD/DO
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_GPO4LDDO_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_GPO4LDDO_PORT, &GPIO_InitStructure);
-    // ENBL/GPO5
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_ENBLGPO5_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_ENBLGPO5_PORT, &GPIO_InitStructure);
-    // MODE/GPO6
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = SYNTH_MODEGPO6_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(SYNTH_MODEGPO6_PORT, &GPIO_InitStructure);
-    // Set low
-    GPIO_ResetBits(SYNTH_MODEGPO6_PORT, SYNTH_MODEGPO6_PIN);
-    // Initialize device
-    SynthInit();
+    RFFCx07x_Synth::HWInit();
+    RFFCx07x_Synth::Init();
 
     /* Joystick */
     SetupJoystick();
 
     /* RF Amplifier */
-    // PENABLE
-    // Note: Use external pull-down resistor (1k) on PENABLE to ensure amplifier is OFF at power-on
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = AMP_PENABLE_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(AMP_PENABLE_PORT, &GPIO_InitStructure);
-    // Initially set LOW (amplifier disabled)
-    GPIO_ResetBits(AMP_PENABLE_PORT, AMP_PENABLE_PIN);
+    RF5652_Amp::HWInit();
+    RF5652_Amp::SetEnabled(false);
 
-    /* Variable Gain Amp */
-    // PUP
-    // Note: Use external pull-down resistor (1k) on PUP to ensure attenuation is at maximum at power-on
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = VARGAINAMP_PUP_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(VARGAINAMP_PUP_PORT, &GPIO_InitStructure);
-    // Initially set LOW (Attenuation at Max, 31.5dB)
-    GPIO_ResetBits(VARGAINAMP_PUP_PORT, VARGAINAMP_PUP_PIN);
-    // CLK
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = VARGAINAMP_CLK_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(VARGAINAMP_CLK_PORT, &GPIO_InitStructure);
-    // Initially set LOW
-    GPIO_ResetBits(VARGAINAMP_CLK_PORT, VARGAINAMP_CLK_PIN);
-    // DATA
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = VARGAINAMP_DATA_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(VARGAINAMP_DATA_PORT, &GPIO_InitStructure);
-    // Initially set LOW
-    GPIO_ResetBits(VARGAINAMP_DATA_PORT, VARGAINAMP_DATA_PIN);
-    // LE
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = VARGAINAMP_LE_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(VARGAINAMP_LE_PORT, &GPIO_InitStructure);
-    // Initially set LOW
-    GPIO_ResetBits(VARGAINAMP_LE_PORT, VARGAINAMP_LE_PIN);
+    /* Variable Gain Amplifier */
+    RDA1005L_VarGainAmp::HWInit();
     // Set gain to minimum
-    VarGainAmpSetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
+    RDA1005L_VarGainAmp::SetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
 
     /* ADC1 (VBAT and Temperature Sensor) */
     ADC1_DMA_Config();
@@ -634,53 +432,6 @@ void NVIC_Config(void)
     NVIC_InitStructure.NVIC_IRQChannelSubPriority           = 1;
     NVIC_InitStructure.NVIC_IRQChannelCmd                   = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
-}
-
-void SPI1_Config(void)
-{
-    GPIO_InitTypeDef    GPIO_InitStructure;
-    SPI_InitTypeDef     SPI_InitStructure;
-
-    /* Configure SPI1 pins: SCK and MOSI */
-    // SCK=PA5, MOSI=PA7
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = GPIO_Pin_5 | GPIO_Pin_7;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_AF;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource5, GPIO_AF_SPI1);
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_SPI1);
-
-    /* Configure CS pin */
-    GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = OLED_CS_PIN;
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
-    GPIO_Init(OLED_CS_PORT, &GPIO_InitStructure);
-
-    /* SPI1 Periph clock enable */
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
-
-    /* SPI1 Config */
-    // Note: OLED has maximum allowable clock speed = 10 MHz (i.e. minimum Tcycle=100ns)
-    SPI_StructInit(&SPI_InitStructure);
-    SPI_InitStructure.SPI_Direction         = SPI_Direction_1Line_Tx;
-    SPI_InitStructure.SPI_Mode              = SPI_Mode_Master;
-    SPI_InitStructure.SPI_DataSize          = SPI_DataSize_8b;
-    SPI_InitStructure.SPI_CPOL              = SPI_CPOL_High;
-    SPI_InitStructure.SPI_CPHA              = SPI_CPHA_2Edge;               // Read data on RISING edge of clock
-    SPI_InitStructure.SPI_NSS               = SPI_NSS_Soft | SPI_NSSInternalSoft_Set;
-    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;     // SCK Freq = SystemFrequency/APB2 Prescaler/SPI_BaudRatePrescaler -> 168/2/16 = 5.25 MHz
-    SPI_InitStructure.SPI_FirstBit          = SPI_FirstBit_MSB;
-    SPI_InitStructure.SPI_CRCPolynomial     = 7;
-    SPI_Init(SPI1, &SPI_InitStructure);
-
-    /* SPI1 enable */
-    SPI_Cmd(SPI1, ENABLE);
 }
 
 void ADC1_DMA_Config(void)

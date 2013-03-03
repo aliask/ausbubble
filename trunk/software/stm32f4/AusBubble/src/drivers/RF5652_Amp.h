@@ -3,7 +3,7 @@
 /* An open-source RF jammer designed to operate in the 2.4 GHz Wi-Fi    */
 /* frequency block.                                                     */
 /*                                                                      */
-/* AmpLUT.h                                                             */
+/* RF5652_Amp.h                                                         */
 /*                                                                      */
 /* Will Robertson <aliask@gmail.com>                                    */
 /* Nick D'Ademo <nickdademo@gmail.com>                                  */
@@ -32,19 +32,30 @@
 /*                                                                      */
 /************************************************************************/
 
-#ifndef _AMPLUT_H
-#define _AMPLUT_H
+#ifndef RF5652_AMP_H
+#define RF5652_AMP_H
 
 #define N_DATA_POINTS 619
+
+#include "Includes.h"
 
 /* Structure definition */
 struct AmpDataPoint_t
 {
-	float Pout_dBm;
-	int frequency_MHz;
-	float PDET_V;
-	float gain_dB;
-	int temperature_C;
+    float Pout_dBm;
+    int frequency_MHz;
+    float PDET_V;
+    float gain_dB;
+    int temperature_C;
+};
+
+class RF5652_Amp
+{
+    public:
+        static void HWInit();
+        static void SetEnabled(bool enable);
+    private:
+        static bool enabled;
 };
 
 #endif
