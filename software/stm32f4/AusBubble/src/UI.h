@@ -32,26 +32,58 @@
 /*                                                                      */
 /************************************************************************/
 
-#ifndef _UI_H
-#define _UI_H
+#ifndef UI_H
+#define UI_H
 
 #include "Includes.h"
+#include "SSD1306_OLED.h"
+#include "Jammer.h"
 
-#include "OLED.h"
-#include "ScanAlgorithms.h"
+/* Enumerations */
+typedef enum {
+    ButtonNone      = 0,
+    ButtonUp        = 1 << 0,
+    ButtonDown      = 1 << 1,
+    ButtonLeft      = 1 << 2,
+    ButtonRight     = 1 << 3,
+    ButtonSelect    = 1 << 4
+} buttonStates;
 
-/* Global variables */
-extern bool gEnabled;
-extern fsmStates gWhereAmI;
-extern bool gInSetting;
-extern bool gSplashActive;
+typedef enum {
+    DisclaimerScreen = 0,
+    HomeScreen,
+    SynthScreen
+} fsmStates;
 
-/* Function prototypes */
-void drawUI(fsmStates location);
-void centredString(const char *stringPointer);
-void safeString(const char *dataPointer, unsigned char row, unsigned char xPos);
-void splash(const char* text);
-void doMenu(int buttons);
-void drawHomescreen(void);
+class UI
+{
+    public:
+        static void draw(fsmStates state);
+        static void splash(const char* text, int duration_ms);
+        static void doMenu(int buttons);
+        static void setToggle(bool state);
+        static fsmStates currentState;
+    private:
+        static void safeString(const char *dataPointer, unsigned char row, unsigned char xPos);
+        static void safeFont57(char ascii, unsigned char row, unsigned char xPos);
+        static void centredString(const char *stringPointer, unsigned char line);
+        static void toggleSetting(int index);
+        static void drawHomescreen(void);
+        static void drawStep(int line, double stepSize);
+        static void drawAlgorithm(int line, ScanAlgorithms_t algorithm);
+        static void drawDisclaimer(void);
+        static void drawSynthMenu(void);
+        static void doDisclaimer(buttonStates action);
+        static void doSynthMin(buttonStates action);
+        static void doSynthMax(buttonStates action);
+        static void doRate(buttonStates action);
+        static void doAlgorithm(buttonStates action);
+        static void doStepSize(buttonStates action);
+        static void doSynthMenu(buttonStates action);
+        static void doHomeScreen(buttonStates action);
+        static int cursorPos;
+        static bool isInSetting;
+        static bool isSplashActive;
+};
 
 #endif

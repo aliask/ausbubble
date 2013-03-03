@@ -3,7 +3,7 @@
 /* An open-source RF jammer designed to work in the 2.4 GHz Wi-Fi       */
 /* frequency block.                                                     */
 /*                                                                      */
-/* OLED.cpp                                                             */
+/* SSD1306_OLED.cpp                                                     */
 /*                                                                      */
 /* Will Robertson <aliask@gmail.com>                                    */
 /* Nick D'Ademo <nickdademo@gmail.com>                                  */
@@ -48,10 +48,104 @@
 //
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "OLED.h"
+#include "SSD1306_OLED.h"
+
+void SSD1306_OLED::HWInit(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+    SPI_InitTypeDef     SPI_InitStructure;
+
+    // RST
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = OLED_RST_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(OLED_RST_PORT, &GPIO_InitStructure);
+    // DC
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = OLED_DC_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(OLED_DC_PORT, &GPIO_InitStructure);
+
+    // SPI1
+    /* Configure SPI1 pins: SCK and MOSI */
+    // SCK=PA5, MOSI=PA7
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = GPIO_Pin_5 | GPIO_Pin_7;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource5, GPIO_AF_SPI1);
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_SPI1);
+
+    /* Configure CS pin */
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = OLED_CS_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
+    GPIO_Init(OLED_CS_PORT, &GPIO_InitStructure);
+
+    /* SPI1 Periph clock enable */
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+
+    /* SPI1 Config */
+    // Note: OLED has maximum allowable clock speed = 10 MHz (i.e. minimum Tcycle=100ns)
+    SPI_StructInit(&SPI_InitStructure);
+    SPI_InitStructure.SPI_Direction         = SPI_Direction_1Line_Tx;
+    SPI_InitStructure.SPI_Mode              = SPI_Mode_Master;
+    SPI_InitStructure.SPI_DataSize          = SPI_DataSize_8b;
+    SPI_InitStructure.SPI_CPOL              = SPI_CPOL_High;
+    SPI_InitStructure.SPI_CPHA              = SPI_CPHA_2Edge;               // Read data on RISING edge of clock
+    SPI_InitStructure.SPI_NSS               = SPI_NSS_Soft | SPI_NSSInternalSoft_Set;
+    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;     // SCK Freq = SystemFrequency/APB2 Prescaler/SPI_BaudRatePrescaler -> 168/2/16 = 5.25 MHz
+    SPI_InitStructure.SPI_FirstBit          = SPI_FirstBit_MSB;
+    SPI_InitStructure.SPI_CRCPolynomial     = 7;
+    SPI_Init(SPI1, &SPI_InitStructure);
+
+    /* SPI1 enable */
+    SPI_Cmd(SPI1, ENABLE);
+}
+
+/* Initialization routine (call once before using OLED) */
+void SSD1306_OLED::Init(void)
+{
+    // Toggle RST line (delay between pin SET/RESET)
+    // Note: Logic low must have duration >3us
+    GPIO_WriteBit(OLED_RST_PORT, OLED_RST_PIN, Bit_RESET);
+    GPIO_WriteBit(OLED_RST_PORT, OLED_RST_PIN, Bit_SET);
+
+    setDisplayOnOff(0x00);              // Display Off (0x00/0x01)
+    setDisplayClock(0x80);              // Set Clock as 100 Frames/Sec
+    setMultiplexRatio(0x3F);            // 1/64 Duty (0x0F~0x3F)
+    setDisplayOffset(0x00);             // Shift Mapping RAM Counter (0x00~0x3F)
+    setStartLine(0x00);                 // Set Mapping RAM Display Start Line (0x00~0x3F)
+    setChargePump(0x04);                // Enable Embedded DC/DC Converter (0x00/0x04)
+    setAddressingMode(0x02);            // Set Page Addressing Mode (0x00/0x01/0x02)
+    setSegmentRemap(0x01);              // Set SEG/Column Mapping (0x00/0x01)
+    setCommonRemap(0x08);               // Set COM/Row Scan Direction (0x00/0x08)
+    setCommonConfig(0x10);              // Set Sequential Configuration (0x00/0x10)
+    setContrastControl(oledBrightness); // Set SEG Output Current
+    setPrechargePeriod(0xF1);           // Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
+    setVCOMH(0x40);                     // Set VCOM Deselect Level
+    setEntireDisplay(0x00);             // Disable Entire Display On (0x00/0x01)
+    setInverseDisplay(0x00);            // Disable Inverse Display On (0x00/0x01)
+
+    fillScreen(0x00);                   // Clear Screen
+
+    setDisplayOnOff(0x01);              // Display On (0x00/0x01)
+}
 
 /* Write a command to the OLED */
-void writeCommand(uint8_t data)
+void SSD1306_OLED::writeCommand(uint8_t data)
 {
     // CS=0, DC=0
     GPIO_WriteBit(OLED_CS_PORT, OLED_CS_PIN, Bit_RESET);
@@ -67,7 +161,7 @@ void writeCommand(uint8_t data)
 }
 
 /* Write data to the OLED */
-void writeData(uint8_t data)
+void SSD1306_OLED::writeData(uint8_t data)
 {
     // CS=0, DC=1
     GPIO_WriteBit(OLED_CS_PORT, OLED_CS_PIN, Bit_RESET);
@@ -83,7 +177,7 @@ void writeData(uint8_t data)
 }
 
 /* Below are functions used to configure the OLED */
-void setStartColumn(unsigned char d)
+void SSD1306_OLED::setStartColumn(unsigned char d)
 {
     writeCommand(0x00+d%16);    // Set Lower Column Start Address for Page Addressing Mode
                                 // Default => 0x00
@@ -91,7 +185,7 @@ void setStartColumn(unsigned char d)
                                 // Default => 0x10
 }
 
-void setAddressingMode(unsigned char d)
+void SSD1306_OLED::setAddressingMode(unsigned char d)
 {
     writeCommand(0x20);         // Set Memory Addressing Mode
     writeCommand(d);            // Default => 0x02
@@ -100,33 +194,33 @@ void setAddressingMode(unsigned char d)
                                 // 0x02 => Page Addressing Mode
 }
 
-void setColumnAddress(unsigned char a, unsigned char b)
+void SSD1306_OLED::setColumnAddress(unsigned char a, unsigned char b)
 {
     writeCommand(0x21);         // Set Column Address
     writeCommand(a);            // Default => 0x00 (Column Start Address)
     writeCommand(b);            // Default => 0x7F (Column End Address)
 }
 
-void setPageAddress(unsigned char a, unsigned char b)
+void SSD1306_OLED::setPageAddress(unsigned char a, unsigned char b)
 {
     writeCommand(0x22);         // Set Page Address
     writeCommand(a);            // Default => 0x00 (Page Start Address)
     writeCommand(b);            // Default => 0x07 (Page End Address)
 }
 
-void setStartLine(unsigned char d)
+void SSD1306_OLED::setStartLine(unsigned char d)
 {
     writeCommand(0x40|d);       // Set Display Start Line
                                 // Default => 0x40 (0x00)
 }
 
-void setContrastControl(unsigned char d)
+void SSD1306_OLED::setContrastControl(unsigned char d)
 {
     writeCommand(0x81);         // Set Contrast Control
     writeCommand(d);            // Default => 0x7F
 }
 
-void setChargePump(unsigned char d)
+void SSD1306_OLED::setChargePump(unsigned char d)
 {
     writeCommand(0x8D);         // Set Charge Pump
     writeCommand(0x10|d);       // Default => 0x10
@@ -134,7 +228,7 @@ void setChargePump(unsigned char d)
                                 // 0x14 (0x04) => Enable Charge Pump
 }
 
-void setSegmentRemap(unsigned char d)
+void SSD1306_OLED::setSegmentRemap(unsigned char d)
 {
     writeCommand(0xA0|d);       // Set Segment Re-Map
                                 // Default => 0xA0
@@ -142,7 +236,7 @@ void setSegmentRemap(unsigned char d)
                                 // 0xA1 (0x01) => Column Address 0 Mapped to SEG127
 }
 
-void setEntireDisplay(unsigned char d)
+void SSD1306_OLED::setEntireDisplay(unsigned char d)
 {
     writeCommand(0xA4|d);       // Set Entire Display On / Off
                                 // Default => 0xA4
@@ -150,7 +244,7 @@ void setEntireDisplay(unsigned char d)
                                 // 0xA5 (0x01) => Entire Display On
 }
 
-void setInverseDisplay(unsigned char d)
+void SSD1306_OLED::setInverseDisplay(unsigned char d)
 {
     writeCommand(0xA6|d);       // Set Inverse Display On/Off
                                 // Default => 0xA6
@@ -158,13 +252,13 @@ void setInverseDisplay(unsigned char d)
                                 // 0xA7 (0x01) => Inverse Display On
 }
 
-void setMultiplexRatio(unsigned char d)
+void SSD1306_OLED::setMultiplexRatio(unsigned char d)
 {
     writeCommand(0xA8);         // Set Multiplex Ratio
     writeCommand(d);            // Default => 0x3F (1/64 Duty)
 }
 
-void setDisplayOnOff(unsigned char d)
+void SSD1306_OLED::setDisplayOnOff(unsigned char d)
 {
     writeCommand(0xAE|d);       // Set Display On/Off
                                 // Default => 0xAE
@@ -172,13 +266,13 @@ void setDisplayOnOff(unsigned char d)
                                 // 0xAF (0x01) => Display On
 }
 
-void setStartPage(unsigned char d)
+void SSD1306_OLED::setStartPage(unsigned char d)
 {
     writeCommand(0xB0|d);       // Set Page Start Address for Page Addressing Mode
                                 // Default => 0xB0 (0x00)
 }
 
-void setCommonRemap(unsigned char d)
+void SSD1306_OLED::setCommonRemap(unsigned char d)
 {
     writeCommand(0xC0|d);       // Set COM Output Scan Direction
                                 // Default => 0xC0
@@ -186,13 +280,13 @@ void setCommonRemap(unsigned char d)
                                 // 0xC8 (0x08) => Scan from COM63 to 0
 }
 
-void setDisplayOffset(unsigned char d)
+void SSD1306_OLED::setDisplayOffset(unsigned char d)
 {
     writeCommand(0xD3);         // Set Display Offset
     writeCommand(d);            // Default => 0x00
 }
 
-void setDisplayClock(unsigned char d)
+void SSD1306_OLED::setDisplayClock(unsigned char d)
 {
     writeCommand(0xD5);         // Set Display Clock Divide Ratio / Oscillator Frequency
     writeCommand(d);            // Default => 0x80
@@ -200,7 +294,7 @@ void setDisplayClock(unsigned char d)
                                 // D[7:4] => Oscillator Frequency
 }
 
-void setPrechargePeriod(unsigned char d)
+void SSD1306_OLED::setPrechargePeriod(unsigned char d)
 {
     writeCommand(0xD9);         // Set Pre-Charge Period
     writeCommand(d);            // Default => 0x22 (2 Display Clocks [Phase 2] / 2 Display Clocks [Phase 1])
@@ -208,7 +302,7 @@ void setPrechargePeriod(unsigned char d)
                                 // D[7:4] => Phase 2 Period in 1~15 Display Clocks
 }
 
-void setCommonConfig(unsigned char d)
+void SSD1306_OLED::setCommonConfig(unsigned char d)
 {
     writeCommand(0xDA);         // Set COM Pins Hardware Configuration
     writeCommand(0x02|d);       // Default => 0x12 (0x10)
@@ -216,19 +310,19 @@ void setCommonConfig(unsigned char d)
                                 // Disable COM Left/Right Re-Map
 }
 
-void setVCOMH(unsigned char d)
+void SSD1306_OLED::setVCOMH(unsigned char d)
 {
     writeCommand(0xDB);         // Set VCOMH Deselect Level
     writeCommand(d);            // Default => 0x20 (0.77*VCC)
 }
 
-void setNOP()
+void SSD1306_OLED::setNOP()
 {
     writeCommand(0xE3);         // Command for No Operation
 }
 
 /* Fill the screen with a particular data pattern */
-void fillScreen(unsigned char data)
+void SSD1306_OLED::fillScreen(unsigned char data)
 {
     unsigned char i,j;
 
@@ -243,7 +337,7 @@ void fillScreen(unsigned char data)
 }
 
 /* Fill a specified block with a particular data pattern */
-void fillBlock(unsigned char data, unsigned char a, unsigned char b, unsigned char c, unsigned char d)
+void SSD1306_OLED::fillBlock(unsigned char data, unsigned char a, unsigned char b, unsigned char c, unsigned char d)
 {
     unsigned char i,j;
 
@@ -258,7 +352,7 @@ void fillBlock(unsigned char data, unsigned char a, unsigned char b, unsigned ch
 }
 
 /* Draw a frame (border) around the OLED */
-void drawFrame()
+void SSD1306_OLED::drawFrame()
 {
     unsigned char i,j;
 
@@ -287,7 +381,7 @@ void drawFrame()
 }
 
 /* Print a single character from font.cpp */
-void showFont57(char ascii, unsigned char row, unsigned char xPos)
+void SSD1306_OLED::showFont57(char ascii, unsigned char row, unsigned char xPos)
 {
     char *srcPointer = 0;
     unsigned char i;
@@ -306,11 +400,11 @@ void showFont57(char ascii, unsigned char row, unsigned char xPos)
 }
 
 /* Display a null-terminated string on the OLED */
-void showString(const char *dataPointer, unsigned char row, unsigned char xPos)
+void SSD1306_OLED::showString(const char *dataPtr, unsigned char row, unsigned char xPos)
 {
     char *srcPointer;
 
-    srcPointer = (char*)dataPointer;
+    srcPointer = (char*)dataPtr;
     showFont57(' ',row,xPos); // NBSP must be written first before the string start
 
     while(1)
@@ -323,7 +417,7 @@ void showString(const char *dataPointer, unsigned char row, unsigned char xPos)
 }
 
 /* Put the OLED to sleep to save power */
-void oledSleep(unsigned char doSleep)
+void SSD1306_OLED::sleep(unsigned char doSleep)
 {
     switch(doSleep)
     {
@@ -336,33 +430,4 @@ void oledSleep(unsigned char doSleep)
             setDisplayOnOff(0x01);
             break;
     }
-}
-
-/* Initialization routine (call once before using OLED) */
-void oledInit(void)
-{
-    // Toggle RST line (delay between pin SET/RESET)
-    // Note: Logic low must have duration >3us
-    GPIO_WriteBit(OLED_RST_PORT, OLED_RST_PIN, Bit_RESET);
-    GPIO_WriteBit(OLED_RST_PORT, OLED_RST_PIN, Bit_SET);
-
-    setDisplayOnOff(0x00);              // Display Off (0x00/0x01)
-    setDisplayClock(0x80);              // Set Clock as 100 Frames/Sec
-    setMultiplexRatio(0x3F);            // 1/64 Duty (0x0F~0x3F)
-    setDisplayOffset(0x00);             // Shift Mapping RAM Counter (0x00~0x3F)
-    setStartLine(0x00);                 // Set Mapping RAM Display Start Line (0x00~0x3F)
-    setChargePump(0x04);                // Enable Embedded DC/DC Converter (0x00/0x04)
-    setAddressingMode(0x02);            // Set Page Addressing Mode (0x00/0x01/0x02)
-    setSegmentRemap(0x01);              // Set SEG/Column Mapping (0x00/0x01)
-    setCommonRemap(0x08);               // Set COM/Row Scan Direction (0x00/0x08)
-    setCommonConfig(0x10);              // Set Sequential Configuration (0x00/0x10)
-    setContrastControl(oledBrightness); // Set SEG Output Current
-    setPrechargePeriod(0xF1);           // Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
-    setVCOMH(0x40);                     // Set VCOM Deselect Level
-    setEntireDisplay(0x00);             // Disable Entire Display On (0x00/0x01)
-    setInverseDisplay(0x00);            // Disable Inverse Display On (0x00/0x01)
-
-    fillScreen(0x00);                   // Clear Screen
-
-    setDisplayOnOff(0x01);              // Display On (0x00/0x01)
 }

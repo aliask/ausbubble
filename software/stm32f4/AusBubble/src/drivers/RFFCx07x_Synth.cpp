@@ -3,7 +3,7 @@
 /* An open-source RF jammer designed to operate in the 2.4 GHz Wi-Fi    */
 /* frequency block.                                                     */
 /*                                                                      */
-/* Synth.cpp                                                            */
+/* RFFCx07x_Synth.cpp                                                   */
 /*                                                                      */
 /* Will Robertson <aliask@gmail.com>                                    */
 /* Nick D'Ademo <nickdademo@gmail.com>                                  */
@@ -32,12 +32,100 @@
 /*                                                                      */
 /************************************************************************/
 
-#include "Synth.h"
+#include "RFFCx07x_Synth.h"
 
-void SynthInit(void)
+void RFFCx07x_Synth::HWInit(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    // SCLK
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_SCLK_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_SCLK_PORT, &GPIO_InitStructure);
+    // SDATA
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_SDATA_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_SDATA_PORT, &GPIO_InitStructure);
+    // ENX
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_ENX_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_ENX_PORT, &GPIO_InitStructure);
+    // RESETX
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_RESETX_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_RESETX_PORT, &GPIO_InitStructure);
+    // GPO1/ADD1
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_GPO1ADD1_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_GPO1ADD1_PORT, &GPIO_InitStructure);
+    // GPO2/ADD2
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_GPO2ADD2_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_GPO2ADD2_PORT, &GPIO_InitStructure);
+    // GPO3/FM
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_GPO3FM_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_GPO3FM_PORT, &GPIO_InitStructure);
+    // GPO4/LD/DO
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_GPO4LDDO_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_GPO4LDDO_PORT, &GPIO_InitStructure);
+    // ENBL/GPO5
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_ENBLGPO5_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_ENBLGPO5_PORT, &GPIO_InitStructure);
+    // MODE/GPO6
+    GPIO_StructInit(&GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin     = SYNTH_MODEGPO6_PIN;
+    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
+    GPIO_Init(SYNTH_MODEGPO6_PORT, &GPIO_InitStructure);
+    // Set low
+    GPIO_ResetBits(SYNTH_MODEGPO6_PORT, SYNTH_MODEGPO6_PIN);
+}
+
+void RFFCx07x_Synth::Init(void)
 {
     /* Set initial state of GPIO pins and perform hardware reset */
-    // RESETX=0
+    // RESETX=0 (hardware reset START)
     GPIO_ResetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
     // ENX=1
     GPIO_SetBits(SYNTH_ENX_PORT, SYNTH_ENX_PIN);
@@ -47,27 +135,27 @@ void SynthInit(void)
     GPIO_ResetBits(SYNTH_SDATA_PORT, SYNTH_SDATA_PIN);
     // ENBL=0
     GPIO_ResetBits(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN);
-    // RESETX=1
+    // RESETX=1 (hardware reset END)
     GPIO_SetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
 
     /* Software Reset */
-    SynthWrite((REG_SDI_CTRL<<16) | (1<<SHIFT_RESET));      // [1] When this bit is taken high the part is reset
+    Write((REG_SDI_CTRL<<16) | (1<<SHIFT_RESET));      // [1] When this bit is taken high the part is reset
 
     /* Configure device */
     // Set GPO4 to output LOCK flag
-    SynthWrite((REG_GPO<<16) | (1<<SHIFT_LOCK));            // [0] Sends LOCK flag to GPO4
+    Write((REG_GPO<<16) | (1<<SHIFT_LOCK));            // [0] Sends LOCK flag to GPO4
     // Bypass the mixer
-    SynthWrite((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
+    Write((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
     /* Set frequency to 2450 MHz */
-    SynthSetFreq(2450000000);
+    SetFreq(2450000000);
 }
 
-void SynthEnable(bool enable)
+void RFFCx07x_Synth::SetEnabled(bool enable)
 {
     #if USE_SW_CONTROL
-        SynthWrite((REG_SDI_CTRL<<16) | (1<<SHIFT_SIPIN) |       // [15] 1=ENBL and MODE pins are ignored and become available as GPO5 and GPO6
-                                        (enable<<SHIFT_ENBL));   // [14] If sipin=1 this field will replace the functionality of the ENBL pin
+        Write((REG_SDI_CTRL<<16) | (1<<SHIFT_SIPIN) |       // [15] 1=ENBL and MODE pins are ignored and become available as GPO5 and GPO6
+                                   (enable<<SHIFT_ENBL));   // [14] If sipin=1 this field will replace the functionality of the ENBL pin
     #else
         if(enable)
             GPIO_WriteBit(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN, Bit_SET);
@@ -76,7 +164,7 @@ void SynthEnable(bool enable)
     #endif
 }
 
-void SynthWrite(uint32_t dataBits)
+void RFFCx07x_Synth::Write(uint32_t dataBits)
 {
     // Initialize count variable to zero
     uint8_t count = 0;
@@ -134,7 +222,7 @@ void SynthWrite(uint32_t dataBits)
     GPIO_ResetBits(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN);
 }
 
-void SynthSendAddress(bool write, uint8_t address)
+void RFFCx07x_Synth::SendAddress(bool write, uint8_t address)
 {
     // Initialize count variable to zero
     uint8_t count = 0;
@@ -209,7 +297,7 @@ void SynthSendAddress(bool write, uint8_t address)
     }
 }
 
-void SynthSendData(uint16_t data)
+void RFFCx07x_Synth::SendData(uint16_t data)
 {
     // Initialize count variable to zero
     uint8_t count = 0;
@@ -248,7 +336,7 @@ void SynthSendData(uint16_t data)
     GPIO_WriteBit(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN, Bit_RESET);
 }
 
-uint16_t SynthReceiveData(void)
+uint16_t RFFCx07x_Synth::ReceiveData(void)
 {
     // Initialize local variables
     uint8_t count = 0;
@@ -281,13 +369,13 @@ uint16_t SynthReceiveData(void)
     return read_data;
 }
 
-uint16_t SynthRead(uint8_t address)
+uint16_t RFFCx07x_Synth::Read(uint8_t address)
 {
-    SynthSendAddress(false, address);
-    return SynthReceiveData();
+    SendAddress(false, address);
+    return ReceiveData();
 }
 
-void SynthSetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
+void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
 {
     /* Register calculations taken from RFMD Programming Guide
     Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
@@ -300,18 +388,18 @@ void SynthSetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, ui
     if(f_vco > 3200000000)
     {
         fbkdiv      = FBKDIV_4;
-        SynthWrite((REG_LF<<16) | (1<<SHIFT_LFACT)      // Active loop filter enable, 1=active 0=passive
-                                | (32<<SHIFT_P2CPDEF)   // Charge pump setting. If p2_kv_en=1 this value sets charge pump current during KV compensation measurement. If p2_kv_en=0, this value is used at all times. Default value is 93uA.
-                                | (32<<SHIFT_P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
-                                | (3<<SHIFT_PLLCPL));   // Charge pump leakage settings
+        Write((REG_LF<<16) | (1<<SHIFT_LFACT)      // Active loop filter enable, 1=active 0=passive
+                           | (32<<SHIFT_P2CPDEF)   // Charge pump setting. If p2_kv_en=1 this value sets charge pump current during KV compensation measurement. If p2_kv_en=0, this value is used at all times. Default value is 93uA.
+                           | (32<<SHIFT_P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
+                           | (3<<SHIFT_PLLCPL));   // Charge pump leakage settings
     }
     else
     {
         fbkdiv      = FBKDIV_2;
-        SynthWrite((REG_LF<<16) | (1<<SHIFT_LFACT)      // Active loop filter enable, 1=active 0=passive
-                                | (32<<SHIFT_P2CPDEF)   // Charge pump setting. If p2_kv_en=1 this value sets charge pump current during KV compensation measurement. If p2_kv_en=0, this value is used at all times. Default value is 93uA.
-                                | (32<<SHIFT_P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
-                                | (2<<SHIFT_PLLCPL));   // Charge pump leakage settings
+        Write((REG_LF<<16) | (1<<SHIFT_LFACT)      // Active loop filter enable, 1=active 0=passive
+                           | (32<<SHIFT_P2CPDEF)   // Charge pump setting. If p2_kv_en=1 this value sets charge pump current during KV compensation measurement. If p2_kv_en=0, this value is used at all times. Default value is 93uA.
+                           | (32<<SHIFT_P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
+                           | (2<<SHIFT_PLLCPL));   // Charge pump leakage settings
     }
     float n_div     = f_vco/(float)(fbkdiv*F_REFERENCE_HZ);
     int n           = n_div;
@@ -323,33 +411,33 @@ void SynthSetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, ui
     numlsb_ref = numlsb;
 
     // Disable device
-    SynthEnable(false);
+    SetEnabled(false);
 
     // Set N divider, LO path divider and feedback divider
-    SynthWrite((REG_P1_FREQ1<<16) | (n<<SHIFT_N) |                      // Path 1 VCO divider integer value
-                                    ((int)log2(lodiv)<<SHIFT_LODIV) |   // Path 1 LO path divider setting: divide by 2^n (i.e. divide by 1 to divide by 32). 110 and 111 are reserved
-                                    ((fbkdiv>>1)<<SHIFT_PRESC));        // Path 1 VCO PLL feedback path divider setting: 01 = divide by 2, 10 = divide by 4 (00 and 11 are reserved)
-    SynthWrite((REG_P1_FREQ2<<16) | (uint16_t)nummsb);                  // Path 1 N divider numerator value, most significant 16 bits
-    SynthWrite((REG_P1_FREQ3<<16) | numlsb);                            // Path 1 N divider numerator value, least significant 8 bits
+    Write((REG_P1_FREQ1<<16) | (n<<SHIFT_N) |                      // Path 1 VCO divider integer value
+                               ((int)log2(lodiv)<<SHIFT_LODIV) |   // Path 1 LO path divider setting: divide by 2^n (i.e. divide by 1 to divide by 32). 110 and 111 are reserved
+                               ((fbkdiv>>1)<<SHIFT_PRESC));        // Path 1 VCO PLL feedback path divider setting: 01 = divide by 2, 10 = divide by 4 (00 and 11 are reserved)
+    Write((REG_P1_FREQ2<<16) | (uint16_t)nummsb);                  // Path 1 N divider numerator value, most significant 16 bits
+    Write((REG_P1_FREQ3<<16) | numlsb);                            // Path 1 N divider numerator value, least significant 8 bits
 
     /* Reset FMOD (so that the desired frequency is set if frequency modulation is/was being used)
     Note: This register sets the Frequency Deviation applied to frac-N */
-    SynthWrite((REG_FMOD<<16) | 0); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
+    Write((REG_FMOD<<16) | 0); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
 
     // Re-lock the PLL
-    SynthWrite((REG_PLL_CTRL<<16) | (1<<SHIFT_DIVBY) |  // [15] Force reference divider to divide by 1
-                                    (8<<SHIFT_TVCO) |   // [10:6] VCO warm-up time. warm-up time [s] = tvco * 1/[fref*256]
-                                    (1<<SHIFT_LDEN) |   // [5] Enable lock detector circuitry
-                                    (1<<SHIFT_RELOK));  // [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
+    Write((REG_PLL_CTRL<<16) | (1<<SHIFT_DIVBY) |  // [15] Force reference divider to divide by 1
+                               (8<<SHIFT_TVCO) |   // [10:6] VCO warm-up time. warm-up time [s] = tvco * 1/[fref*256]
+                               (1<<SHIFT_LDEN) |   // [5] Enable lock detector circuitry
+                               (1<<SHIFT_RELOK));  // [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
 
     // Enable device
-    SynthEnable(true);
+    SetEnabled(true);
 
     // Wait for lock
     while(waitForLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
 }
 
-void SynthSetFreq(uint64_t freq_Hz)
+void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz)
 {
     static uint64_t f_lo_Hz = 0;
     static uint64_t freq_prev_Hz = 0;
@@ -376,20 +464,22 @@ void SynthSetFreq(uint64_t freq_Hz)
         ((cur_fmod + fmod_step) >= fmod_lower_bound))
     {
         cur_fmod += fmod_step;
-        SynthWrite((REG_FMOD<<16) | cur_fmod); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
+        Write((REG_FMOD<<16) | cur_fmod); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
+
+        vDebugPrintf("curfmod=%d\n", cur_fmod);
     }
     /* SET FREQUENCY BY WRITING TO FREQ1, FREQ2, FREQ3 REGISTERS */
     else
     {
         // Set frequency (wait for PLL lock)
         f_lo_Hz = freq_Hz;
-        SynthSetFreqLO(f_lo_Hz, true, nummsb, numlsb);
+        SetFreqLO(f_lo_Hz, true, nummsb, numlsb);
         cur_fmod = 0; // FMOD reset to 0
         // Set optimum modulation parameters depending on frequency delta
         // Note: Frequency modulation is only used for valid frequency deltas (i.e. step sizes)
         uint8_t modstep;
         freq_delta_Hz = freq_Hz - freq_prev_Hz;
-        SynthGetModParams(freq_delta_Hz, modstep, fmod_step);
+        GetModParams(freq_delta_Hz, modstep, fmod_step);
         // Valid frequency delta
         if(fmod_step != 0)
         {
@@ -407,14 +497,16 @@ void SynthSetFreq(uint64_t freq_Hz)
                 fmod_upper_bound = ((0xFFFFFF-n_24bit) & max_fmod) >> modstep;
 
             // Enable frequency modulation
-            SynthWrite((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
-                                           (modstep<<SHIFT_MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
+            Write((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
+                                      (modstep<<SHIFT_MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
+
+            vDebugPrintf("f=%lu l=%d u=%d n=%lu modstep=%d fmod_step=%d\n", (uint32_t)freq_Hz, fmod_lower_bound, fmod_upper_bound, n_24bit, modstep, fmod_step);
         }
     }
     freq_prev_Hz = freq_Hz;
 }
 
-void SynthGetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step)
+void RFFCx07x_Synth::GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step)
 {
     /*
           Fmod = MOD * (2^MODSTEP) * step_size
@@ -422,11 +514,11 @@ void SynthGetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_st
           where     step_size  =   (Fpd * P) / (R * (2^24) * LO_DIV)
 
           where     Fpd        =   Phase detector frequency
-                    MODSTEP    =   Modulation scale factor
-                    MOD        =   Frequency deviation applied to frac-N
-                    P          =   Prescaler division ratio    (VARIABLE:   2,4)
-                    R          =   Reference division ratio    (FIXED:      1)
-                    LO_DIV     =   Low divider value           (VARIABLE:   2,4,8,16,32)
+                    MODSTEP    =   Modulation scale factor                  {0,1,2,3,4,5,6,7}
+                    MOD        =   Frequency deviation applied to frac-N    [-32768,32767]
+                    P          =   Prescaler division ratio                 {2,4}
+                    R          =   Reference division ratio                 {1}
+                    LO_DIV     =   Low divider value                        {2,4,8,16,32}
     */
 
     // Assume P=4, R=1, LO_DIV=2

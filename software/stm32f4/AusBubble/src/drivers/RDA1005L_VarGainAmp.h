@@ -3,7 +3,7 @@
 /* An open-source RF jammer designed to operate in the 2.4 GHz Wi-Fi    */
 /* frequency block.                                                     */
 /*                                                                      */
-/* VarGainAmp.cpp                                                       */
+/* RDA1005L_VarGainAmp.h                                                */
 /*                                                                      */
 /* Will Robertson <aliask@gmail.com>                                    */
 /* Nick D'Ademo <nickdademo@gmail.com>                                  */
@@ -32,71 +32,23 @@
 /*                                                                      */
 /************************************************************************/
 
-#include "VarGainAmp.h"
+#ifndef RDA1005L_VARGAINAMP_H
+#define RDA1005L_VARGAINAMP_H
 
-void VarGainAmpSetGain(double gain_dB)
+#include "Includes.h"
+
+/* Gain Limits (DO NOT MODIFY) */
+#define VARGAINAMP_MAX_GAIN_LIMIT_DB    0.0    // Permanent damage to the RF5652 may result if this value is too HIGH
+#define VARGAINAMP_MIN_GAIN_LIMIT_DB    -13.5
+#define VARGAINAMP_MAX_GAIN_DB          18.0
+
+class RDA1005L_VarGainAmp
 {
-    /* This function accepts a gain value between VARGAINAMP_MIN_GAIN_LIMIT_DB and VARGAINAMP_MAX_GAIN_LIMIT_DB
-    Note: Value is written to the amp in steps of 0.5dB */
+    public:
+        static void HWInit();
+        static void SetGain(double gain_dB);
+    private:
+        static void Write(uint8_t data);
+};
 
-    double gainRelToMaxAbs;
-    uint8_t stepN;
-
-    // Saturate gain value if out of valid range
-    // Convert gain input to gain relative to maximum (absolute value)
-    if(gain_dB>=VARGAINAMP_MAX_GAIN_LIMIT_DB)
-      gainRelToMaxAbs=0;
-    else if(gain_dB<=VARGAINAMP_MIN_GAIN_LIMIT_DB)
-      gainRelToMaxAbs=31.5;
-    else
-      gainRelToMaxAbs=fabs(gain_dB-VARGAINAMP_MAX_GAIN_DB);
-
-    // Calculate step number (0 to 63)
-    stepN = round(gainRelToMaxAbs*2.0);
-
-    // Calculate correct bit-pattern and write
-    // MAX RELATIVE GAIN: 0dB = 6b'111111
-    // MIN RELATIVE GAIN: -31.5dB = 6b'000000
-    VarGainAmpWrite((~stepN) & 0x3F);
-}
-
-void VarGainAmpWrite(uint8_t data)
-{
-    // Initialize count variable to zero
-    uint8_t count = 0;
-
-    // Pulse LE
-    GPIO_ResetBits(VARGAINAMP_LE_PORT, VARGAINAMP_LE_PIN);
-    GPIO_SetBits(VARGAINAMP_LE_PORT, VARGAINAMP_LE_PIN);
-    GPIO_ResetBits(VARGAINAMP_LE_PORT, VARGAINAMP_LE_PIN);
-
-    // Put 6 bits on DATA line (MSB first)
-    while (count < 6)
-    {
-        if (data & (0x20 >> count))
-        {
-            // DATA=1
-            GPIO_SetBits(VARGAINAMP_DATA_PORT, VARGAINAMP_DATA_PIN);
-            asm volatile("nop");
-
-            // Pulse CLK
-            GPIO_SetBits(VARGAINAMP_CLK_PORT, VARGAINAMP_CLK_PIN);
-            GPIO_ResetBits(VARGAINAMP_CLK_PORT, VARGAINAMP_CLK_PIN);
-        }
-        else
-        {
-            // DATA=0
-            GPIO_ResetBits(VARGAINAMP_DATA_PORT, VARGAINAMP_DATA_PIN);
-            asm volatile("nop");
-
-            // Pulse CLK
-            GPIO_SetBits(VARGAINAMP_CLK_PORT, VARGAINAMP_CLK_PIN);
-            GPIO_ResetBits(VARGAINAMP_CLK_PORT, VARGAINAMP_CLK_PIN);
-        }
-        count++;
-    }
-
-    // Pulse LE
-    GPIO_SetBits(VARGAINAMP_LE_PORT, VARGAINAMP_LE_PIN);
-    GPIO_ResetBits(VARGAINAMP_LE_PORT, VARGAINAMP_LE_PIN);
-}
+#endif /* VARGAINAMP_H_ */

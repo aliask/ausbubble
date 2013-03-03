@@ -3,7 +3,7 @@
 /* An open-source RF jammer designed to operate in the 2.4 GHz Wi-Fi    */
 /* frequency block.                                                     */
 /*                                                                      */
-/* Synth.h                                                              */
+/* RFFCx07x_Synth.h                                                     */
 /*                                                                      */
 /* Will Robertson <aliask@gmail.com>                                    */
 /* Nick D'Ademo <nickdademo@gmail.com>                                  */
@@ -32,11 +32,10 @@
 /*                                                                      */
 /************************************************************************/
 
-#ifndef SYNTH_H
-#define SYNTH_H
+#ifndef RFFCX07X_SYNTH_H
+#define RFFCX07X_SYNTH_H
 
 #include "Includes.h"
-#include "ScanAlgorithms.h"
 
 #define F_VCO_MAX_HZ        5400000000
 #define F_REFERENCE_HZ      26000000
@@ -129,15 +128,21 @@
 #define SHIFT_CTCLK     2
 #define SHIFT_BYPASS    1
 
-void SynthInit(void);
-void SynthEnable(bool enable);
-void SynthWrite(uint32_t dataBits);
-void SynthSendAddress(bool write, uint8_t address);
-void SynthSendData(uint16_t data);
-uint16_t SynthReceiveData();
-uint16_t SynthRead(uint8_t address);
-void SynthSetFreq(uint64_t freq_Hz);
-void SynthSetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
-void SynthGetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step);
+class RFFCx07x_Synth
+{
+    public:
+        static void HWInit(void);
+        static void Init(void);
+        static void SetEnabled(bool enable);
+        static void SetFreq(uint64_t freq_Hz);
+    private:
+        static void Write(uint32_t dataBits);
+        static void SendAddress(bool write, uint8_t address);
+        static void SendData(uint16_t data);
+        static uint16_t ReceiveData(void);
+        static uint16_t Read(uint8_t address);
+        static void SetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
+        static void GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step);
+};
 
 #endif
