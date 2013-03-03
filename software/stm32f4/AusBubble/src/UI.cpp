@@ -60,16 +60,19 @@ void UI::draw(fsmStates state)
             case HomeScreen:
                 // Draw RIGHT arrow
                 safeFont57(131, 1, 128-6);
+                // Draw screen
                 drawHomescreen();
                 break;
             case SynthScreen:
                 // Draw LEFT arrow
                 safeFont57(127, 1, 0);
+                // Draw screen
                 drawSynthMenu();
                 break;
             default:
-                // Looks like we're lost!
+                // Looks like we're lost! Set state to Disclaimer screen
                 currentState = DisclaimerScreen;
+                // Draw screen
                 drawDisclaimer();
                 break;
         }
@@ -155,7 +158,7 @@ void UI::centredString(const char *stringPointer, unsigned char line)
 void UI::toggleSetting(int index)
 {
     // Toggle flag
-    isInSetting ^= 1;
+    isInSetting ^= true;
 
     // Draw the >> icon in the appropriate location
     if(isInSetting)

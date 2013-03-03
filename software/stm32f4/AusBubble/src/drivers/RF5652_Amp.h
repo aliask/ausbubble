@@ -52,7 +52,7 @@ struct AmpDataPoint_t
 class RF5652_Amp
 {
     public:
-        static void HWInit();
+        static void HWInit(void);
         static void SetEnabled(bool enable);
     private:
         static bool enabled;

@@ -437,7 +437,7 @@ void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &num
     while(waitForLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
 }
 
-void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz)
+void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz, bool useModulation)
 {
     static uint64_t f_lo_Hz = 0;
     static uint64_t freq_prev_Hz = 0;
@@ -451,13 +451,15 @@ void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz)
     static int32_t cur_freq_delta_Hz = 0;
 
     /* FREQUENCY MODULATION */
-    // Check 1 :                                            : Is the PLL still locked?
-    // Check 2 : fmod_step != 0                             : Valid frequency delta (i.e. step size)
-    // Check 3 : (freq_Hz - freq_prev_Hz) == freq_delta_Hz  : Has frequency step size or direction changed? (i.e. are modulation setting still valid?)
-    // Check 4 : (cur_fmod + fmod_step) <= fmod_upper_bound : New modulation setting less than or equal to upper bound
-    // Check 5 : (cur_fmod + fmod_step) >= fmod_lower_bound : New modulation setting greater than or equal to lower bound
+    // Check 1 :                                            : Is frequency modulation enabled?
+    // Check 2 :                                            : Is the PLL still locked?
+    // Check 3 : fmod_step != 0                             : Valid frequency delta (i.e. step size)
+    // Check 4 : (freq_Hz - freq_prev_Hz) == freq_delta_Hz  : Has frequency step size or direction changed? (i.e. are modulation setting still valid?)
+    // Check 5 : (cur_fmod + fmod_step) <= fmod_upper_bound : New modulation setting less than or equal to upper bound
+    // Check 6 : (cur_fmod + fmod_step) >= fmod_lower_bound : New modulation setting greater than or equal to lower bound
     cur_freq_delta_Hz = freq_Hz - freq_prev_Hz;
-    if( ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) == SYNTH_GPO4LDDO_PIN) &&
+    if( useModulation &&
+        ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) == SYNTH_GPO4LDDO_PIN) &&
         (fmod_step != 0) &&
         (cur_freq_delta_Hz == freq_delta_Hz) &&
         ((cur_fmod + fmod_step) <= fmod_upper_bound) &&
@@ -472,31 +474,37 @@ void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz)
         // Set frequency (wait for PLL lock)
         f_lo_Hz = freq_Hz;
         SetFreqLO(f_lo_Hz, true, nummsb, numlsb);
-        cur_fmod = 0; // FMOD reset to 0
-        // Set optimum modulation parameters depending on frequency delta
-        // Note: Frequency modulation is only used for valid frequency deltas (i.e. step sizes)
-        uint8_t modstep;
-        freq_delta_Hz = freq_Hz - freq_prev_Hz;
-        GetModParams(freq_delta_Hz, modstep, fmod_step);
-        // Valid frequency delta
-        if(fmod_step != 0)
-        {
-            uint32_t n_24bit = (nummsb<<8) | (numlsb>>8);
-            uint32_t max_fmod = 0x7FFF << modstep; // FMOD is multiplied by 2^MODSTEP before being added to frac-N
-            // LOWER BOUND
-            if(max_fmod <= n_24bit)
-                fmod_lower_bound = -1*0x7FFF;
-            else
-                fmod_lower_bound = -1*((n_24bit & max_fmod) >> modstep);
-            // UPPER BOUND
-            if((n_24bit + max_fmod) <= 0xFFFFFF)
-                fmod_upper_bound = 0x7FFF;
-            else
-                fmod_upper_bound = ((0xFFFFFF-n_24bit) & max_fmod) >> modstep;
 
-            // Enable frequency modulation
-            Write((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
-                                      (modstep<<SHIFT_MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
+        /* Calculate modulation parameters */
+        if(useModulation)
+        {
+            // FMOD reset to 0
+            cur_fmod = 0;
+            // Set optimum modulation parameters depending on frequency delta
+            // Note: Frequency modulation is only used for valid frequency deltas (i.e. step sizes)
+            uint8_t modstep;
+            freq_delta_Hz = freq_Hz - freq_prev_Hz;
+            GetModParams(freq_delta_Hz, modstep, fmod_step);
+            // Valid frequency delta
+            if(fmod_step != 0)
+            {
+                uint32_t n_24bit = (nummsb<<8) | (numlsb>>8);
+                uint32_t max_fmod = 0x7FFF << modstep; // FMOD is multiplied by 2^MODSTEP before being added to frac-N
+                // LOWER BOUND
+                if(max_fmod <= n_24bit)
+                    fmod_lower_bound = -1*0x7FFF;
+                else
+                    fmod_lower_bound = -1*((n_24bit & max_fmod) >> modstep);
+                // UPPER BOUND
+                if((n_24bit + max_fmod) <= 0xFFFFFF)
+                    fmod_upper_bound = 0x7FFF;
+                else
+                    fmod_upper_bound = ((0xFFFFFF-n_24bit) & max_fmod) >> modstep;
+
+                // Enable frequency modulation
+                Write((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
+                                          (modstep<<SHIFT_MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
+            }
         }
     }
     freq_prev_Hz = freq_Hz;

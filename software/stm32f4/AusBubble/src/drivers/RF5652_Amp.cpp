@@ -1906,7 +1906,7 @@ const AmpDataPoint_t wifiG100duty[N_DATA_POINTS] = {
         {33.00,2484,2.173000,31.21,85}
 };
 
-void RF5652_Amp::HWInit()
+void RF5652_Amp::HWInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -1924,13 +1924,10 @@ void RF5652_Amp::HWInit()
 void RF5652_Amp::SetEnabled(bool enable)
 {
     if(enable)
-    {
         GPIO_SetBits(AMP_PENABLE_PORT, AMP_PENABLE_PIN);
-        enabled = true;
-    }
     else
-    {
         GPIO_ResetBits(AMP_PENABLE_PORT, AMP_PENABLE_PIN);
-        enabled = false;
-    }
+
+    /* Set internal flag */
+    enabled = enable;
 }

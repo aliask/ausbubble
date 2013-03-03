@@ -36,13 +36,12 @@
 #define JAMMER_H
 
 #include "Includes.h"
-
-// Standard libraries
+/* Standard libraries */
 #include <stdlib.h>
-// FreeRTOS
+/* FreeRTOS */
 #include "FreeRTOS.h"
 #include "task.h"
-// Peripheral libraries
+/* Peripheral libraries */
 #include "RDA1005L_VarGainAmp.h"
 #include "RFFCx07x_Synth.h"
 #include "RF5652_Amp.h"
@@ -71,11 +70,11 @@ struct jamSettings_t {
 class Jammer
 {
     public:
-        static void Init();
+        static void Init(void);
         static void SetEnabled(bool enable);
-        static bool isEnabled();
+        static bool isEnabled(void);
         static void SetUpdateRate(uint16_t updateRate_Hz);
-        static void Advance();
+        static void Advance(void);
         static struct jamSettings_t settings;
     private:
         static bool enabled;

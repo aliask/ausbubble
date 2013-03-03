@@ -134,7 +134,7 @@ class RFFCx07x_Synth
         static void HWInit(void);
         static void Init(void);
         static void SetEnabled(bool enable);
-        static void SetFreq(uint64_t freq_Hz);
+        static void SetFreq(uint64_t freq_Hz, bool useModulation=false);
     private:
         static void Write(uint32_t dataBits);
         static void SendAddress(bool write, uint8_t address);
