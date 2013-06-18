@@ -134,14 +134,14 @@ class RFFCx07x_Synth
         static void HWInit(void);
         static void Init(void);
         static void SetEnabled(bool enable);
-        static void SetFreq(uint64_t freq_Hz, bool useModulation=false);
+        static void SetFreq(uint64_t freq_Hz, bool waitForPLLLock=false, bool useModulation=false);
     private:
         static void Write(uint32_t dataBits);
         static void SendAddress(bool write, uint8_t address);
         static void SendData(uint16_t data);
         static uint16_t ReceiveData(void);
         static uint16_t Read(uint8_t address);
-        static void SetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
+        static void SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
         static void GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step);
 };
 

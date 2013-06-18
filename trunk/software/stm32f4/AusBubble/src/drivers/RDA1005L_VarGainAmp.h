@@ -38,9 +38,10 @@
 #include "Includes.h"
 
 /* Gain Limits (DO NOT MODIFY) */
-#define VARGAINAMP_MAX_GAIN_LIMIT_DB    0.0    // Permanent damage to the RF5652 may result if this value is too HIGH
+#define VARGAINAMP_MAX_GAIN_LIMIT_DB    8.0     // Permanent damage to the final-stage amplifier may result if this value is too HIGH (check input power limits in datasheet)
 #define VARGAINAMP_MIN_GAIN_LIMIT_DB    -13.5
-#define VARGAINAMP_MAX_GAIN_DB          18.0
+#define VARGAINAMP_MAX_GAIN_DB          18.0    // Maximum rated gain of amplifier
+#define VARGAINAMP_MIN_GAIN_DB          -13.5   // Minimum rated gain of amplifier
 
 class RDA1005L_VarGainAmp
 {
@@ -51,4 +52,4 @@ class RDA1005L_VarGainAmp
         static void Write(uint8_t data);
 };
 
-#endif /* VARGAINAMP_H_ */
+#endif

@@ -147,8 +147,8 @@ void RFFCx07x_Synth::Init(void)
     // Bypass the mixer
     Write((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
-    /* Set frequency to 2450 MHz */
-    SetFreq(2450000000);
+    /* Set frequency to 2450 MHz (wait for PLL lock) */
+    SetFreq(2450000000, true);
 }
 
 void RFFCx07x_Synth::SetEnabled(bool enable)
@@ -375,7 +375,7 @@ uint16_t RFFCx07x_Synth::Read(uint8_t address)
     return ReceiveData();
 }
 
-void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
+void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
 {
     /* Register calculations taken from RFMD Programming Guide
     Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
@@ -433,11 +433,11 @@ void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForLock, uint16_t &num
     // Enable device
     SetEnabled(true);
 
-    // Wait for lock
-    while(waitForLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
+    // Wait for PLL lock
+    while(waitForPLLLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
 }
 
-void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz, bool useModulation)
+void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz, bool waitForPLLLock, bool useModulation)
 {
     static uint64_t f_lo_Hz = 0;
     static uint64_t freq_prev_Hz = 0;
@@ -471,9 +471,9 @@ void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz, bool useModulation)
     /* SET FREQUENCY BY WRITING TO FREQ1, FREQ2, FREQ3 REGISTERS */
     else
     {
-        // Set frequency (wait for PLL lock)
+        // Set frequency
         f_lo_Hz = freq_Hz;
-        SetFreqLO(f_lo_Hz, true, nummsb, numlsb);
+        SetFreqLO(f_lo_Hz, waitForPLLLock, nummsb, numlsb);
 
         /* Calculate modulation parameters */
         if(useModulation)

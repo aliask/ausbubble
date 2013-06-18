@@ -121,7 +121,6 @@ void Jammer::Advance(void)
             else
                 newFreq = settings.start;
             break;
-
         case ScanTriangle:
             /* Current direction is UP */
             if(direction == Up)
@@ -135,7 +134,6 @@ void Jammer::Advance(void)
                     newFreq = settings.stop;
                     direction = Down;
                 }
-
             }
             /* Current direction is DOWN */
             else
@@ -151,7 +149,6 @@ void Jammer::Advance(void)
                 }
             }
             break;
-
         case ScanRandom:
             /* Wait until one RNG number is ready */
             while(RNG_GetFlagStatus(RNG_FLAG_DRDY)== RESET);
@@ -160,7 +157,6 @@ void Jammer::Advance(void)
             /* Get random number between START and STOP frequency range */
             newFreq = settings.start + (uint32_t)(((float) random32bit / (float) UINT32_MAX)*(settings.stop - settings.start));
             break;
-
         default:
             newFreq = freq;
             break;
@@ -169,7 +165,7 @@ void Jammer::Advance(void)
     /* Set synthesizer frequency (if different to current frequency) */
     if(newFreq != freq)
     {
-        RFFCx07x_Synth::SetFreq(newFreq);
+        RFFCx07x_Synth::SetFreq(newFreq, true, false);  // Wait for PLL lock, Frequency modulation OFF
         freq = newFreq;
     }
 }
