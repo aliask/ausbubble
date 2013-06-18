@@ -89,12 +89,13 @@ void RDA1005L_VarGainAmp::SetGain(double gain_dB)
     double gainRelToMaxAbs;
     uint8_t stepN;
 
-    // Saturate gain value if out of valid range
-    // Convert gain input to gain relative to maximum (absolute value)
+    /* Convert gain input to gain relative to maximum (absolute value) */
+    // Saturate gain value if HIGHER than defined limit
     if(gain_dB >= VARGAINAMP_MAX_GAIN_LIMIT_DB)
-      gainRelToMaxAbs=0;
+      gainRelToMaxAbs=VARGAINAMP_MAX_GAIN_DB-VARGAINAMP_MAX_GAIN_LIMIT_DB;
+    // Saturate gain value if LOWER than defined limit
     else if(gain_dB <= VARGAINAMP_MIN_GAIN_LIMIT_DB)
-      gainRelToMaxAbs=31.5;
+      gainRelToMaxAbs=-1*(VARGAINAMP_MIN_GAIN_DB-VARGAINAMP_MAX_GAIN_DB);
     else
       gainRelToMaxAbs=fabs(gain_dB-VARGAINAMP_MAX_GAIN_DB);
 
