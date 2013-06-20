@@ -329,6 +329,7 @@ void UI::doSynthMin(buttonStates action)
                 Jammer::settings.start += FREQ_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", Jammer::settings.start / 1000000.0f);
                 safeString(menuText, 2, 14);
+                showChannelHint_Start(Jammer::settings.start, 500);
             }
             break;
         case ButtonDown:
@@ -337,12 +338,14 @@ void UI::doSynthMin(buttonStates action)
                 Jammer::settings.start -= FREQ_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", Jammer::settings.start / 1000000.0f);
                 safeString(menuText, 2, 14);
+                showChannelHint_Start(Jammer::settings.start, 500);
             }
             else
             {
                 Jammer::settings.start = MIN_FREQ_HZ;
                 snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", Jammer::settings.start / 1000000.0f);
                 safeString(menuText, 2, 14);
+                showChannelHint_Start(Jammer::settings.start, 500);
             }
             break;
         case ButtonSelect:
@@ -366,12 +369,14 @@ void UI::doSynthMax(buttonStates action)
                 Jammer::settings.stop += FREQ_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", Jammer::settings.stop / 1000000.0f);
                 safeString(menuText, 3, 14);
+                showChannelHint_Stop(Jammer::settings.stop, 500);
             }
             else
             {
                 Jammer::settings.stop = MAX_FREQ_HZ;
                 snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", Jammer::settings.stop / 1000000.0f);
                 safeString(menuText, 3, 14);
+                showChannelHint_Stop(Jammer::settings.stop, 500);
             }
             break;
         case ButtonDown:
@@ -380,6 +385,7 @@ void UI::doSynthMax(buttonStates action)
                 Jammer::settings.stop -= FREQ_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", Jammer::settings.stop / 1000000.0f);
                 safeString(menuText, 3, 14);
+                showChannelHint_Stop(Jammer::settings.stop, 500);
             }
             break;
         case ButtonSelect:
@@ -611,4 +617,212 @@ void UI::doHomeScreen(buttonStates action)
     }
 }
 
+void UI::showChannelHint_Start(uint64_t freq_Hz, int duration_ms)
+{
+    switch(freq_Hz)
+    {
+        // CH1
+        case 2401000000:
+            UI::splash("Ch 1 (b: 22M BW)", duration_ms);
+            break;
+        case 2402000000:
+            UI::splash("Ch 1 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH2
+        case 2404000000:
+            UI::splash("Ch 2 (b: 22M BW)", duration_ms);
+            break;
+        case 2405000000:
+            UI::splash("Ch 2 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH3
+        case 2411000000:
+            UI::splash("Ch 3 (b: 22M BW)", duration_ms);
+            break;
+        case 2412000000:
+            UI::splash("Ch 3 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH4
+        case 2416000000:
+            UI::splash("Ch 4 (b: 22M BW)", duration_ms);
+            break;
+        case 2417000000:
+            UI::splash("Ch 4 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH5
+        case 2421000000:
+            UI::splash("Ch 5 (b: 22M BW)", duration_ms);
+            break;
+        case 2422000000:
+            UI::splash("Ch 5 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH6
+        case 2426000000:
+            UI::splash("Ch 6 (b: 22M BW)", duration_ms);
+            break;
+        case 2427000000:
+            UI::splash("Ch 6 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH7
+        case 2431000000:
+            UI::splash("Ch 7 (b: 22M BW)", duration_ms);
+            break;
+        case 2432000000:
+            UI::splash("Ch 7 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH8
+        case 2436000000:
+            UI::splash("Ch 8 (b: 22M BW)", duration_ms);
+            break;
+        case 2437000000:
+            UI::splash("Ch 8 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH9
+        case 2441000000:
+            UI::splash("Ch 9 (b: 22M BW)", duration_ms);
+            break;
+        case 2442000000:
+            UI::splash("Ch 9 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH10
+        case 2446000000:
+            UI::splash("Ch 10 (b: 22M BW)", duration_ms);
+            break;
+        case 2447000000:
+            UI::splash("Ch 10 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH11
+        case 2451000000:
+            UI::splash("Ch 11 (b: 22M BW)", duration_ms);
+            break;
+        case 2452000000:
+            UI::splash("Ch 11 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH12
+        case 2456000000:
+            UI::splash("Ch 12 (b: 22M BW)", duration_ms);
+            break;
+        case 2457000000:
+            UI::splash("Ch 12 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH13
+        case 2461000000:
+            UI::splash("Ch 13 (b: 22M BW)", duration_ms);
+            break;
+        case 2462000000:
+            UI::splash("Ch 13 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH14
+        case 2473000000:
+            UI::splash("Ch 14 (b: 22M BW)", duration_ms);
+            break;
+        case 2474000000:
+            UI::splash("Ch 14 (g/n: 20M BW)", duration_ms);
+            break;
+    }
+}
 
+void UI::showChannelHint_Stop(uint64_t freq_Hz, int duration_ms)
+{
+    switch(freq_Hz)
+    {
+        // CH1
+        case 2423000000:
+            UI::splash("Ch 1 (b: 22M BW)", duration_ms);
+            break;
+        case 2422000000:
+            UI::splash("Ch 1 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH2
+        case 2428000000:
+            UI::splash("Ch 2 (b: 22M BW)", duration_ms);
+            break;
+        case 2427000000:
+            UI::splash("Ch 2 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH3
+        case 2433000000:
+            UI::splash("Ch 3 (b: 22M BW)", duration_ms);
+            break;
+        case 2432000000:
+            UI::splash("Ch 3 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH4
+        case 2438000000:
+            UI::splash("Ch 4 (b: 22M BW)", duration_ms);
+            break;
+        case 2437000000:
+            UI::splash("Ch 4 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH5
+        case 2443000000:
+            UI::splash("Ch 5 (b: 22M BW)", duration_ms);
+            break;
+        case 2442000000:
+            UI::splash("Ch 5 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH6
+        case 2448000000:
+            UI::splash("Ch 6 (b: 22M BW)", duration_ms);
+            break;
+        case 2447000000:
+            UI::splash("Ch 6 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH7
+        case 2453000000:
+            UI::splash("Ch 7 (b: 22M BW)", duration_ms);
+            break;
+        case 2452000000:
+            UI::splash("Ch 7 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH8
+        case 2458000000:
+            UI::splash("Ch 8 (b: 22M BW)", duration_ms);
+            break;
+        case 2457000000:
+            UI::splash("Ch 8 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH9
+        case 2463000000:
+            UI::splash("Ch 9 (b: 22M BW)", duration_ms);
+            break;
+        case 2462000000:
+            UI::splash("Ch 9 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH10
+        case 2468000000:
+            UI::splash("Ch 10 (b: 22M BW)", duration_ms);
+            break;
+        case 2467000000:
+            UI::splash("Ch 10 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH11
+        case 2473000000:
+            UI::splash("Ch 11 (b: 22M BW)", duration_ms);
+            break;
+        case 2472000000:
+            UI::splash("Ch 11 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH12
+        case 2478000000:
+            UI::splash("Ch 12 (b: 22M BW)", duration_ms);
+            break;
+        case 2477000000:
+            UI::splash("Ch 12 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH13
+        case 2483000000:
+            UI::splash("Ch 13 (b: 22M BW)", duration_ms);
+            break;
+        case 2482000000:
+            UI::splash("Ch 13 (g/n: 20M BW)", duration_ms);
+            break;
+        // CH14
+        case 2495000000:
+            UI::splash("Ch 14 (b: 22M BW)", duration_ms);
+            break;
+        case 2494000000:
+            UI::splash("Ch 14 (g/n: 20M BW)", duration_ms);
+            break;
+    }
+}
