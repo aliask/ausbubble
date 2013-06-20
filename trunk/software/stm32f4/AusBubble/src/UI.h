@@ -82,6 +82,8 @@ class UI
         static void doStepSize(buttonStates action);
         static void doSynthMenu(buttonStates action);
         static void doHomeScreen(buttonStates action);
+        static void showChannelHint_Start(uint64_t freq_Hz, int duration_ms);
+        static void showChannelHint_Stop(uint64_t freq_Hz, int duration_ms);
         static int cursorPos;
         static bool isInSetting;
         static bool isSplashActive;
