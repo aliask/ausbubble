@@ -65,6 +65,7 @@
 #define FREQ_STEP_HZ        500000
 #define RATE_STEP_HZ        1
 #define DISP_MAX            2
+#define UI_DRAW_COUNT_MAX   500
 /* Button behaviour */
 #define TICK_RATE_1         200     // Slowest
 #define TICK_RATE_2         100
@@ -84,6 +85,7 @@
 #define STEP_250K_HZ        250000
 #define STEP_500K_HZ        500000
 #define STEP_1M_HZ          1000000
+#define STEP_NONE           0
 
 /* Scan settings defaults */
 #define SCAN_SETTINGS_DEFAULT_START_FREQ_HZ     2400000000      /* DO NOT MODIFY */
@@ -184,5 +186,18 @@ extern float VBATVoltage;
 
 /* RTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds);
+
+/* Structure definitions */
+struct Stats
+{
+    /* System */
+    bool heartbeat;
+    /* Battery */
+    int batteryLevel;
+    bool isCharging;
+    /* Jammer */
+    bool isPLLLocked;
+    bool isJamming;
+};
 
 #endif

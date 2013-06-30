@@ -61,6 +61,7 @@ __IO uint16_t gADC3ConvertedValue = 0;
 float gPDETVoltage;
 float TCelsius;
 float VBATVoltage;
+Stats stats;
 
 /* Function Prototypes */
 void prvSetupHardware(void);
@@ -83,10 +84,15 @@ void vHeartbeatTask(void *pvParameters)
 
     while(1)
     {
+        /* Toggle LED */
         if(toggle ^= true)
             GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_RESET);
         else
             GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_SET);
+        /* Update statistics structure */
+        stats.heartbeat = toggle;
+        UI::updateStatsData(stats);
+        /* Sleep */
         DelayMS(500);
     }
 }
@@ -98,6 +104,7 @@ void vUITask(void *pvParameters)
     uint8_t buttonState = ButtonNone;
     uint8_t buttonState_prev = ButtonNone;
     uint32_t debounceCount = 0;
+    uint32_t drawCount = 0;
     int tickRate = TICK_INITIALRATE;
     uint32_t holdCount = 0;
     bool buttonReleased = false;
@@ -118,6 +125,20 @@ void vUITask(void *pvParameters)
             debounceCount++;
         else
             debounceCount=0;
+
+        if(drawCount < UI_DRAW_COUNT_MAX)
+            drawCount++;
+        else
+        {
+            /* Re-draw everything if we're on the home screen */
+            if(UI::currentState == HomeScreen)
+                UI::draw(HomeScreen);
+            /* Just draw the header otherwise */
+            else
+                UI::drawHeader();
+            /* Reset count */
+            drawCount = 0;
+        }
 
         /* Has button state been stable long enough? (de-bouncing) */
         if(debounceCount >= DEBOUNCE_COUNT)
@@ -202,8 +223,8 @@ void vUITask(void *pvParameters)
     }
 }
 
-/* Read/save the various analog inputs */
-void vADCTask(void *pvParameters)
+/* Read/save various run-time statistics */
+void vStatsTask(void *pvParameters)
 {
     /* Local variables */
     uint32_t ADC1ConvertedVoltage0 = 0;
@@ -222,11 +243,16 @@ void vADCTask(void *pvParameters)
         Vsense = (float)(ADC1ConvertedVoltage1 / 1000.0);
         TCelsius = ((Vsense - V25) / AVG_SLOPE) + 25.0 ;
         /* 4. TODO: RF Amplifier Thermistor */
+        /* 5. TODO: Battery parameters (via I2C) */
 
-        /* Re-draw home screen */
-        if(UI::currentState == HomeScreen)
-            UI::draw(HomeScreen);
+        /* Update statistics structure */
+        stats.batteryLevel = 75;
+        stats.isCharging = false;
+        stats.isJamming = Jammer::isEnabled();
+        stats.isPLLLocked = RFFCx07x_Synth::isPLLLocked();
+        UI::updateStatsData(stats);
 
+        /* Sleep */
         DelayMS(250);
     }
 }
@@ -240,6 +266,7 @@ void vJammingTask(void *pvParameters)
         {
             /* Update synthesizer frequency */
             Jammer::Advance();
+
             /* Clear timer flag */
             TIM_ClearFlag(TIM2, TIM_IT_Update);
         }
@@ -275,7 +302,7 @@ int main(void)
                 NULL,
                 tskIDLE_PRIORITY + 2,
                 NULL);
-    xTaskCreate(vADCTask,
+    xTaskCreate(vStatsTask,
                 (signed portCHAR *)"vADCTask",
                 512,
                 NULL,
