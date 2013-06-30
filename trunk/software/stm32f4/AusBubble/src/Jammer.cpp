@@ -56,7 +56,7 @@ void Jammer::SetEnabled(bool enable)
     if(enable)
     {
         /* Enable amplifier */
-        RF5652_Amp::SetEnabled(true);
+        RFPA5201_Amp::SetEnabled(true);
         /* Set gain to maximum allowable */
         RDA1005L_VarGainAmp::SetGain(VARGAINAMP_MAX_GAIN_LIMIT_DB);
         /* Enable synthesizer */
@@ -72,7 +72,7 @@ void Jammer::SetEnabled(bool enable)
         /* Set gain to minimum allowable */
         RDA1005L_VarGainAmp::SetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
         /* Disable amplifier */
-        RF5652_Amp::SetEnabled(false);
+        RFPA5201_Amp::SetEnabled(false);
 
         /* TIM IT disable */
         TIM_ITConfig(TIM2, TIM_IT_Update, DISABLE);
