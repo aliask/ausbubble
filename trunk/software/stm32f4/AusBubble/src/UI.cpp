@@ -39,6 +39,39 @@ int UI::cursorPos = 0;
 fsmStates UI::currentState = DisclaimerScreen;
 bool UI::isInSetting = false;
 bool UI::isSplashActive = false;
+Stats UI::stats;
+
+void UI::updateStatsData(Stats input)
+{
+    /* System */
+    UI::stats.heartbeat = input.heartbeat;
+    /* Battery */
+    UI::stats.batteryLevel = input.batteryLevel;
+    UI::stats.isCharging = input.isCharging;
+    /* Jammer */
+    UI::stats.isJamming = input.isJamming;
+    UI::stats.isPLLLocked = input.isPLLLocked;
+}
+
+void UI::drawHeader(void)
+{
+    SSD1306_OLED::fillBlock(0x00, 0, 0, 0, 128);
+
+    centredString("AusBubble", 0);
+
+    if(stats.isJamming)
+        safeFont57(138, 0, 5);
+
+    if(stats.isPLLLocked)
+        safeFont57(139, 0, 13);
+    else
+        safeFont57(140, 0, 13);
+
+    if(stats.heartbeat)
+        safeFont57(141, 0, 20);
+
+    SSD1306_OLED::drawBatt(stats.batteryLevel,97,0);
+}
 
 void UI::draw(fsmStates state)
 {
@@ -47,33 +80,34 @@ void UI::draw(fsmStates state)
 
     if(!isSplashActive)
     {
+        /* Clear entire screen */
         SSD1306_OLED::fillScreen(0x00);
 
-        SSD1306_OLED::drawFrame();
-        centredString(" AusBubble ", 0);
+        /* Draw header */
+        UI::drawHeader();
 
         switch(state)
         {
             case DisclaimerScreen:
-                drawDisclaimer();
+                drawDisclaimerScreen();
                 break;
             case HomeScreen:
-                // Draw RIGHT arrow
+                /* Draw RIGHT arrow */
                 safeFont57(131, 1, 128-6);
-                // Draw screen
-                drawHomescreen();
+                /* Draw screen */
+                drawHomeScreen();
                 break;
-            case SynthScreen:
-                // Draw LEFT arrow
+            case JammerScreen:
+                /* Draw LEFT arrow */
                 safeFont57(127, 1, 0);
-                // Draw screen
-                drawSynthMenu();
+                /* Draw screen */
+                drawJammerScreen();
                 break;
             default:
-                // Looks like we're lost! Set state to Disclaimer screen
+                /* Looks like we're lost! Set state to Disclaimer screen */
                 currentState = DisclaimerScreen;
-                // Draw screen
-                drawDisclaimer();
+                /* Draw screen */
+                drawDisclaimerScreen();
                 break;
         }
     }
@@ -122,8 +156,8 @@ void UI::doMenu(int buttons)
         case DisclaimerScreen:
             doDisclaimer(action);
             break;
-        case SynthScreen:
-            doSynthMenu(action);
+        case JammerScreen:
+            doJammerScreen(action);
             break;
         case HomeScreen:
             doHomeScreen(action);
@@ -178,7 +212,7 @@ void UI::setToggle(bool state)
     isInSetting = state;
 }
 
-void UI::drawStep(int line, double stepSize)
+void UI::drawJammerStep(int line, double stepSize)
 {
     if(stepSize == STEP_1K_HZ)
         safeString("Step Size:   1 kHz", line, 14);
@@ -196,9 +230,11 @@ void UI::drawStep(int line, double stepSize)
         safeString("Step Size: 500 kHz", line, 14);
     else if(stepSize == STEP_1M_HZ)
         safeString("Step Size:   1 MHz", line, 14);
+    else if(stepSize == STEP_NONE)
+        safeString("Step Size:    None", line, 14);
 }
 
-void UI::drawAlgorithm(int line, ScanAlgorithms_t algorithm)
+void UI::drawJammerAlgorithm(int line, ScanAlgorithms_t algorithm)
 {
     switch(algorithm)
     {
@@ -214,7 +250,7 @@ void UI::drawAlgorithm(int line, ScanAlgorithms_t algorithm)
     }
 }
 
-void UI::drawDisclaimer()
+void UI::drawDisclaimerScreen()
 {
     const char* disclaimer1 = "Use of this device is";
     const char* disclaimer2 = "subject to terms &   ";
@@ -247,11 +283,11 @@ void UI::drawDisclaimer()
     }
 }
 
-void UI::drawHomescreen()
+void UI::drawHomeScreen()
 {
     char menuText[21];
 
-    centredString("Home Screen", 1);
+    centredString("Home", 1);
 
     snprintf(menuText, sizeof(menuText), "Battery:  %d%%", 15);
     safeString(menuText, 3, 14);
@@ -263,11 +299,11 @@ void UI::drawHomescreen()
     safeString(menuText, 6, 14);
 }
 
-void UI::drawSynthMenu()
+void UI::drawJammerScreen()
 {
     char menuText[21];
 
-    centredString("Synth Settings", 1);
+    centredString("Jammer Settings", 1);
 
     snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", (float) (Jammer::settings.start / 1000000.0f));
     safeString(menuText, 2, 14);
@@ -275,8 +311,8 @@ void UI::drawSynthMenu()
     snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", (float) (Jammer::settings.stop / 1000000.0f));
     safeString(menuText, 3, 14);
 
-    drawAlgorithm(4, Jammer::settings.algorithm);
-    drawStep(5, Jammer::settings.stepSize);
+    drawJammerAlgorithm(4, Jammer::settings.algorithm);
+    drawJammerStep(5, Jammer::settings.stepSize);
 
     snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", Jammer::settings.rate);
     safeString(menuText, 6, 14);
@@ -293,11 +329,11 @@ void UI::doDisclaimer(buttonStates action)
     {
         case ButtonUp:
             cursorPos = 0;
-            drawDisclaimer();
+            drawDisclaimerScreen();
             break;
         case ButtonDown:
             cursorPos = 1;
-            drawDisclaimer();
+            drawDisclaimerScreen();
             break;
         case ButtonLeft:
             break;
@@ -317,7 +353,7 @@ void UI::doDisclaimer(buttonStates action)
     }
 }
 
-void UI::doSynthMin(buttonStates action)
+void UI::doJammerFreqStart(buttonStates action)
 {
     char menuText[21];
 
@@ -357,7 +393,7 @@ void UI::doSynthMin(buttonStates action)
     }
 }
 
-void UI::doSynthMax(buttonStates action)
+void UI::doJammerFreqStop(buttonStates action)
 {
     char menuText[21];
 
@@ -397,7 +433,7 @@ void UI::doSynthMax(buttonStates action)
     }
 }
 
-void UI::doRate(buttonStates action)
+void UI::doJammerRate(buttonStates action)
 {
     char menuText[21];
 
@@ -434,7 +470,7 @@ void UI::doRate(buttonStates action)
     }
 }
 
-void UI::doAlgorithm(buttonStates action)
+void UI::doJammerAlgorithm(buttonStates action)
 {
     switch(action)
     {
@@ -448,15 +484,18 @@ void UI::doAlgorithm(buttonStates action)
             {
                 case ScanSawtooth:
                     Jammer::settings.algorithm = ScanRandom;
-                    drawAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerStep(5, STEP_NONE);
                     break;
                 case ScanTriangle:
                     Jammer::settings.algorithm = ScanSawtooth;
-                    drawAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerStep(5, SCAN_SETTINGS_DEFAULT_STEPSIZE);
                     break;
                 case ScanRandom:
                     Jammer::settings.algorithm = ScanTriangle;
-                    drawAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerStep(5, SCAN_SETTINGS_DEFAULT_STEPSIZE);
                     break;
             }
             break;
@@ -464,16 +503,19 @@ void UI::doAlgorithm(buttonStates action)
             switch(Jammer::settings.algorithm)
             {
                 case ScanSawtooth:
-                    drawAlgorithm(4,Jammer::settings.algorithm);
                     Jammer::settings.algorithm = ScanTriangle;
+                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerStep(5, SCAN_SETTINGS_DEFAULT_STEPSIZE);
                     break;
                 case ScanTriangle:
-                    drawAlgorithm(4,Jammer::settings.algorithm);
                     Jammer::settings.algorithm = ScanRandom;
+                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerStep(5, STEP_NONE);
                     break;
                 case ScanRandom:
-                    drawAlgorithm(4,Jammer::settings.algorithm);
                     Jammer::settings.algorithm = ScanSawtooth;
+                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
+                    drawJammerStep(5, SCAN_SETTINGS_DEFAULT_STEPSIZE);
                     break;
             }
             break;
@@ -482,7 +524,7 @@ void UI::doAlgorithm(buttonStates action)
     }
 }
 
-void UI::doStepSize(buttonStates action)
+void UI::doJammerStepSize(buttonStates action)
 {
     switch(action)
     {
@@ -492,47 +534,55 @@ void UI::doStepSize(buttonStates action)
             toggleSetting(cursorPos);
             break;
         case ButtonUp:
-            // Step forwards through the cycle
-            if(Jammer::settings.stepSize == STEP_1K_HZ)
-                Jammer::settings.stepSize = STEP_10K_HZ;
-            else if(Jammer::settings.stepSize == STEP_10K_HZ)
-                Jammer::settings.stepSize = STEP_25K_HZ;
-            else if(Jammer::settings.stepSize == STEP_25K_HZ)
-                Jammer::settings.stepSize = STEP_50K_HZ;
-            else if(Jammer::settings.stepSize == STEP_50K_HZ)
-                Jammer::settings.stepSize = STEP_100K_HZ;
-            else if(Jammer::settings.stepSize == STEP_100K_HZ)
-                Jammer::settings.stepSize = STEP_250K_HZ;
-            else if(Jammer::settings.stepSize == STEP_250K_HZ)
-                Jammer::settings.stepSize = STEP_500K_HZ;
-            else if(Jammer::settings.stepSize == STEP_500K_HZ)
-                Jammer::settings.stepSize = STEP_1M_HZ;
-            drawStep(5,Jammer::settings.stepSize);
+            /* Only toggle step size if algorithm is not set to RANDOM */
+            if(Jammer::settings.algorithm != ScanRandom)
+            {
+                // Step forwards through the cycle
+                if(Jammer::settings.stepSize == STEP_1K_HZ)
+                    Jammer::settings.stepSize = STEP_10K_HZ;
+                else if(Jammer::settings.stepSize == STEP_10K_HZ)
+                    Jammer::settings.stepSize = STEP_25K_HZ;
+                else if(Jammer::settings.stepSize == STEP_25K_HZ)
+                    Jammer::settings.stepSize = STEP_50K_HZ;
+                else if(Jammer::settings.stepSize == STEP_50K_HZ)
+                    Jammer::settings.stepSize = STEP_100K_HZ;
+                else if(Jammer::settings.stepSize == STEP_100K_HZ)
+                    Jammer::settings.stepSize = STEP_250K_HZ;
+                else if(Jammer::settings.stepSize == STEP_250K_HZ)
+                    Jammer::settings.stepSize = STEP_500K_HZ;
+                else if(Jammer::settings.stepSize == STEP_500K_HZ)
+                    Jammer::settings.stepSize = STEP_1M_HZ;
+                drawJammerStep(5,Jammer::settings.stepSize);
+            }
             break;
         case ButtonDown:
-            // Step backwards through the cycle
-            if(Jammer::settings.stepSize == STEP_1M_HZ)
-                Jammer::settings.stepSize = STEP_500K_HZ;
-            else if(Jammer::settings.stepSize == STEP_500K_HZ)
-                Jammer::settings.stepSize = STEP_250K_HZ;
-            else if(Jammer::settings.stepSize == STEP_250K_HZ)
-                Jammer::settings.stepSize = STEP_100K_HZ;
-            else if(Jammer::settings.stepSize == STEP_100K_HZ)
-                Jammer::settings.stepSize = STEP_50K_HZ;
-            else if(Jammer::settings.stepSize == STEP_50K_HZ)
-                Jammer::settings.stepSize = STEP_25K_HZ;
-            else if(Jammer::settings.stepSize == STEP_25K_HZ)
-                Jammer::settings.stepSize = STEP_10K_HZ;
-            else if(Jammer::settings.stepSize == STEP_10K_HZ)
-                Jammer::settings.stepSize = STEP_1K_HZ;
-            drawStep(5,Jammer::settings.stepSize);
+            /* Only toggle step size if algorithm is not set to RANDOM */
+            if(Jammer::settings.algorithm != ScanRandom)
+            {
+                // Step backwards through the cycle
+                if(Jammer::settings.stepSize == STEP_1M_HZ)
+                    Jammer::settings.stepSize = STEP_500K_HZ;
+                else if(Jammer::settings.stepSize == STEP_500K_HZ)
+                    Jammer::settings.stepSize = STEP_250K_HZ;
+                else if(Jammer::settings.stepSize == STEP_250K_HZ)
+                    Jammer::settings.stepSize = STEP_100K_HZ;
+                else if(Jammer::settings.stepSize == STEP_100K_HZ)
+                    Jammer::settings.stepSize = STEP_50K_HZ;
+                else if(Jammer::settings.stepSize == STEP_50K_HZ)
+                    Jammer::settings.stepSize = STEP_25K_HZ;
+                else if(Jammer::settings.stepSize == STEP_25K_HZ)
+                    Jammer::settings.stepSize = STEP_10K_HZ;
+                else if(Jammer::settings.stepSize == STEP_10K_HZ)
+                    Jammer::settings.stepSize = STEP_1K_HZ;
+                drawJammerStep(5,Jammer::settings.stepSize);
+            }
             break;
         default:
             break;
     }
 }
 
-void UI::doSynthMenu(buttonStates action)
+void UI::doJammerScreen(buttonStates action)
 {
     // We're in a setting, let's handle the key press depending on which one
     if(isInSetting)
@@ -540,19 +590,19 @@ void UI::doSynthMenu(buttonStates action)
         switch(cursorPos)
         {
             case 0:
-                doSynthMin(action);
+                doJammerFreqStart(action);
                 break;
             case 1:
-                doSynthMax(action);
+                doJammerFreqStop(action);
                 break;
             case 2:
-                doAlgorithm(action);
+                doJammerAlgorithm(action);
                 break;
             case 3:
-                doStepSize(action);
+                doJammerStepSize(action);
                 break;
             case 4:
-                doRate(action);
+                doJammerRate(action);
                 break;
             default:
                 break;
@@ -610,7 +660,7 @@ void UI::doHomeScreen(buttonStates action)
             break;
         case ButtonRight:
             cursorPos = 0;
-            UI::draw(SynthScreen);
+            UI::draw(JammerScreen);
             break;
         default:
             break;

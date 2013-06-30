@@ -135,6 +135,7 @@ class RFFCx07x_Synth
         static void Init(void);
         static void SetEnabled(bool enable);
         static void SetFreq(uint64_t freq_Hz, bool waitForPLLLock=false, bool useModulation=false);
+        static bool isPLLLocked(void);
     private:
         static void Write(uint32_t dataBits);
         static void SendAddress(bool write, uint8_t address);

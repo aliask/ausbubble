@@ -337,16 +337,16 @@ void SSD1306_OLED::fillScreen(unsigned char data)
 }
 
 /* Fill a specified block with a particular data pattern */
-void SSD1306_OLED::fillBlock(unsigned char data, unsigned char a, unsigned char b, unsigned char c, unsigned char d)
+void SSD1306_OLED::fillBlock(unsigned char data, unsigned char startRow, unsigned char endRow, unsigned char startCol, unsigned char endCol)
 {
     unsigned char i,j;
 
-    for(i=a;i<(b+1);i++)
+    for(i=startRow;i<(endRow+1);i++)
     {
         setStartPage(i);
-        setStartColumn(c);
+        setStartColumn(startCol);
 
-        for(j=0;j<d;j++)
+        for(j=0;j<endCol;j++)
             writeData(data);
     }
 }
@@ -377,6 +377,36 @@ void SSD1306_OLED::drawFrame()
             setStartColumn(xLevel+j);
             writeData(0xFF);
         }
+    }
+}
+
+/* Draw a 30x8 battery symbol with specified level */
+void SSD1306_OLED::drawBatt(int level, int x, int row)
+{
+    if(level>100)
+        level=100;
+    else if(level<0)
+        level=0;
+
+    setStartPage(row);
+    setStartColumn(x+1);
+
+    for(int i=0;i<27;i++)
+        writeData(0x41);
+
+    setStartColumn(x);
+    writeData(0x7F);
+
+    setStartColumn(x+28);
+    writeData(0x7F);
+
+    setStartColumn(x+29);
+    writeData(0x1C);
+
+    for(int i=0;i<level/4;i++)
+    {
+        setStartColumn(i+x+2);
+        writeData(0x5D);
     }
 }
 

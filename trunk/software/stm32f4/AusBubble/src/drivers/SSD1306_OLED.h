@@ -54,8 +54,9 @@ class SSD1306_OLED
         static void HWInit(void);
         static void Init(void);
         static void drawFrame(void);
+        static void drawBatt(int level, int x, int row);
         static void fillScreen(unsigned char data);
-        static void fillBlock(unsigned char data, unsigned char a, unsigned char b, unsigned char c, unsigned char d);
+        static void fillBlock(unsigned char data, unsigned char startRow, unsigned char endRow, unsigned char startCol, unsigned char endCol);
         static void showString(const char *dataPtr, unsigned char base, unsigned char column);
         static void showFont57(char b, unsigned char c, unsigned char d);
         static void sleep(unsigned char sleep);

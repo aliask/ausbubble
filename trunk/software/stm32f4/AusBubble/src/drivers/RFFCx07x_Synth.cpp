@@ -147,6 +147,9 @@ void RFFCx07x_Synth::Init(void)
     // Bypass the mixer
     Write((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
+    /* Enable Device */
+    SetEnabled(true);
+
     /* Set frequency to 2450 MHz (wait for PLL lock) */
     SetFreq(2450000000, true);
 }
@@ -382,6 +385,7 @@ void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &
     int n_lo        = log2f((float)(F_VCO_MAX_HZ/f_lo_Hz));
     int lodiv       = 1<<n_lo;
     uint64_t f_vco  = lodiv*f_lo_Hz;
+
     /* If the VCO frequency is above 3.2GHz it is necessary to set the prescaler to /4
     and charge pump leakage to 3 for the CT_cal to work correctly */
     int fbkdiv;
@@ -410,9 +414,6 @@ void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &
     nummsb_ref = (uint16_t) nummsb;
     numlsb_ref = numlsb;
 
-    // Disable device
-    SetEnabled(false);
-
     // Set N divider, LO path divider and feedback divider
     Write((REG_P1_FREQ1<<16) | (n<<SHIFT_N) |                      // Path 1 VCO divider integer value
                                ((int)log2(lodiv)<<SHIFT_LODIV) |   // Path 1 LO path divider setting: divide by 2^n (i.e. divide by 1 to divide by 32). 110 and 111 are reserved
@@ -430,11 +431,8 @@ void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &
                                (1<<SHIFT_LDEN) |   // [5] Enable lock detector circuitry
                                (1<<SHIFT_RELOK));  // [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
 
-    // Enable device
-    SetEnabled(true);
-
     // Wait for PLL lock
-    while(waitForPLLLock && ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) != SYNTH_GPO4LDDO_PIN));
+    while(waitForPLLLock && !isPLLLocked());
 }
 
 void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz, bool waitForPLLLock, bool useModulation)
@@ -591,4 +589,9 @@ void RFFCx07x_Synth::GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16
 
     // Set sign of step
     fmod_step *= (freq_delta_Hz > 0 ? 1 : -1);
+}
+
+bool RFFCx07x_Synth::isPLLLocked(void)
+{
+    return ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) == SYNTH_GPO4LDDO_PIN);
 }

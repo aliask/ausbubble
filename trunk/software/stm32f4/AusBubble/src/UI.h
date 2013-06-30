@@ -53,13 +53,15 @@ typedef enum {
 typedef enum {
     DisclaimerScreen = 0,
     HomeScreen,
-    SynthScreen
+    JammerScreen
 } fsmStates;
 
 class UI
 {
     public:
         static void draw(fsmStates state);
+        static void drawHeader(void);
+        static void updateStatsData(Stats input);
         static void splash(const char* text, int duration_ms);
         static void doMenu(int buttons);
         static void setToggle(bool state);
@@ -69,24 +71,25 @@ class UI
         static void safeFont57(char ascii, unsigned char row, unsigned char xPos);
         static void centredString(const char *stringPointer, unsigned char line);
         static void toggleSetting(int index);
-        static void drawHomescreen(void);
-        static void drawStep(int line, double stepSize);
-        static void drawAlgorithm(int line, ScanAlgorithms_t algorithm);
-        static void drawDisclaimer(void);
-        static void drawSynthMenu(void);
+        static void drawDisclaimerScreen(void);
+        static void drawHomeScreen(void);
+        static void drawJammerScreen(void);
+        static void drawJammerStep(int line, double stepSize);
+        static void drawJammerAlgorithm(int line, ScanAlgorithms_t algorithm);
         static void doDisclaimer(buttonStates action);
-        static void doSynthMin(buttonStates action);
-        static void doSynthMax(buttonStates action);
-        static void doRate(buttonStates action);
-        static void doAlgorithm(buttonStates action);
-        static void doStepSize(buttonStates action);
-        static void doSynthMenu(buttonStates action);
+        static void doJammerFreqStart(buttonStates action);
+        static void doJammerFreqStop(buttonStates action);
+        static void doJammerRate(buttonStates action);
+        static void doJammerAlgorithm(buttonStates action);
+        static void doJammerStepSize(buttonStates action);
+        static void doJammerScreen(buttonStates action);
         static void doHomeScreen(buttonStates action);
         static void showChannelHint_Start(uint64_t freq_Hz, int duration_ms);
         static void showChannelHint_Stop(uint64_t freq_Hz, int duration_ms);
         static int cursorPos;
         static bool isInSetting;
         static bool isSplashActive;
+        static Stats stats;
 };
 
 #endif
