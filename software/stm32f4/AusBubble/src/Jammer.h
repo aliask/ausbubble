@@ -44,7 +44,7 @@
 /* Peripheral libraries */
 #include "RDA1005L_VarGainAmp.h"
 #include "RFFCx07x_Synth.h"
-#include "RF5652_Amp.h"
+#include "RFPA5201_Amp.h"
 
 /* Enumerations */
 typedef enum {

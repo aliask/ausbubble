@@ -366,8 +366,8 @@ void prvSetupHardware(void)
     RFFCx07x_Synth::Init();
 
     /* RF Amplifier */
-    RF5652_Amp::HWInit();
-    RF5652_Amp::SetEnabled(false);
+    RFPA5201_Amp::HWInit();
+    RFPA5201_Amp::SetEnabled(false);
 
     /* Variable Gain Amplifier */
     RDA1005L_VarGainAmp::HWInit();
