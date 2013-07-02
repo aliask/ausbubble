@@ -58,9 +58,6 @@ __IO uint16_t gADC1ConvertedValue[ADC1_BUFFER_LENGTH];
 __IO uint16_t gADC3ConvertedValue = 0;
 
 /* Global Variables */
-float gPDETVoltage;
-float TCelsius;
-float VBATVoltage;
 Stats stats;
 
 /* Function Prototypes */
@@ -230,11 +227,17 @@ void vStatsTask(void *pvParameters)
     uint32_t ADC1ConvertedVoltage0 = 0;
     uint32_t ADC1ConvertedVoltage1 = 0;
     float Vsense = 0.0;
+    float Pout_dBm;
+    float gPDETVoltage;
+    float TCelsius;
+    float VBATVoltage;
 
     while(1)
     {
         /* 1. RF Amplifier Power Detection (PDET) */
         gPDETVoltage = 3.0*((float)gADC3ConvertedValue/(float)0xFFF);
+        // Get output power
+        Pout_dBm = RFPA5201_Amp::GetOutputPower_dBm(gPDETVoltage);
         /* 2. VBAT */
         ADC1ConvertedVoltage0 = (uint32_t)(gADC1ConvertedValue[0] * 2) * 3000 / 0xFFF;
         VBATVoltage = (float)(ADC1ConvertedVoltage0 / 1000.0);
@@ -246,10 +249,17 @@ void vStatsTask(void *pvParameters)
         /* 5. TODO: Battery parameters (via I2C) */
 
         /* Update statistics structure */
+        // System
+        stats.Vbat = VBATVoltage;
+        stats.onChipTemp_degC = TCelsius;
+        // Battery
         stats.batteryLevel = 75;
         stats.isCharging = false;
+        // Jammer
         stats.isJamming = Jammer::isEnabled();
         stats.isPLLLocked = RFFCx07x_Synth::isPLLLocked();
+        stats.Pout_dBm = Pout_dBm;
+        // Do update
         UI::updateStatsData(stats);
 
         /* Sleep */

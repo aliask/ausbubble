@@ -192,12 +192,15 @@ struct Stats
 {
     /* System */
     bool heartbeat;
+    float Vbat;
+    float onChipTemp_degC;
     /* Battery */
     int batteryLevel;
     bool isCharging;
     /* Jammer */
     bool isPLLLocked;
     bool isJamming;
+    float Pout_dBm;
 };
 
 #endif

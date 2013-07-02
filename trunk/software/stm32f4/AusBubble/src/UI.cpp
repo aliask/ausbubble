@@ -44,13 +44,16 @@ Stats UI::stats;
 void UI::updateStatsData(Stats input)
 {
     /* System */
-    UI::stats.heartbeat = input.heartbeat;
+    stats.heartbeat = input.heartbeat;
+    stats.Vbat = input.Vbat;
+    stats.onChipTemp_degC = input.onChipTemp_degC;
     /* Battery */
-    UI::stats.batteryLevel = input.batteryLevel;
-    UI::stats.isCharging = input.isCharging;
+    stats.batteryLevel = input.batteryLevel;
+    stats.isCharging = input.isCharging;
     /* Jammer */
-    UI::stats.isJamming = input.isJamming;
-    UI::stats.isPLLLocked = input.isPLLLocked;
+    stats.isJamming = input.isJamming;
+    stats.isPLLLocked = input.isPLLLocked;
+    stats.Pout_dBm = input.Pout_dBm;
 }
 
 void UI::drawHeader(void)
@@ -289,14 +292,12 @@ void UI::drawHomeScreen()
 
     centredString("Home", 1);
 
-    snprintf(menuText, sizeof(menuText), "Battery:  %d%%", 15);
+    snprintf(menuText, sizeof(menuText), "Pout:    %2.2f dBm", stats.Pout_dBm);
     safeString(menuText, 3, 14);
-    snprintf(menuText, sizeof(menuText), "Batt Rem: %d:%d", 1, 13);
+    snprintf(menuText, sizeof(menuText), "VBAT:    %1.2f V", stats.Vbat);
     safeString(menuText, 4, 14);
-    snprintf(menuText, sizeof(menuText), "PDET:     %1.2fv", gPDETVoltage);
+    snprintf(menuText, sizeof(menuText), "Tchip:   %2.2f degC", stats.onChipTemp_degC);
     safeString(menuText, 5, 14);
-    snprintf(menuText, sizeof(menuText), "VBAT:     %1.2fv", VBATVoltage);
-    safeString(menuText, 6, 14);
 }
 
 void UI::drawJammerScreen()

@@ -39,7 +39,7 @@
 
 #include "Includes.h"
 
-/* Structure definition */
+/* Structure definitions */
 struct AmpDataPoint_t
 {
     float Pout_dBm;
@@ -53,6 +53,7 @@ class RFPA5201_Amp
     public:
         static void HWInit(void);
         static void SetEnabled(bool enable);
+        static float GetOutputPower_dBm(float pDETVoltage);
     private:
         static bool enabled;
 };
