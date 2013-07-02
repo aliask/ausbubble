@@ -156,24 +156,22 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="Test.org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.652421920" name="ARM Cross Target Application" projectType="org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf"/>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153.;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.c.compiler.debug.408097569;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.c.compiler.base.input.600367839">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.cross.arm.gnu.ARM_YG_GCCWinManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153.;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.assembler.debug.1533478177;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.assembler.base.input.1609079415">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.cross.arm.gnu.ARM_YG_GCCWinManagedMakePerProjectProfileC"/>
-		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153.;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.cpp.compiler.debug.116460699;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.cpp.compiler.base.input.180830871">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.cross.arm.gnu.ARM_YG_GCCWinManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.debug.1290199153.;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.elf.assembler.debug.1533478177;org.eclipse.cdt.cross.arm.gnu.yagarto.windows.assembler.base.input.1609079415">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.cross.arm.gnu.ARM_YG_GCCWinManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
 	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="/Test"/>
-		</configuration>
-	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>
