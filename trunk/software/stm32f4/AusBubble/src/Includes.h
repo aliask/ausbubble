@@ -179,11 +179,6 @@
 #define VARGAINAMP_LE_PORT              GPIOD
 #define VARGAINAMP_LE_PIN               GPIO_Pin_9
 
-/* Global Variables */
-extern float gPDETVoltage;
-extern float TCelsius;
-extern float VBATVoltage;
-
 /* RTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds);
 
