@@ -39,7 +39,7 @@ bool RFPA5201_Amp::enabled = false;
 
 /* RFPA5201 EVM: 11n MCS7 HT40; Vcc=5v; Vreg=2.9v; Temp=25degC; Duty Cycle=50%; f=2450MHz */
 // Data points for lookup table. Format is Vpdet => P(dB)
-float RFPA5201_Amp::dataPoints[SAMPLES] =
+float RFPA5201_Amp::dataPoints[2*SAMPLES] =
         { 0.103384, 0.83,
           0.103922, 1,
           0.105509, 1.5,
