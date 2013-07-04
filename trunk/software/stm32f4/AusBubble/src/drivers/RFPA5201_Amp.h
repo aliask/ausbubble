@@ -47,7 +47,7 @@ class RFPA5201_Amp
         static float GetOutputPower_dBm(float pDETVoltage);
     private:
         static bool enabled;
-        static float dataPoints[SAMPLES];
+        static float dataPoints[SAMPLES*2];
 };
 
 #endif
