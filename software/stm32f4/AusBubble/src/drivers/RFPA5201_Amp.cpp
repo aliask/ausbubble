@@ -147,7 +147,9 @@ float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
     /* Basic binary search algorithm */
     while(imax > imin)
     {
+        /* Calculate midpoint index of search area */
         imid = (imax-imin)/2 + imin;
+        /* Calculate new index bounds of search area */
         if(dataPoints[imid*2] < pDETVoltage)
             imin = imid + 1;
         else if(dataPoints[imid*2] > pDETVoltage)
@@ -157,12 +159,10 @@ float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
             return dataPoints[imid*2+1];
     }
 
-    if(imid>=2 && fabs(dataPoints[imid]-pDETVoltage) > fabs(dataPoints[imid-2]-pDETVoltage))
-    {
+    /* Return lower bound value */
+    if(imid>=2 && (fabs(dataPoints[imid*2]-pDETVoltage) > fabs(dataPoints[imid*2-2]-pDETVoltage)))
         return dataPoints[imid*2-1];
-    }
+    /* Return upper bound value */
     else
-    {
         return dataPoints[imid*2+1];
-    }
 }
