@@ -35,18 +35,9 @@
 #ifndef RFPA5201_AMP_H
 #define RFPA5201_AMP_H
 
-#define N_DATA_POINTS 210
+#define SAMPLES 70
 
 #include "Includes.h"
-
-/* Structure definitions */
-struct AmpDataPoint_t
-{
-    float Pout_dBm;
-    int frequency_MHz;
-    float PDET_V;
-    int temperature_C;
-};
 
 class RFPA5201_Amp
 {
@@ -56,6 +47,7 @@ class RFPA5201_Amp
         static float GetOutputPower_dBm(float pDETVoltage);
     private:
         static bool enabled;
+        static float dataPoints[SAMPLES];
 };
 
 #endif
