@@ -140,26 +140,29 @@ void RFPA5201_Amp::SetEnabled(bool enable)
 
 float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
 {
-    int imin=0,imax=SAMPLES;
+    int imin = 0;
+    int imax = SAMPLES;
+    int imid;
+
     /* Basic binary search algorithm */
-    while(imax>imin)
+    while(imax > imin)
     {
-        int imid = (imax-imin)/2+imin;
-        if(RFPA5201_Amp::dataPoints[imid*2] < pDETVoltage)
+        imid = (imax-imin)/2 + imin;
+        if(dataPoints[imid*2] < pDETVoltage)
             imin = imid + 1;
-        else if(RFPA5201_Amp::dataPoints[imid*2] > pDETVoltage)
+        else if(dataPoints[imid*2] > pDETVoltage)
             imax = imid - 1;
+        /* In the unlikely case that our target voltage has a sample */
         else
-            /* In the unlikely case that our target voltage has a sample */
-            return RFPA5201_Amp::dataPoints[imid*2+1];
+            return dataPoints[imid*2+1];
     }
 
-    if(i>=2 && fabs(RFPA5201_Amp::dataPoints[imid]-target)>fabs(RFPA5201_Amp::dataPoints[imid-2]-target))
+    if(imid>=2 && fabs(dataPoints[imid]-pDETVoltage) > fabs(dataPoints[imid-2]-pDETVoltage))
     {
-      return RFPA5201_Amp::dataPoints[imid*2-1];
+        return dataPoints[imid*2-1];
     }
     else
     {
-      return RFPA5201_Amp::dataPoints[imid*2+1];
+        return dataPoints[imid*2+1];
     }
 }
