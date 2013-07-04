@@ -37,6 +37,81 @@
 /* Initialize static members */
 bool RFPA5201_Amp::enabled = false;
 
+/* RFPA5201 EVM: 11n MCS7 HT40; Vcc=5v; Vreg=2.9v; Temp=25degC; Duty Cycle=50%; f=2450MHz */
+// Data points for lookup table. Format is Vpdet => P(dB)
+float RFPA5201_Amp::dataPoints[SAMPLES] =
+        { 0.103384, 0.83,
+          0.103922, 1,
+          0.105509, 1.5,
+          0.107157, 2,
+          0.108910, 2.5,
+          0.110815, 3,
+          0.112917, 3.5,
+          0.115261, 4,
+          0.117887, 4.5,
+          0.120831, 5,
+          0.124126, 5.5,
+          0.127807, 6,
+          0.131907, 6.5,
+          0.136461, 7,
+          0.141508, 7.5,
+          0.147101, 8,
+          0.153290, 8.5,
+          0.160125, 9,
+          0.167661, 9.5,
+          0.175949, 10,
+          0.185034, 10.5,
+          0.194957, 11,
+          0.205760, 11.5,
+          0.217483, 12,
+          0.230164, 12.5,
+          0.243848, 13,
+          0.258599, 13.5,
+          0.274519, 14,
+          0.291717, 14.5,
+          0.310298, 15,
+          0.330370, 15.5,
+          0.352041, 16,
+          0.375404, 16.5,
+          0.400535, 17,
+          0.427504, 17.5,
+          0.456380, 18,
+          0.487229, 18.5,
+          0.520135, 19,
+          0.555185, 19.5,
+          0.592644, 20,
+          0.632811, 20.5,
+          0.675997, 21,
+          0.722506, 21.5,
+          0.772656, 22,
+          0.826708, 22.5,
+          0.884415, 23,
+          0.944988, 23.5,
+          1.008000, 24,
+          1.072000, 24.5,
+          1.141000, 25,
+          1.217000, 25.5,
+          1.305000, 26,
+          1.403000, 26.5,
+          1.508000, 27,
+          1.610000, 27.5,
+          1.704000, 28,
+          1.797000, 28.5,
+          1.893000, 29,
+          1.990000, 29.5,
+          2.084000, 30,
+          2.180000, 30.5,
+          2.281000, 31,
+          2.392000, 31.5,
+          2.500000, 32,
+          2.585000, 32.5,
+          2.663000, 33,
+          2.735000, 33.5,
+          2.803000, 34,
+          2.892000, 34.5,
+          2.922000, 34.95
+        };
+
 void RFPA5201_Amp::HWInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -65,8 +140,26 @@ void RFPA5201_Amp::SetEnabled(bool enable)
 
 float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
 {
-    /* RFPA5201 EVM: 11n MCS7 HT40; Vcc=5v; Vreg=2.9v; Temp=25degC; Duty Cycle=50%; f=2450MHz */
-    /* 70 data points: Residual Sum of Squares: rss = 83.9760863 */
-    /* From: http://www.xuru.org/rt/LnR.asp */
-    return 8.906874645*log(pDETVoltage) + 24.24875014;
+    int imin=0,imax=SAMPLES;
+    /* Basic binary search algorithm */
+    while(imax>imin)
+    {
+        int imid = (imax-imin)/2+imin;
+        if(RFPA5201_Amp::dataPoints[imid*2] < pDETVoltage)
+            imin = imid + 1;
+        else if(RFPA5201_Amp::dataPoints[imid*2] > pDETVoltage)
+            imax = imid - 1;
+        else
+            /* In the unlikely case that our target voltage has a sample */
+            return RFPA5201_Amp::dataPoints[imid*2+1];
+    }
+
+    if(i>=2 && fabs(RFPA5201_Amp::dataPoints[imid]-target)>fabs(RFPA5201_Amp::dataPoints[imid-2]-target))
+    {
+      return RFPA5201_Amp::dataPoints[imid*2-1];
+    }
+    else
+    {
+      return RFPA5201_Amp::dataPoints[imid*2+1];
+    }
 }
