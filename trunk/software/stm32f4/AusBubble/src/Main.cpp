@@ -245,7 +245,7 @@ void vStatsTask(void *pvParameters)
         /* 3. On-chip Temperature Sensor */
         ADC1ConvertedVoltage1 = (uint32_t)(gADC1ConvertedValue[1] * 3000 / 0xFFF);
         Vsense = (float)(ADC1ConvertedVoltage1 / 1000.0);
-        TCelsius = ((V25-Vsense) / AVG_SLOPE) + 25.0 ;
+        TCelsius = ((Vsense - V25) / AVG_SLOPE) + 25.0 ;
         /* 4. TODO: RF Amplifier Thermistor */
         /* 5. TODO: Battery parameters (via I2C) */
 
