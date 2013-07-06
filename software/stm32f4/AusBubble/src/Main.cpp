@@ -66,6 +66,7 @@ void SetupJoystick(void);
 void NVIC_Config(void);
 void ADC1_DMA_Config(void);
 void ADC3_DMA_Config(void);
+void I2C2_Config(void);
 
 /* FreeRTOS millisecond delay function */
 void DelayMS(uint32_t milliseconds)
@@ -244,7 +245,7 @@ void vStatsTask(void *pvParameters)
         /* 3. On-chip Temperature Sensor */
         ADC1ConvertedVoltage1 = (uint32_t)(gADC1ConvertedValue[1] * 3000 / 0xFFF);
         Vsense = (float)(ADC1ConvertedVoltage1 / 1000.0);
-        TCelsius = ((Vsense - V25) / AVG_SLOPE) + 25.0 ;
+        TCelsius = ((V25-Vsense) / AVG_SLOPE) + 25.0 ;
         /* 4. TODO: RF Amplifier Thermistor */
         /* 5. TODO: Battery parameters (via I2C) */
 
@@ -397,6 +398,9 @@ void prvSetupHardware(void)
     // Start ADC3 Software Conversion
     ADC_SoftwareStartConv(ADC3);
 
+    /* I2C */
+    I2C2_Config();
+
     /* Enable clock for timer used in vJammingTask() */
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 
@@ -492,9 +496,9 @@ void ADC1_DMA_Config(void)
     DMA_InitStructure.DMA_PeripheralBaseAddr    = (uint32_t)ADC1_DR_ADDRESS;
     DMA_InitStructure.DMA_Memory0BaseAddr       = (uint32_t)&gADC1ConvertedValue;
     DMA_InitStructure.DMA_DIR                   = DMA_DIR_PeripheralToMemory;
-    DMA_InitStructure.DMA_BufferSize            = 1;
+    DMA_InitStructure.DMA_BufferSize            = 2;
     DMA_InitStructure.DMA_PeripheralInc         = DMA_PeripheralInc_Disable;
-    DMA_InitStructure.DMA_MemoryInc             = DMA_MemoryInc_Disable;
+    DMA_InitStructure.DMA_MemoryInc             = DMA_MemoryInc_Enable;
     DMA_InitStructure.DMA_PeripheralDataSize    = DMA_PeripheralDataSize_HalfWord;
     DMA_InitStructure.DMA_MemoryDataSize        = DMA_MemoryDataSize_HalfWord;
     DMA_InitStructure.DMA_Mode                  = DMA_Mode_Circular;
@@ -517,7 +521,7 @@ void ADC1_DMA_Config(void)
     /* ADC1 Init */
     ADC_StructInit(&ADC_InitStructure);
     ADC_InitStructure.ADC_Resolution            = ADC_Resolution_12b;
-    ADC_InitStructure.ADC_ScanConvMode          = DISABLE;
+    ADC_InitStructure.ADC_ScanConvMode          = ENABLE;
     ADC_InitStructure.ADC_ContinuousConvMode    = ENABLE;
     ADC_InitStructure.ADC_ExternalTrigConvEdge  = ADC_ExternalTrigConvEdge_None;
     ADC_InitStructure.ADC_ExternalTrigConv      = 0;
@@ -613,6 +617,41 @@ void ADC3_DMA_Config(void)
 
     /* Enable ADC3 */
     ADC_Cmd(ADC3, ENABLE);
+}
+
+void I2C2_Config(void)
+{
+    GPIO_InitTypeDef    GPIO_InitStructure;
+    I2C_InitTypeDef     I2C_InitStructure;
+
+    /* Enable APB1 peripheral clock for I2C2 */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C2, ENABLE);
+    /* Enable clock for SCL and SDA pins */
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
+    /* SCL=PB10, SDA=PB11 */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;      // Set output to open-drain (line has to only be pulled low, not driven high)
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;        // Enable pull up resistors
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+    /* Connect I2C2 pins to AF */
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_I2C2);
+    GPIO_PinAFConfig(GPIOB, GPIO_PinSource11, GPIO_AF_I2C2);
+
+    /* Configure I2C2 */
+    I2C_InitStructure.I2C_ClockSpeed = 400000;                                 // 400kHz
+    I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;                                 // I2C mode
+    I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;                         // 50% duty cycle (standard)
+    I2C_InitStructure.I2C_OwnAddress1 = 0x00;                                  // Own address (not relevant in master mode)
+    I2C_InitStructure.I2C_Ack = I2C_Ack_Disable;                               // Disable acknowledge when reading
+    I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;  // Set address length to 7 bit addresses
+    I2C_Init(I2C2, &I2C_InitStructure);
+
+    /* Enable I2C2 */
+    I2C_Cmd(I2C2, ENABLE);
 }
 
 extern "C"

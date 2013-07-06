@@ -56,8 +56,8 @@
 #define ADC1_DR_ADDRESS     ((uint32_t)0x4001204C)
 #define ADC3_DR_ADDRESS     ((uint32_t)0x4001224C)
 /* On-chip temperature sensor properties */
-#define V25                 0.760
-#define AVG_SLOPE           25.0
+#define V25                 1.41
+#define AVG_SLOPE           0.0043
 /* ADC1 Buffer Length */
 #define ADC1_BUFFER_LENGTH  2
 
@@ -106,10 +106,10 @@
 /* OLED */
 #define OLED_CS_PORT                    GPIOA
 #define OLED_CS_PIN                     GPIO_Pin_4
-#define OLED_RST_PORT                   GPIOB
-#define OLED_RST_PIN                    GPIO_Pin_10
-#define OLED_DC_PORT                    GPIOB
-#define OLED_DC_PIN                     GPIO_Pin_11
+#define OLED_RST_PORT                   GPIOA
+#define OLED_RST_PIN                    GPIO_Pin_3
+#define OLED_DC_PORT                    GPIOA
+#define OLED_DC_PIN                     GPIO_Pin_2
 /* RTOS Heartbeat LED */
 #define RTOS_LED_PORT                   GPIOD
 #define RTOS_LED_PIN                    GPIO_Pin_12

@@ -108,26 +108,28 @@ void Jammer::Advance(void)
 {
     static uint64_t freq = settings.start;
     static ScanDirection_t direction = Up;
-    uint64_t newFreq = -1;
-    uint32_t random32bit = 0;
+    static uint32_t random32bit;
+    uint64_t newFreq = freq;
 
     switch(settings.algorithm)
     {
+        /* SAWTOOTH */
         case ScanSawtooth:
             /* Increase frequency */
             if((freq + settings.stepSize) <= settings.stop)
-                newFreq = freq + settings.stepSize;
+                newFreq += settings.stepSize;
             /* If at upper bound, return to start frequency */
             else
                 newFreq = settings.start;
             break;
+        /* TRIANGLE */
         case ScanTriangle:
             /* Current direction is UP */
             if(direction == Up)
             {
                 /* Increase frequency */
                 if((freq + settings.stepSize) < settings.stop)
-                    newFreq = freq + settings.stepSize;
+                    newFreq += settings.stepSize;
                 /* At (or exceeded) upper bound, reverse direction */
                 else
                 {
@@ -140,7 +142,7 @@ void Jammer::Advance(void)
             {
                 /* Decrease frequency */
                 if((freq - settings.stepSize) > settings.start)
-                    newFreq = freq - settings.stepSize;
+                    newFreq -= settings.stepSize;
                 /* At (or exceeded) lower bound, reverse direction */
                 else
                 {
@@ -149,6 +151,7 @@ void Jammer::Advance(void)
                 }
             }
             break;
+        /* RANDOM */
         case ScanRandom:
             /* Wait until one RNG number is ready */
             while(RNG_GetFlagStatus(RNG_FLAG_DRDY)== RESET);
@@ -157,12 +160,12 @@ void Jammer::Advance(void)
             /* Get random number between START and STOP frequency range */
             newFreq = settings.start + (uint32_t)(((float) random32bit / (float) UINT32_MAX)*(settings.stop - settings.start));
             break;
+        /* Invalid algorithm */
         default:
-            newFreq = freq;
             break;
     }
 
-    /* Set synthesizer frequency (if different to current frequency) */
+    /* Set synthesizer frequency (only if different to current frequency) */
     if(newFreq != freq)
     {
         RFFCx07x_Synth::SetFreq(newFreq, true, false);  // Wait for PLL lock, Frequency modulation OFF

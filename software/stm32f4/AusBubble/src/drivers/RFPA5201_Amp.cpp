@@ -38,8 +38,8 @@
 bool RFPA5201_Amp::enabled = false;
 
 /* RFPA5201 EVM: 11n MCS7 HT40; Vcc=5v; Vreg=2.9v; Temp=25degC; Duty Cycle=50%; f=2450MHz */
-// Data points for lookup table. Format is Vpdet => P(dB)
-float RFPA5201_Amp::dataPoints[2*SAMPLES] =
+// Data points format: Pdet(V) => Pout(dB)
+float RFPA5201_Amp::dataPoints[2*N_SAMPLES] =
         { 0.103384, 0.83,
           0.103922, 1,
           0.105509, 1.5,
@@ -116,7 +116,7 @@ void RFPA5201_Amp::HWInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    // PENABLE
+    /* PENABLE */
     // Note: Use external pull-down resistor (1k) on PENABLE to ensure amplifier is OFF at power-on
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin = AMP_PENABLE_PIN;
@@ -141,28 +141,43 @@ void RFPA5201_Amp::SetEnabled(bool enable)
 float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
 {
     int imin = 0;
-    int imax = SAMPLES;
+    int imax = N_SAMPLES;
     int imid;
+
+    /* If amplifier is disabled, output power is zero */
+    if(!enabled)
+        return 0.00;
 
     /* Basic binary search algorithm */
     while(imax > imin)
     {
-        /* Calculate midpoint index of search area */
+        /* Calculate midpoint index of search interval */
+        /* Note: Midpoint value will be rounded up to nearest integer if remainder >= 0.5 */
         imid = (imax-imin)/2 + imin;
-        /* Calculate new index bounds of search area */
+        /* Calculate new index bounds of search interval */
         if(dataPoints[imid*2] < pDETVoltage)
             imin = imid + 1;
         else if(dataPoints[imid*2] > pDETVoltage)
             imax = imid - 1;
-        /* In the unlikely case that our target voltage has a sample */
+        /* Input voltage exactly matches the value in the LUT (highly unlikely) */
         else
             return dataPoints[imid*2+1];
     }
 
-    /* Return lower bound value */
-    if(imid>=2 && (fabs(dataPoints[imid*2]-pDETVoltage) > fabs(dataPoints[imid*2-2]-pDETVoltage)))
+    /* We are at the extremities of the LUT */
+    /* Interval: {N_SAMPLES-1,N_SAMPLES} */
+    if(imid==N_SAMPLES)
+        imid -= 1;
+    /* Interval: {0,1} */
+    else if(imid==0)
+        imid += 1;
+
+    /* Look at interval: {imin,imax} where imin and imax are successive indexes */
+    /* Note: imid=imax due to integer rounding */
+    /* Return value at imin */
+    if(fabs(dataPoints[imid*2]-pDETVoltage) > fabs(dataPoints[imid*2-2]-pDETVoltage))
         return dataPoints[imid*2-1];
-    /* Return upper bound value */
+    /* Return value at imax */
     else
         return dataPoints[imid*2+1];
 }
