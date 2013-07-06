@@ -496,7 +496,7 @@ void ADC1_DMA_Config(void)
     DMA_InitStructure.DMA_PeripheralBaseAddr    = (uint32_t)ADC1_DR_ADDRESS;
     DMA_InitStructure.DMA_Memory0BaseAddr       = (uint32_t)&gADC1ConvertedValue;
     DMA_InitStructure.DMA_DIR                   = DMA_DIR_PeripheralToMemory;
-    DMA_InitStructure.DMA_BufferSize            = 2;
+    DMA_InitStructure.DMA_BufferSize            = ADC1_BUFFER_LENGTH;
     DMA_InitStructure.DMA_PeripheralInc         = DMA_PeripheralInc_Disable;
     DMA_InitStructure.DMA_MemoryInc             = DMA_MemoryInc_Enable;
     DMA_InitStructure.DMA_PeripheralDataSize    = DMA_PeripheralDataSize_HalfWord;
