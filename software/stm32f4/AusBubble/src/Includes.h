@@ -56,8 +56,9 @@
 #define ADC1_DR_ADDRESS     ((uint32_t)0x4001204C)
 #define ADC3_DR_ADDRESS     ((uint32_t)0x4001224C)
 /* On-chip temperature sensor properties */
-#define V25                 1.41
-#define AVG_SLOPE           0.0043
+/* From STM32F4 device datasheet: 5.3.21, Table 69, TS characteristics */
+#define V25                 0.76    // Units: V
+#define AVG_SLOPE           0.0025  // Units: V/deg
 /* ADC1 Buffer Length */
 #define ADC1_BUFFER_LENGTH  2
 
