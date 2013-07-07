@@ -158,10 +158,6 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 GenerateClassCluster=0
 
-[GeneratedDocument1]
-DocumentPath=Logic_RF.PcbDoc.htm
-DItemRevisionGUID=
-
 [SearchPath1]
 Path=..\footprint_libraries\*.*
 IncludeSubFolders=1
