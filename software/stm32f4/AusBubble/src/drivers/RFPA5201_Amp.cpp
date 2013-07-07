@@ -159,19 +159,16 @@ float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
         if(dataPoints[imid][0] < pDETVoltage)
             imin = imid;
         else if(dataPoints[imid][0] > pDETVoltage)
-           imax = imid;
+            imax = imid;
         /* Input voltage exactly matches the value in the LUT (highly unlikely) */
         else
             return dataPoints[imid][1];
-
     }
 
-    /* Look at interval: {imin,imax} where imin and imax are successive indexes */
-    /* Note: imid=imax due to integer rounding */
-    /* Return value at imin */
+    /* Return value at imax */
     if(fabs(dataPoints[imin][0]-pDETVoltage) > fabs(dataPoints[imax][0]-pDETVoltage))
         return dataPoints[imax][1];
-    /* Return value at imax */
+    /* Return value at imin */
     else
         return dataPoints[imin][1];
 }
