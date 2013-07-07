@@ -1,0 +1,6 @@
+[ProjectGroup]
+Version=1.0
+[Project1]
+ProjectPath=Logic_RF\Logic_RF.PrjPcb
+[Project2]
+ProjectPath=Power\Power.PrjPcb
