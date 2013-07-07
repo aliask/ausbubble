@@ -159,7 +159,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 
 [SearchPath1]
-Path=..\footprint_libraries\*.*
+Path=..\Footprint_Libraries\*.*
 IncludeSubFolders=1
 
 [Configuration1]
