@@ -66,7 +66,7 @@
 #define FREQ_STEP_HZ        500000
 #define RATE_STEP_HZ        1
 #define DISP_MAX            2
-#define UI_DRAW_COUNT_MAX   500
+#define UI_DRAW_COUNT_MAX   250
 /* Button behaviour */
 #define TICK_RATE_1         200     // Slowest
 #define TICK_RATE_2         100
