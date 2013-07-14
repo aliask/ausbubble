@@ -55,7 +55,7 @@ __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 
 /* Volatiles */
 __IO uint16_t gADC1ConvertedValue[ADC1_BUFFER_LENGTH];
-__IO uint16_t gADC3ConvertedValue = 0;
+__IO uint16_t gADC3ConvertedValue[ADC3_BUFFER_LENGTH];
 
 /* Global Variables */
 Stats stats;
@@ -128,7 +128,7 @@ void vUITask(void *pvParameters)
             drawCount++;
         else
         {
-            /* Re-draw everything if we're on the home screen */
+            /* Re-draw everything if we're on the Home screen */
             if(UI::currentState == HomeScreen)
                 UI::draw(HomeScreen);
             /* Just draw the header otherwise */
@@ -221,44 +221,43 @@ void vUITask(void *pvParameters)
     }
 }
 
-/* Read/save various run-time statistics */
+/* Read and save various run-time statistics */
 void vStatsTask(void *pvParameters)
 {
     /* Local variables */
-    uint32_t ADC1ConvertedVoltage0 = 0;
-    uint32_t ADC1ConvertedVoltage1 = 0;
-    float Vsense = 0.0;
+    float PDET_V;
     float Pout_dBm;
-    float gPDETVoltage;
-    float TCelsius;
-    float VBATVoltage;
+    float VBAT_V;
+    float OnChipTS_Vsense_V;
+    float OnChipTS_T_degC;
+    float RFAmpTS_Vsense_V;
 
     while(1)
     {
         /* 1. RF Amplifier Power Detection (PDET) */
-        gPDETVoltage = 3.0*((float)gADC3ConvertedValue/(float)0xFFF);
+        PDET_V = (gADC3ConvertedValue[1] * 3.0) / 0xFFF;
         // Get output power
-        Pout_dBm = RFPA5201_Amp::GetOutputPower_dBm(gPDETVoltage);
+        Pout_dBm = RFPA5201_Amp::GetOutputPower_dBm(PDET_V);
         /* 2. VBAT */
-        ADC1ConvertedVoltage0 = (uint32_t)(gADC1ConvertedValue[0] * 2) * 3000 / 0xFFF;
-        VBATVoltage = (float)(ADC1ConvertedVoltage0 / 1000.0);
+        VBAT_V = ((gADC1ConvertedValue[0] * 2) * 3.0) / 0xFFF;
         /* 3. On-chip Temperature Sensor */
-        ADC1ConvertedVoltage1 = (uint32_t)(gADC1ConvertedValue[1] * 3000 / 0xFFF);
-        Vsense = (float)(ADC1ConvertedVoltage1 / 1000.0);
-        TCelsius = ((Vsense - V25) / AVG_SLOPE) + 25.0 ;
+        OnChipTS_Vsense_V = (gADC1ConvertedValue[1] * 3.0) / 0xFFF;
+        OnChipTS_T_degC = ((OnChipTS_Vsense_V - V25) / AVG_SLOPE) + 25.0 ;
         /* 4. TODO: RF Amplifier Thermistor */
+        RFAmpTS_Vsense_V = (gADC3ConvertedValue[0] * 3.0) / 0xFFF;
         /* 5. TODO: Battery parameters (via I2C) */
 
         /* Update statistics structure */
         // System
-        stats.Vbat = VBATVoltage;
-        stats.onChipTemp_degC = TCelsius;
+        stats.VBAT_V = VBAT_V;
+        stats.OnChipTS_T_degC = OnChipTS_T_degC;
         // Battery
         stats.batteryLevel = 75;
         stats.isCharging = false;
         // Jammer
         stats.isJamming = Jammer::isEnabled();
         stats.isPLLLocked = RFFCx07x_Synth::isPLLLocked();
+        stats.PDET_V = PDET_V;
         stats.Pout_dBm = Pout_dBm;
         // Do update
         UI::updateStatsData(stats);
@@ -566,9 +565,9 @@ void ADC3_DMA_Config(void)
     DMA_InitStructure.DMA_PeripheralBaseAddr    = (uint32_t)ADC3_DR_ADDRESS;
     DMA_InitStructure.DMA_Memory0BaseAddr       = (uint32_t)&gADC3ConvertedValue;
     DMA_InitStructure.DMA_DIR                   = DMA_DIR_PeripheralToMemory;
-    DMA_InitStructure.DMA_BufferSize            = 1;
+    DMA_InitStructure.DMA_BufferSize            = ADC3_BUFFER_LENGTH;
     DMA_InitStructure.DMA_PeripheralInc         = DMA_PeripheralInc_Disable;
-    DMA_InitStructure.DMA_MemoryInc             = DMA_MemoryInc_Disable;
+    DMA_InitStructure.DMA_MemoryInc             = DMA_MemoryInc_Enable;
     DMA_InitStructure.DMA_PeripheralDataSize    = DMA_PeripheralDataSize_HalfWord;
     DMA_InitStructure.DMA_MemoryDataSize        = DMA_MemoryDataSize_HalfWord;
     DMA_InitStructure.DMA_Mode                  = DMA_Mode_Circular;
@@ -580,9 +579,9 @@ void ADC3_DMA_Config(void)
     DMA_Init(DMA2_Stream0, &DMA_InitStructure);
     DMA_Cmd(DMA2_Stream0, ENABLE);
 
-    /* Configure ADC3 Channel12 pin as analog input */
+    /* Configure ADC3 Channel11 & ADC3 Channel12 pin as analog inputs */
     GPIO_StructInit(&GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin     = GPIO_Pin_2;
+    GPIO_InitStructure.GPIO_Pin     = GPIO_Pin_1 | GPIO_Pin_2;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_AN;
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
     GPIO_Init(GPIOC, &GPIO_InitStructure);
@@ -598,16 +597,18 @@ void ADC3_DMA_Config(void)
     /* ADC3 Init */
     ADC_StructInit(&ADC_InitStructure);
     ADC_InitStructure.ADC_Resolution            = ADC_Resolution_12b;
-    ADC_InitStructure.ADC_ScanConvMode          = DISABLE;
+    ADC_InitStructure.ADC_ScanConvMode          = ENABLE;
     ADC_InitStructure.ADC_ContinuousConvMode    = ENABLE;
     ADC_InitStructure.ADC_ExternalTrigConvEdge  = ADC_ExternalTrigConvEdge_None;
     ADC_InitStructure.ADC_ExternalTrigConv      = 0;
     ADC_InitStructure.ADC_DataAlign             = ADC_DataAlign_Right;
-    ADC_InitStructure.ADC_NbrOfConversion       = 1;
+    ADC_InitStructure.ADC_NbrOfConversion       = ADC3_BUFFER_LENGTH;
     ADC_Init(ADC3, &ADC_InitStructure);
 
+    /* ADC3 regular channel11 configuration */
+    ADC_RegularChannelConfig(ADC3, ADC_Channel_11, 1, ADC_SampleTime_3Cycles);
     /* ADC3 regular channel12 configuration */
-    ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 1, ADC_SampleTime_3Cycles);
+    ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 2, ADC_SampleTime_3Cycles);
 
     /* Enable DMA request after last transfer (Single-ADC mode) */
     ADC_DMARequestAfterLastTransferCmd(ADC3, ENABLE);

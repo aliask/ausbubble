@@ -144,11 +144,13 @@ float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
     int imin = 0;
     int imax = N_SAMPLES;
     int imid;
+    float m;
 
     /* If amplifier is disabled, output power is zero */
     if(!enabled)
         return 0.00;
 
+    /* Binary search */
     while(imax > imin+1)
     {
         /* Calculate midpoint index of search interval */
@@ -165,10 +167,7 @@ float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
             return dataPoints[imid][1];
     }
 
-    /* Return value at imax */
-    if(fabs(dataPoints[imin][0]-pDETVoltage) > fabs(dataPoints[imax][0]-pDETVoltage))
-        return dataPoints[imax][1];
-    /* Return value at imin */
-    else
-        return dataPoints[imin][1];
+    /* Use linear interpolation */
+    m = (dataPoints[imax][1] - dataPoints[imin][1]) / (dataPoints[imax][0] - dataPoints[imin][0]);
+    return m * (pDETVoltage - dataPoints[imax][0]) + dataPoints[imax][1];
 }

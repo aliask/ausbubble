@@ -61,6 +61,8 @@
 #define AVG_SLOPE           0.0025  // Units: V/deg
 /* ADC1 Buffer Length */
 #define ADC1_BUFFER_LENGTH  2
+/* ADC3 Buffer Length */
+#define ADC3_BUFFER_LENGTH  2
 
 /* UI settings */
 #define FREQ_STEP_HZ        500000
@@ -68,11 +70,11 @@
 #define DISP_MAX            2
 #define UI_DRAW_COUNT_MAX   250
 /* Button behaviour */
-#define TICK_RATE_1         200     // Slowest
+#define TICK_RATE_1         200         // Slowest
 #define TICK_RATE_2         100
 #define TICK_RATE_3         50
 #define TICK_RATE_4         25
-#define TICK_RATE_5         10      // Fastest
+#define TICK_RATE_5         10          // Fastest
 #define TICK_INITIALRATE    TICK_RATE_1
 #define TICK_HOLDCOUNT      1000
 #define DO_MENU_HOLD_COUNT  5
@@ -188,14 +190,15 @@ struct Stats
 {
     /* System */
     bool heartbeat;
-    float Vbat;
-    float onChipTemp_degC;
+    float VBAT_V;
+    float OnChipTS_T_degC;
     /* Battery */
     int batteryLevel;
     bool isCharging;
     /* Jammer */
     bool isPLLLocked;
     bool isJamming;
+    float PDET_V;
     float Pout_dBm;
 };
 
