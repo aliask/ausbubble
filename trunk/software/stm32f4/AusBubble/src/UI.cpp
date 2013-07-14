@@ -45,14 +45,15 @@ void UI::updateStatsData(Stats input)
 {
     /* System */
     stats.heartbeat = input.heartbeat;
-    stats.Vbat = input.Vbat;
-    stats.onChipTemp_degC = input.onChipTemp_degC;
+    stats.VBAT_V = input.VBAT_V;
+    stats.OnChipTS_T_degC = input.OnChipTS_T_degC;
     /* Battery */
     stats.batteryLevel = input.batteryLevel;
     stats.isCharging = input.isCharging;
     /* Jammer */
     stats.isJamming = input.isJamming;
     stats.isPLLLocked = input.isPLLLocked;
+    stats.PDET_V = input.PDET_V;
     stats.Pout_dBm = input.Pout_dBm;
 }
 
@@ -294,9 +295,9 @@ void UI::drawHomeScreen()
 
     snprintf(menuText, sizeof(menuText), "Pout:    %2.2f dBm", stats.Pout_dBm);
     safeString(menuText, 3, 14);
-    snprintf(menuText, sizeof(menuText), "VBAT:    %1.2f V", stats.Vbat);
+    snprintf(menuText, sizeof(menuText), "VBAT:    %1.2f V", stats.VBAT_V);
     safeString(menuText, 4, 14);
-    snprintf(menuText, sizeof(menuText), "Tchip:   %2.2f degC", stats.onChipTemp_degC);
+    snprintf(menuText, sizeof(menuText), "Tchip:   %2.2f degC", stats.OnChipTS_T_degC);
     safeString(menuText, 5, 14);
 }
 
