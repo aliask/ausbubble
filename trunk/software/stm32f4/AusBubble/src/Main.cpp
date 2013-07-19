@@ -32,6 +32,15 @@
 /*                                                                      */
 /************************************************************************/
 
+/* Boot Modes (From Section 3.1: ST AN2606 Application note) */
+/* The values on the BOOT pins are latched on the fourth rising edge of SYSCLK after a reset. */
+/*
+BOOT1   BOOT0     BOOT MODE             ALIASING
+X       0         User Flash memory     User Flash memory is selected as the boot space
+0       1         System memory         System memory is selected as the boot space
+1       1         Embedded SRAM         Embedded SRAM is selected as the boot space
+*/
+
 #include "Includes.h"
 #include "UI.h"
 #include "Jammer.h"
@@ -417,9 +426,10 @@ void SetupJoystick(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    /* Note: Internal pull-ups are used on each button input (i.e. external pull-up resistors not required) */
+    /* Note: Internal pull-ups are used on all button inputs except SEL (PB2) */
+    /* Use an external 10k pull-up resistor for SEL (PB2) */
 
-    /* Configure LEFT as input floating */
+    /* Configure LEFT as input */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_LEFT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -427,7 +437,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_LEFT_PORT, &GPIO_InitStructure);
-    /* Configure RIGHT as input floating */
+    /* Configure RIGHT as input */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_RIGHT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -435,7 +445,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_RIGHT_PORT, &GPIO_InitStructure);
-    /* Configure UP as input floating */
+    /* Configure UP as input */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_UP_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -443,7 +453,7 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_UP_PORT, &GPIO_InitStructure);
-    /* Configure DOWN as input floating */
+    /* Configure DOWN as input */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_DOWN_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
@@ -451,12 +461,12 @@ void SetupJoystick(void)
     GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_DOWN_PORT, &GPIO_InitStructure);
-    /* Configure SEL as input floating */
+    /* Configure SEL as input */
     GPIO_StructInit(&GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Pin     = JOYSTICK_SELECT_PIN;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_OType   = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_UP;
+    GPIO_InitStructure.GPIO_PuPd    = GPIO_PuPd_NOPULL;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_100MHz;
     GPIO_Init(JOYSTICK_SELECT_PORT, &GPIO_InitStructure);
 }

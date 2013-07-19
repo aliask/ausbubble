@@ -129,7 +129,7 @@
 #define SYNTH_GPO1ADD1_PORT             GPIOB
 #define SYNTH_GPO1ADD1_PIN              GPIO_Pin_1
 #define SYNTH_GPO2ADD2_PORT             GPIOB
-#define SYNTH_GPO2ADD2_PIN              GPIO_Pin_2
+#define SYNTH_GPO2ADD2_PIN              GPIO_Pin_10
 #define SYNTH_GPO3FM_PORT               GPIOB
 #define SYNTH_GPO3FM_PIN                GPIO_Pin_5
 #define SYNTH_GPO4LDDO_PORT             GPIOE
@@ -142,33 +142,18 @@
 // Left
 #define JOYSTICK_LEFT_PORT              GPIOE
 #define JOYSTICK_LEFT_PIN               GPIO_Pin_10
-#define JOYSTICK_LEFT_PORT_SOURCE       EXTI_PortSourceGPIOE
-#define JOYSTICK_LEFT_PIN_SOURCE        EXTI_PinSource10
-#define JOYSTICK_LEFT_EXTI_LINE         EXTI_Line10
 // Right
 #define JOYSTICK_RIGHT_PORT             GPIOE
 #define JOYSTICK_RIGHT_PIN              GPIO_Pin_11
-#define JOYSTICK_RIGHT_PORT_SOURCE      EXTI_PortSourceGPIOE
-#define JOYSTICK_RIGHT_PIN_SOURCE       EXTI_PinSource11
-#define JOYSTICK_RIGHT_EXTI_LINE        EXTI_Line11
 // Up
 #define JOYSTICK_UP_PORT                GPIOE
 #define JOYSTICK_UP_PIN                 GPIO_Pin_12
-#define JOYSTICK_UP_PORT_SOURCE         EXTI_PortSourceGPIOE
-#define JOYSTICK_UP_PIN_SOURCE          EXTI_PinSource12
-#define JOYSTICK_UP_EXTI_LINE           EXTI_Line12
 // Down
 #define JOYSTICK_DOWN_PORT              GPIOE
 #define JOYSTICK_DOWN_PIN               GPIO_Pin_13
-#define JOYSTICK_DOWN_PORT_SOURCE       EXTI_PortSourceGPIOE
-#define JOYSTICK_DOWN_PIN_SOURCE        EXTI_PinSource13
-#define JOYSTICK_DOWN_EXTI_LINE         EXTI_Line13
 // Select
-#define JOYSTICK_SELECT_PORT            GPIOE
-#define JOYSTICK_SELECT_PIN             GPIO_Pin_14
-#define JOYSTICK_SELECT_PORT_SOURCE     EXTI_PortSourceGPIOE
-#define JOYSTICK_SELECT_PIN_SOURCE      EXTI_PinSource14
-#define JOYSTICK_SELECT_EXTI_LINE       EXTI_Line14
+#define JOYSTICK_SELECT_PORT            GPIOB
+#define JOYSTICK_SELECT_PIN             GPIO_Pin_2
 /* RF Amplifier */
 #define AMP_PENABLE_PORT                GPIOB
 #define AMP_PENABLE_PIN                 GPIO_Pin_9
