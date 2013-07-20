@@ -75,7 +75,7 @@ AusBubble.elf: $(OBJS) $(USER_OBJS)
 
 AusBubble.hex: AusBubble.elf
 	@echo 'Invoking: ARM Yagarto Windows GNU Create Flash Image'
-	arm-none-eabi-objcopy -O ihex AusBubble.elf  "AusBubble.hex"
+	arm-none-eabi-objcopy -O binary AusBubble.elf  "AusBubble.hex"
 	@echo 'Finished building: $@'
 	@echo ' '
 
