@@ -37,6 +37,7 @@
 /* Initialize static members */
 struct jamSettings_t Jammer::settings;
 bool Jammer::enabled = false;
+bool Jammer::firstAlgoRun = false;
 
 void Jammer::Init(void)
 {
@@ -80,8 +81,9 @@ void Jammer::SetEnabled(bool enable)
         TIM_Cmd(TIM2, DISABLE);
     }
 
-    /* Set internal flag */
+    /* Set internal flags */
     enabled = enable;
+    firstAlgoRun = enable;
 }
 
 bool Jammer::isEnabled(void)
@@ -165,10 +167,13 @@ void Jammer::Advance(void)
             break;
     }
 
-    /* Set synthesizer frequency (only if different to current frequency) */
-    if(newFreq != freq)
+    /* Set synthesizer frequency (only if different to current frequency OR if first call when set to single freq) */
+    if((newFreq != freq) || (firstAlgoRun && (settings.start==settings.stop)))
     {
         RFFCx07x_Synth::SetFreq(newFreq, true, false);  // Wait for PLL lock, Frequency modulation OFF
         freq = newFreq;
     }
+
+    /* Set flag */
+    firstAlgoRun = false;
 }
