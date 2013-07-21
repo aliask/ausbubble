@@ -38,80 +38,125 @@
 bool RFPA5201_Amp::enabled = false;
 
 /* RFPA5201 EVM: 11n MCS7 HT40; Vcc=5v; Vreg=2.9v; Temp=25degC; Duty Cycle=50%; f=2450MHz */
-// Data points format: Pdet(V) => Pout(dB)
-float RFPA5201_Amp::dataPoints[N_SAMPLES][2] =
-      {
-        { 0.103384, 0.83 },
-        { 0.103922, 1 },
-        { 0.105509, 1.5 },
-        { 0.107157, 2 },
-        { 0.108910, 2.5 },
-        { 0.110815, 3 },
-        { 0.112917, 3.5 },
-        { 0.115261, 4 },
-        { 0.117887, 4.5 },
-        { 0.120831, 5 },
-        { 0.124126, 5.5 },
-        { 0.127807, 6 },
-        { 0.131907, 6.5 },
-        { 0.136461, 7 },
-        { 0.141508, 7.5 },
-        { 0.147101, 8 },
-        { 0.153290, 8.5 },
-        { 0.160125, 9 },
-        { 0.167661, 9.5 },
-        { 0.175949, 10 },
-        { 0.185034, 10.5 },
-        { 0.194957, 11 },
-        { 0.205760, 11.5 },
-        { 0.217483, 12 },
-        { 0.230164, 12.5 },
-        { 0.243848, 13 },
-        { 0.258599, 13.5 },
-        { 0.274519, 14 },
-        { 0.291717, 14.5 },
-        { 0.310298, 15 },
-        { 0.330370, 15.5 },
-        { 0.352041, 16 },
-        { 0.375404, 16.5 },
-        { 0.400535, 17 },
-        { 0.427504, 17.5 },
-        { 0.456380, 18 },
-        { 0.487229, 18.5 },
-        { 0.520135, 19 },
-        { 0.555185, 19.5 },
-        { 0.592644, 20 },
-        { 0.632811, 20.5 },
-        { 0.675997, 21 },
-        { 0.722506, 21.5 },
-        { 0.772656, 22 },
-        { 0.826708, 22.5 },
-        { 0.884415, 23 },
-        { 0.944988, 23.5 },
-        { 1.008000, 24 },
-        { 1.072000, 24.5 },
-        { 1.141000, 25 },
-        { 1.217000, 25.5 },
-        { 1.305000, 26 },
-        { 1.403000, 26.5 },
-        { 1.508000, 27 },
-        { 1.610000, 27.5 },
-        { 1.704000, 28 },
-        { 1.797000, 28.5 },
-        { 1.893000, 29 },
-        { 1.990000, 29.5 },
-        { 2.084000, 30 },
-        { 2.180000, 30.5 },
-        { 2.281000, 31 },
-        { 2.392000, 31.5 },
-        { 2.500000, 32 },
-        { 2.585000, 32.5 },
-        { 2.663000, 33 },
-        { 2.735000, 33.5 },
-        { 2.803000, 34 },
-        { 2.892000, 34.5 },
-        { 2.922000, 34.95 }
-      };
+// Data points format: { Pdet(V) , Pout(dB) }
+float RFPA5201_Amp::Pout_dataPoints[POUT_N_SAMPLES][2] =
+{
+    { 0.103384, 0.83 },
+    { 0.103922, 1 },
+    { 0.105509, 1.5 },
+    { 0.107157, 2 },
+    { 0.108910, 2.5 },
+    { 0.110815, 3 },
+    { 0.112917, 3.5 },
+    { 0.115261, 4 },
+    { 0.117887, 4.5 },
+    { 0.120831, 5 },
+    { 0.124126, 5.5 },
+    { 0.127807, 6 },
+    { 0.131907, 6.5 },
+    { 0.136461, 7 },
+    { 0.141508, 7.5 },
+    { 0.147101, 8 },
+    { 0.153290, 8.5 },
+    { 0.160125, 9 },
+    { 0.167661, 9.5 },
+    { 0.175949, 10 },
+    { 0.185034, 10.5 },
+    { 0.194957, 11 },
+    { 0.205760, 11.5 },
+    { 0.217483, 12 },
+    { 0.230164, 12.5 },
+    { 0.243848, 13 },
+    { 0.258599, 13.5 },
+    { 0.274519, 14 },
+    { 0.291717, 14.5 },
+    { 0.310298, 15 },
+    { 0.330370, 15.5 },
+    { 0.352041, 16 },
+    { 0.375404, 16.5 },
+    { 0.400535, 17 },
+    { 0.427504, 17.5 },
+    { 0.456380, 18 },
+    { 0.487229, 18.5 },
+    { 0.520135, 19 },
+    { 0.555185, 19.5 },
+    { 0.592644, 20 },
+    { 0.632811, 20.5 },
+    { 0.675997, 21 },
+    { 0.722506, 21.5 },
+    { 0.772656, 22 },
+    { 0.826708, 22.5 },
+    { 0.884415, 23 },
+    { 0.944988, 23.5 },
+    { 1.008000, 24 },
+    { 1.072000, 24.5 },
+    { 1.141000, 25 },
+    { 1.217000, 25.5 },
+    { 1.305000, 26 },
+    { 1.403000, 26.5 },
+    { 1.508000, 27 },
+    { 1.610000, 27.5 },
+    { 1.704000, 28 },
+    { 1.797000, 28.5 },
+    { 1.893000, 29 },
+    { 1.990000, 29.5 },
+    { 2.084000, 30 },
+    { 2.180000, 30.5 },
+    { 2.281000, 31 },
+    { 2.392000, 31.5 },
+    { 2.500000, 32 },
+    { 2.585000, 32.5 },
+    { 2.663000, 33 },
+    { 2.735000, 33.5 },
+    { 2.803000, 34 },
+    { 2.892000, 34.5 },
+    { 2.922000, 34.95 }
+};
+
+/* Vishay NTC Thermistor (NTCLE100E3): R25=33kOhm */
+// Data points format: { ADC value , Temp(degC) }
+float RFPA5201_Amp::Temp_dataPoints[TEMP_N_SAMPLES][2] =
+{
+    { 36  , -40 },
+    { 50  , -35 },
+    { 68  , -30 },
+    { 91  , -25 },
+    { 121 , -20 },
+    { 160 , -15 },
+    { 209 , -10 },
+    { 269 , -5  },
+    { 343 , 0   },
+    { 431 , 5   },
+    { 536 , 10  },
+    { 658 , 15  },
+    { 797 , 20  },
+    { 952 , 25  },
+    { 1123, 30  },
+    { 1305, 35  },
+    { 1498, 40  },
+    { 1696, 45  },
+    { 1895, 50  },
+    { 2092, 55  },
+    { 2284, 60  },
+    { 2467, 65  },
+    { 2638, 70  },
+    { 2798, 75  },
+    { 2944, 80  },
+    { 3076, 85  },
+    { 3195, 90  },
+    { 3301, 95  },
+    { 3395, 100 },
+    { 3479, 105 },
+    { 3552, 110 },
+    { 3617, 115 },
+    { 3673, 120 },
+    { 3722, 125 },
+    { 3766, 130 },
+    { 3804, 135 },
+    { 3837, 140 },
+    { 3866, 145 },
+    { 3891, 150 }
+};
 
 void RFPA5201_Amp::HWInit(void)
 {
@@ -142,7 +187,7 @@ void RFPA5201_Amp::SetEnabled(bool enable)
 float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
 {
     int imin = 0;
-    int imax = N_SAMPLES;
+    int imax = POUT_N_SAMPLES;
     int imid;
     float m;
 
@@ -158,16 +203,45 @@ float RFPA5201_Amp::GetOutputPower_dBm(float pDETVoltage)
         imid = (imax-imin)/2 + imin;
 
         /* Calculate new index bounds of search interval */
-        if(dataPoints[imid][0] < pDETVoltage)
+        if(Pout_dataPoints[imid][0] < pDETVoltage)
             imin = imid;
-        else if(dataPoints[imid][0] > pDETVoltage)
+        else if(Pout_dataPoints[imid][0] > pDETVoltage)
             imax = imid;
         /* Input voltage exactly matches the value in the LUT (highly unlikely) */
         else
-            return dataPoints[imid][1];
+            return Pout_dataPoints[imid][1];
     }
 
     /* Use linear interpolation */
-    m = (dataPoints[imax][1] - dataPoints[imin][1]) / (dataPoints[imax][0] - dataPoints[imin][0]);
-    return m * (pDETVoltage - dataPoints[imax][0]) + dataPoints[imax][1];
+    m = (Pout_dataPoints[imax][1] - Pout_dataPoints[imin][1]) / (Pout_dataPoints[imax][0] - Pout_dataPoints[imin][0]);
+    return m * (pDETVoltage - Pout_dataPoints[imax][0]) + Pout_dataPoints[imax][1];
+}
+
+float RFPA5201_Amp::GetTemp_degC(uint16_t adcValue)
+{
+    int imin = 0;
+    int imax = TEMP_N_SAMPLES;
+    int imid;
+    float m;
+
+    /* Binary search */
+    while(imax > imin+1)
+    {
+        /* Calculate midpoint index of search interval */
+        /* Note: Midpoint value will be rounded up to nearest integer if remainder >= 0.5 */
+        imid = (imax-imin)/2 + imin;
+
+        /* Calculate new index bounds of search interval */
+        if(Temp_dataPoints[imid][0] < adcValue)
+            imin = imid;
+        else if(Temp_dataPoints[imid][0] > adcValue)
+            imax = imid;
+        /* Input voltage exactly matches the value in the LUT (highly unlikely) */
+        else
+            return Temp_dataPoints[imid][1];
+    }
+
+    /* Use linear interpolation */
+    m = (Temp_dataPoints[imax][1] - Temp_dataPoints[imin][1]) / (Temp_dataPoints[imax][0] - Temp_dataPoints[imin][0]);
+    return m * (adcValue - Temp_dataPoints[imax][0]) + Temp_dataPoints[imax][1];
 }

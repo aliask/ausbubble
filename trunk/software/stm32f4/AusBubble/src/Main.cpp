@@ -93,11 +93,12 @@ void vHeartbeatTask(void *pvParameters)
     {
         /* Toggle LED */
         if(toggle ^= true)
-            GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_RESET);
+            GPIO_ResetBits(RTOS_LED_PORT, RTOS_LED_PIN);
         else
-            GPIO_WriteBit(RTOS_LED_PORT, RTOS_LED_PIN, Bit_SET);
+            GPIO_SetBits(RTOS_LED_PORT, RTOS_LED_PIN);
         /* Update statistics structure */
         stats.heartbeat = toggle;
+        // Do update
         UI::updateStatsData(stats);
         /* Sleep */
         DelayMS(500);
@@ -127,26 +128,6 @@ void vUITask(void *pvParameters)
         buttonState |= ((JOYSTICK_DOWN_PORT->IDR & JOYSTICK_DOWN_PIN) == 0) << 1;
         buttonState |= ((JOYSTICK_UP_PORT->IDR & JOYSTICK_UP_PIN) == 0) << 0;
 
-        /* Has button state changed since last check? */
-        if(buttonState_prev == buttonState)
-            debounceCount++;
-        else
-            debounceCount=0;
-
-        if(drawCount < UI_DRAW_COUNT_MAX)
-            drawCount++;
-        else
-        {
-            /* Re-draw everything if we're on the Home screen */
-            if(UI::currentState == HomeScreen)
-                UI::draw(HomeScreen);
-            /* Just draw the header otherwise */
-            else
-                UI::drawHeader();
-            /* Reset count */
-            drawCount = 0;
-        }
-
         /* Has button state been stable long enough? (de-bouncing) */
         if(debounceCount >= DEBOUNCE_COUNT)
         {
@@ -156,9 +137,10 @@ void vUITask(void *pvParameters)
                 /* Button is being held down */
                 if(((holdCount % TICK_HOLDCOUNT) == 0) && (holdCount > 0))
                 {
-                    /* UP/DOWN: Increase tick rate */
+                    /* UP/DOWN */
                     if((buttonState == ButtonUp)||(buttonState == ButtonDown))
                     {
+                        /* Increase tick rate */
                         switch(tickRate)
                         {
                             case TICK_RATE_1:
@@ -177,7 +159,7 @@ void vUITask(void *pvParameters)
                                 break;
                         }
                     }
-                    /* SELECT: Enable RF output */
+                    /* SELECT */
                     else if(buttonState == ButtonSelect)
                     {
                         /* Enable jamming if disabled (and if not at Disclaimer screen) */
@@ -210,7 +192,7 @@ void vUITask(void *pvParameters)
                 }
 
                 /* Update UI */
-                if(holdCount % tickRate == DO_MENU_HOLD_COUNT)
+                if((holdCount % tickRate == DO_MENU_HOLD_COUNT))
                     UI::doMenu(buttonState);
 
                 holdCount++;
@@ -225,7 +207,29 @@ void vUITask(void *pvParameters)
         }
         /* Save button state */
         buttonState_prev = buttonState;
-        /* Sleep for 1 ms */
+
+        /* Has button state changed since last check? */
+        if(buttonState_prev == buttonState)
+            debounceCount++;
+        else
+            debounceCount=0;
+
+        /* Redraw UI */
+        if(drawCount < UI_DRAW_COUNT_MAX)
+            drawCount++;
+        else
+        {
+            /* Re-draw everything if we're on the Home screen */
+            if(UI::currentState == HomeScreen)
+                UI::draw(HomeScreen);
+            /* Just draw the header otherwise */
+            else
+                UI::drawHeader();
+            /* Reset count */
+            drawCount = 0;
+        }
+
+        /* Sleep for 1ms */
         DelayMS(1);
     }
 }
@@ -239,7 +243,7 @@ void vStatsTask(void *pvParameters)
     float VBAT_V;
     float OnChipTS_Vsense_V;
     float OnChipTS_T_degC;
-    float RFAmpTS_Vsense_V;
+    float RFAmpTS_T_degC;
 
     while(1)
     {
@@ -252,8 +256,8 @@ void vStatsTask(void *pvParameters)
         /* 3. On-chip Temperature Sensor */
         OnChipTS_Vsense_V = (gADC1ConvertedValue[1] * 3.0) / 0xFFF;
         OnChipTS_T_degC = ((OnChipTS_Vsense_V - V25) / AVG_SLOPE) + 25.0 ;
-        /* 4. TODO: RF Amplifier Thermistor */
-        RFAmpTS_Vsense_V = (gADC3ConvertedValue[0] * 3.0) / 0xFFF;
+        /* 4. RF Amplifier Thermistor */
+        RFAmpTS_T_degC = RFPA5201_Amp::GetTemp_degC(gADC3ConvertedValue[0]);
         /* 5. TODO: Battery parameters (via I2C) */
 
         /* Update statistics structure */
@@ -268,6 +272,7 @@ void vStatsTask(void *pvParameters)
         stats.isPLLLocked = RFFCx07x_Synth::isPLLLocked();
         stats.PDET_V = PDET_V;
         stats.Pout_dBm = Pout_dBm;
+        stats.RFAmpTS_T_degC = RFAmpTS_T_degC;
         // Do update
         UI::updateStatsData(stats);
 
@@ -296,11 +301,11 @@ void vJammingTask(void *pvParameters)
 /* Main */
 int main(void)
 {
-    /* At this stage the microcontroller clock setting is already configured,
-    this is done through SystemInit() function which is called from startup
-    file (startup_stm32f4xx.S) before to branch to application main.
-    To reconfigure the default setting of SystemInit() function, refer to
-    system_stm32f4xx.c file */
+    /* At this stage, the microcontroller clock setting is already configured.
+    This is done through the SystemInit() function which is called from the startup
+    file (startup_stm32f4xx.S) before branching to main().
+    To reconfigure the default setting of the SystemInit() function, refer to
+    the system_stm32f4xx.c file */
 
     /* Setup STM32 hardware */
     prvSetupHardware();
