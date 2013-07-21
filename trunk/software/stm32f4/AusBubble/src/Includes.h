@@ -106,6 +106,10 @@
 #define MIN_RATE_HZ                     1           /* DO NOT MODIFY */
 #define MAX_RATE_HZ                     1000        /* DO NOT MODIFY */
 
+/* Maximum RF amp operating temperature */
+// RFPA5201 datasheet specifies a 85degC absolute maximum operating ambient temperature
+#define MAX_RF_AMP_TEMP_DEGC            75
+
 /* OLED */
 #define OLED_CS_PORT                    GPIOA
 #define OLED_CS_PIN                     GPIO_Pin_4
