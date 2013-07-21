@@ -294,13 +294,13 @@ void UI::drawHomeScreen()
 
     centredString("Home", 1);
 
-    snprintf(menuText, sizeof(menuText), "Pout:    %2.2f dBm", stats.Pout_dBm);
+    snprintf(menuText, sizeof(menuText), "Pout:    %05.2f dBm", stats.Pout_dBm);
     safeString(menuText, 3, 14);
-    snprintf(menuText, sizeof(menuText), "VBAT:    %1.2f V", stats.VBAT_V);
+    snprintf(menuText, sizeof(menuText), "VBAT:    %04.2f V", stats.VBAT_V);
     safeString(menuText, 4, 14);
-    snprintf(menuText, sizeof(menuText), "Tchip:   %2.2f degC", stats.OnChipTS_T_degC);
+    snprintf(menuText, sizeof(menuText), "Tmcu:    %05.2f degC", stats.OnChipTS_T_degC);
     safeString(menuText, 5, 14);
-    snprintf(menuText, sizeof(menuText), "Trfamp:  %2.2f degC", stats.RFAmpTS_T_degC);
+    snprintf(menuText, sizeof(menuText), "Trfamp:  %05.2f degC", stats.RFAmpTS_T_degC);
     safeString(menuText, 6, 14);
 }
 

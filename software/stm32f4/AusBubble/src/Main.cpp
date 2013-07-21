@@ -258,6 +258,16 @@ void vStatsTask(void *pvParameters)
         OnChipTS_T_degC = ((OnChipTS_Vsense_V - V25) / AVG_SLOPE) + 25.0 ;
         /* 4. RF Amplifier Thermistor */
         RFAmpTS_T_degC = RFPA5201_Amp::GetTemp_degC(gADC3ConvertedValue[0]);
+        // Do temperature limit check
+        if(RFAmpTS_T_degC > MAX_RF_AMP_TEMP_DEGC)
+        {
+            /* Set hardware */
+            Jammer::SetEnabled(false);
+            /* Show splash text */
+            UI::splash("RF Amp Temp Limit", 1000);
+            /* Show splash text */
+            UI::splash("RF Output DISABLED", 1000);
+        }
         /* 5. TODO: Battery parameters (via I2C) */
 
         /* Update statistics structure */
