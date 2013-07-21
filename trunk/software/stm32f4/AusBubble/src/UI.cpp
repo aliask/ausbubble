@@ -294,9 +294,11 @@ void UI::drawHomeScreen()
 
     centredString("Home", 1);
 
+    snprintf(menuText, sizeof(menuText), "Vpdet:   %04.2f V", stats.PDET_V);
+    safeString(menuText, 2, 14);
     snprintf(menuText, sizeof(menuText), "Pout:    %05.2f dBm", stats.Pout_dBm);
     safeString(menuText, 3, 14);
-    snprintf(menuText, sizeof(menuText), "VBAT:    %04.2f V", stats.VBAT_V);
+    snprintf(menuText, sizeof(menuText), "Vbat:    %04.2f V", stats.VBAT_V);
     safeString(menuText, 4, 14);
     snprintf(menuText, sizeof(menuText), "Tmcu:    %05.2f degC", stats.OnChipTS_T_degC);
     safeString(menuText, 5, 14);

@@ -78,6 +78,7 @@ class Jammer
         static struct jamSettings_t settings;
     private:
         static bool enabled;
+        static bool firstAlgoRun;
 };
 
 #endif
