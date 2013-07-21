@@ -185,6 +185,7 @@ struct Stats
     bool isJamming;
     float PDET_V;
     float Pout_dBm;
+    float RFAmpTS_T_degC;
 };
 
 #endif

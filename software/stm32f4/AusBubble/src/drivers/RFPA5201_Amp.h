@@ -35,7 +35,8 @@
 #ifndef RFPA5201_AMP_H
 #define RFPA5201_AMP_H
 
-#define N_SAMPLES 70
+#define POUT_N_SAMPLES 70
+#define TEMP_N_SAMPLES 39
 
 #include "Includes.h"
 
@@ -45,9 +46,11 @@ class RFPA5201_Amp
         static void HWInit(void);
         static void SetEnabled(bool enable);
         static float GetOutputPower_dBm(float pDETVoltage);
+        static float GetTemp_degC(uint16_t adcValue);
     private:
         static bool enabled;
-        static float dataPoints[N_SAMPLES][2];
+        static float Pout_dataPoints[POUT_N_SAMPLES][2];
+        static float Temp_dataPoints[TEMP_N_SAMPLES][2];
 };
 
 #endif

@@ -55,6 +55,7 @@ void UI::updateStatsData(Stats input)
     stats.isPLLLocked = input.isPLLLocked;
     stats.PDET_V = input.PDET_V;
     stats.Pout_dBm = input.Pout_dBm;
+    stats.RFAmpTS_T_degC = input.RFAmpTS_T_degC;
 }
 
 void UI::drawHeader(void)
@@ -299,6 +300,8 @@ void UI::drawHomeScreen()
     safeString(menuText, 4, 14);
     snprintf(menuText, sizeof(menuText), "Tchip:   %2.2f degC", stats.OnChipTS_T_degC);
     safeString(menuText, 5, 14);
+    snprintf(menuText, sizeof(menuText), "Trfamp:  %2.2f degC", stats.RFAmpTS_T_degC);
+    safeString(menuText, 6, 14);
 }
 
 void UI::drawJammerScreen()
