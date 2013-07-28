@@ -3,7 +3,7 @@
 /* An open-source RF jammer designed to operate in the 2.4 GHz Wi-Fi    */
 /* frequency block.                                                     */
 /*                                                                      */
-/* RFFCx07x_Synth.h                                                     */
+/* RFFCx07xA_Synth.h                                                    */
 /*                                                                      */
 /* Will Robertson <aliask@gmail.com>                                    */
 /* Nick D'Ademo <nickdademo@gmail.com>                                  */
@@ -32,8 +32,8 @@
 /*                                                                      */
 /************************************************************************/
 
-#ifndef RFFCX07X_SYNTH_H
-#define RFFCX07X_SYNTH_H
+#ifndef RFFCX07XA_SYNTH_H
+#define RFFCX07XA_SYNTH_H
 
 #include "Includes.h"
 
@@ -128,7 +128,7 @@
 #define SHIFT_CTCLK     2
 #define SHIFT_BYPASS    1
 
-class RFFCx07x_Synth
+class RFFCx07xA_Synth
 {
     public:
         static void HWInit(void);

@@ -279,7 +279,7 @@ void vStatsTask(void *pvParameters)
         stats.isCharging = false;
         // Jammer
         stats.isJamming = Jammer::isEnabled();
-        stats.isPLLLocked = RFFCx07x_Synth::isPLLLocked();
+        stats.isPLLLocked = RFFCx07xA_Synth::isPLLLocked();
         stats.PDET_V = PDET_V;
         stats.Pout_dBm = Pout_dBm;
         stats.RFAmpTS_T_degC = RFAmpTS_T_degC;
@@ -364,7 +364,7 @@ void prvSetupHardware(void)
     /* Configure HCLK clock as SysTick clock source */
     SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
     /* GPIO Periph clock enable */
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_GPIOE, ENABLE);
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_GPIOE, ENABLE);
     /* SYSCFG APB clock must be enabled to get write access to SYSCFG_EXTICRx registers */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
 
@@ -396,8 +396,8 @@ void prvSetupHardware(void)
     UI::draw(DisclaimerScreen);
 
     /* SYNTH */
-    RFFCx07x_Synth::HWInit();
-    RFFCx07x_Synth::Init();
+    RFFCx07xA_Synth::HWInit();
+    RFFCx07xA_Synth::Init();
 
     /* RF Amplifier */
     RFPA5201_Amp::HWInit();

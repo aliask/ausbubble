@@ -43,7 +43,7 @@
 #include "task.h"
 /* Peripheral libraries */
 #include "RDA1005L_VarGainAmp.h"
-#include "RFFCx07x_Synth.h"
+#include "RFFCx07xA_Synth.h"
 #include "RFPA5201_Amp.h"
 
 /* Enumerations */
