@@ -279,7 +279,7 @@ void vStatsTask(void *pvParameters)
         stats.isCharging = false;
         // Jammer
         stats.isJamming = Jammer::isEnabled();
-        stats.isPLLLocked = RFFCx07xA_Synth::isPLLLocked();
+        stats.isPLLLocked = RFMD_IntSynth::isPLLLocked();
         stats.PDET_V = PDET_V;
         stats.Pout_dBm = Pout_dBm;
         stats.RFAmpTS_T_degC = RFAmpTS_T_degC;
@@ -395,9 +395,9 @@ void prvSetupHardware(void)
     SSD1306_OLED::Init();
     UI::draw(DisclaimerScreen);
 
-    /* SYNTH */
-    RFFCx07xA_Synth::HWInit();
-    RFFCx07xA_Synth::Init();
+    /* Synthesizer */
+    RFMD_IntSynth::HWInit();
+    RFMD_IntSynth::Init();
 
     /* RF Amplifier */
     RFPA5201_Amp::HWInit();

@@ -95,7 +95,7 @@
 #define SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ      2500000000      /* DO NOT MODIFY */
 #define SCAN_SETTINGS_DEFAULT_ALGO              ScanTriangle
 #define SCAN_SETTINGS_DEFAULT_STEPSIZE          STEP_1M_HZ
-#define SCAN_SETTINGS_DEFAULT_RATE_HZ           500
+#define SCAN_SETTINGS_DEFAULT_RATE_HZ           10
 
 /* Synth Frequency */
 // Allowable range
@@ -104,7 +104,7 @@
 /* Jamming Update Rate */
 // Allowable range
 #define MIN_RATE_HZ                     1           /* DO NOT MODIFY */
-#define MAX_RATE_HZ                     1000        /* DO NOT MODIFY */
+#define MAX_RATE_HZ                     5000        /* DO NOT MODIFY */
 
 /* Maximum RF amp operating temperature */
 // RFPA5201 datasheet specifies a 85degC absolute maximum operating ambient temperature

@@ -61,7 +61,7 @@ void Jammer::SetEnabled(bool enable)
         /* Set gain to maximum allowable */
         RDA1005L_VarGainAmp::SetGain(VARGAINAMP_MAX_GAIN_LIMIT_DB);
         /* Enable synthesizer */
-        RFFCx07xA_Synth::SetEnabled(true);
+        RFMD_IntSynth::SetEnabled(true);
 
         /* Set jam update rate */
         SetUpdateRate(settings.rate);
@@ -69,7 +69,7 @@ void Jammer::SetEnabled(bool enable)
     else
     {
         /* Disable synthesizer */
-        RFFCx07xA_Synth::SetEnabled(false);
+        RFMD_IntSynth::SetEnabled(false);
         /* Set gain to minimum allowable */
         RDA1005L_VarGainAmp::SetGain(VARGAINAMP_MIN_GAIN_LIMIT_DB);
         /* Disable amplifier */
@@ -156,7 +156,7 @@ void Jammer::Advance(void)
         /* RANDOM */
         case ScanRandom:
             /* Wait until one RNG number is ready */
-            while(RNG_GetFlagStatus(RNG_FLAG_DRDY)== RESET);
+            while(RNG_GetFlagStatus(RNG_FLAG_DRDY) == RESET);
             /* Get a 32bit Random number */
             random32bit = RNG_GetRandomNumber();
             /* Get random number between START and STOP frequency range */
@@ -170,7 +170,7 @@ void Jammer::Advance(void)
     /* Set synthesizer frequency (only if different to current frequency OR if first call when set to single freq) */
     if((newFreq != freq) || (firstAlgoRun && (settings.start==settings.stop)))
     {
-        RFFCx07xA_Synth::SetFreq(newFreq, true, false);  // Wait for PLL lock, Frequency modulation OFF
+        RFMD_IntSynth::SetFreq(newFreq, true, true);  // Wait for PLL lock, Frequency modulation OFF
         freq = newFreq;
     }
 

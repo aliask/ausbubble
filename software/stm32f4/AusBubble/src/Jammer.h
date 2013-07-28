@@ -43,7 +43,7 @@
 #include "task.h"
 /* Peripheral libraries */
 #include "RDA1005L_VarGainAmp.h"
-#include "RFFCx07xA_Synth.h"
+#include "RFMD_IntSynth.h"
 #include "RFPA5201_Amp.h"
 
 /* Enumerations */
@@ -63,7 +63,7 @@ struct jamSettings_t {
     uint64_t start;
     uint64_t stop;
     ScanAlgorithms_t algorithm;
-    uint32_t stepSize;
+    uint64_t stepSize;
     uint16_t rate;
 };
 

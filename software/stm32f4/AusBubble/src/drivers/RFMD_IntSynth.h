@@ -3,7 +3,7 @@
 /* An open-source RF jammer designed to operate in the 2.4 GHz Wi-Fi    */
 /* frequency block.                                                     */
 /*                                                                      */
-/* RFFCx07xA_Synth.h                                                    */
+/* RFMD_IntSynth.h                                                      */
 /*                                                                      */
 /* Will Robertson <aliask@gmail.com>                                    */
 /* Nick D'Ademo <nickdademo@gmail.com>                                  */
@@ -32,16 +32,17 @@
 /*                                                                      */
 /************************************************************************/
 
-#ifndef RFFCX07XA_SYNTH_H
-#define RFFCX07XA_SYNTH_H
+#ifndef RFMD_INTSYNTH_H
+#define RFMD_INTSYNTH_H
 
 #include "Includes.h"
 
 #define F_VCO_MAX_HZ                5400000000
-#define F_REFERENCE_HZ              26000000
-#define FBKDIV_2                    2       // Prescaler divider (fvco<3.2GHz: 2)
-#define FBKDIV_4                    4       // Prescaler divider (fvco>3.2GHz: 4)
-#define USE_SW_CONTROL              0       // Software Control=1, Hardware Control=0 (via ENBL and MODE pins)
+#define F_REFERENCE_HZ              26000000    // Must be between 10 MHz and 52 MHz (after division)
+                                                // External TCXO: Must be between 10MHz and 104MHz
+#define FBKDIV_2                    2           // Prescaler divider (fvco<3.2GHz: 2)
+#define FBKDIV_4                    4           // Prescaler divider (fvco>3.2GHz: 4)
+#define USE_SW_CONTROL              0           // Software Control=1, Hardware Control=0 (via ENBL and MODE pins)
 
 // Synthesizer registers
 #define REG_LF                      0x00
@@ -280,22 +281,31 @@
 #define SHIFT_TEST__RGBYP           2
 #define SHIFT_TEST__RCBYP           1
 
-class RFFCx07xA_Synth
+class RFMD_IntSynth
 {
     public:
         static void HWInit(void);
         static void Init(void);
         static void SetEnabled(bool enable);
-        static void SetFreq(uint64_t freq_Hz, bool waitForPLLLock=false, bool useModulation=false);
         static bool isPLLLocked(void);
+        static void SetFreq(uint64_t freq_Hz, bool waitForPLLLock=false, bool useModulation=false);
     private:
         static void Write(uint32_t dataBits);
         static void SendAddress(bool write, uint8_t address);
         static void SendData(uint16_t data);
         static uint16_t ReceiveData(void);
         static uint16_t Read(uint8_t address);
-        static void SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref);
+        static void SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock);
         static void GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step);
+        static uint64_t freq_Hz;
+        static uint64_t freq_Hz_prev;
+        static int32_t freq_delta_Hz;
+        static int32_t freq_delta_Hz_prev;
+        static int lodiv;
+        static int fbkdiv;
+        static int n;
+        static uint16_t nummsb;
+        static uint16_t numlsb;
 };
 
 #endif
