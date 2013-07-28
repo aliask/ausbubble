@@ -95,7 +95,7 @@
 #define SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ      2500000000      /* DO NOT MODIFY */
 #define SCAN_SETTINGS_DEFAULT_ALGO              ScanTriangle
 #define SCAN_SETTINGS_DEFAULT_STEPSIZE          STEP_1M_HZ
-#define SCAN_SETTINGS_DEFAULT_RATE_HZ           10
+#define SCAN_SETTINGS_DEFAULT_RATE_HZ           1000
 
 /* Synth Frequency */
 // Allowable range
