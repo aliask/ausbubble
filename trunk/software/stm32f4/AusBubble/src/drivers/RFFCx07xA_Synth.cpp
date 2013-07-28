@@ -3,7 +3,7 @@
 /* An open-source RF jammer designed to operate in the 2.4 GHz Wi-Fi    */
 /* frequency block.                                                     */
 /*                                                                      */
-/* RFFCx07x_Synth.cpp                                                   */
+/* RFFCx07xA_Synth.cpp                                                  */
 /*                                                                      */
 /* Will Robertson <aliask@gmail.com>                                    */
 /* Nick D'Ademo <nickdademo@gmail.com>                                  */
@@ -32,9 +32,9 @@
 /*                                                                      */
 /************************************************************************/
 
-#include "RFFCx07x_Synth.h"
+#include "RFFCx07xA_Synth.h"
 
-void RFFCx07x_Synth::HWInit(void)
+void RFFCx07xA_Synth::HWInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -122,7 +122,7 @@ void RFFCx07x_Synth::HWInit(void)
     GPIO_ResetBits(SYNTH_MODEGPO6_PORT, SYNTH_MODEGPO6_PIN);
 }
 
-void RFFCx07x_Synth::Init(void)
+void RFFCx07xA_Synth::Init(void)
 {
     /* Set initial state of GPIO pins and perform hardware reset */
     // RESETX=0 (hardware reset START)
@@ -154,7 +154,7 @@ void RFFCx07x_Synth::Init(void)
     SetFreq(2450000000, true);
 }
 
-void RFFCx07x_Synth::SetEnabled(bool enable)
+void RFFCx07xA_Synth::SetEnabled(bool enable)
 {
     #if USE_SW_CONTROL
         Write((REG_SDI_CTRL<<16) | (1<<SHIFT_SIPIN) |       // [15] 1=ENBL and MODE pins are ignored and become available as GPO5 and GPO6
@@ -167,7 +167,7 @@ void RFFCx07x_Synth::SetEnabled(bool enable)
     #endif
 }
 
-void RFFCx07x_Synth::Write(uint32_t dataBits)
+void RFFCx07xA_Synth::Write(uint32_t dataBits)
 {
     // Initialize count variable to zero
     uint8_t count = 0;
@@ -225,7 +225,7 @@ void RFFCx07x_Synth::Write(uint32_t dataBits)
     GPIO_ResetBits(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN);
 }
 
-void RFFCx07x_Synth::SendAddress(bool write, uint8_t address)
+void RFFCx07xA_Synth::SendAddress(bool write, uint8_t address)
 {
     // Initialize count variable to zero
     uint8_t count = 0;
@@ -300,7 +300,7 @@ void RFFCx07x_Synth::SendAddress(bool write, uint8_t address)
     }
 }
 
-void RFFCx07x_Synth::SendData(uint16_t data)
+void RFFCx07xA_Synth::SendData(uint16_t data)
 {
     // Initialize count variable to zero
     uint8_t count = 0;
@@ -339,7 +339,7 @@ void RFFCx07x_Synth::SendData(uint16_t data)
     GPIO_WriteBit(SYNTH_SCLK_PORT, SYNTH_SCLK_PIN, Bit_RESET);
 }
 
-uint16_t RFFCx07x_Synth::ReceiveData(void)
+uint16_t RFFCx07xA_Synth::ReceiveData(void)
 {
     // Initialize local variables
     uint8_t count = 0;
@@ -372,13 +372,13 @@ uint16_t RFFCx07x_Synth::ReceiveData(void)
     return read_data;
 }
 
-uint16_t RFFCx07x_Synth::Read(uint8_t address)
+uint16_t RFFCx07xA_Synth::Read(uint8_t address)
 {
     SendAddress(false, address);
     return ReceiveData();
 }
 
-void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
+void RFFCx07xA_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &nummsb_ref, uint16_t &numlsb_ref)
 {
     /* Register calculations taken from RFMD Programming Guide
     Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
@@ -435,7 +435,7 @@ void RFFCx07x_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t &
     while(waitForPLLLock && !isPLLLocked());
 }
 
-void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz, bool waitForPLLLock, bool useModulation)
+void RFFCx07xA_Synth::SetFreq(uint64_t freq_Hz, bool waitForPLLLock, bool useModulation)
 {
     static uint64_t f_lo_Hz = 0;
     static uint64_t freq_prev_Hz = 0;
@@ -508,7 +508,7 @@ void RFFCx07x_Synth::SetFreq(uint64_t freq_Hz, bool waitForPLLLock, bool useModu
     freq_prev_Hz = freq_Hz;
 }
 
-void RFFCx07x_Synth::GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step)
+void RFFCx07xA_Synth::GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step)
 {
     /*
           Fmod = MOD * (2^MODSTEP) * step_size
@@ -591,7 +591,7 @@ void RFFCx07x_Synth::GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16
     fmod_step *= (freq_delta_Hz > 0 ? 1 : -1);
 }
 
-bool RFFCx07x_Synth::isPLLLocked(void)
+bool RFFCx07xA_Synth::isPLLLocked(void)
 {
     return ((SYNTH_GPO4LDDO_PORT->IDR & SYNTH_GPO4LDDO_PIN) == SYNTH_GPO4LDDO_PIN);
 }
