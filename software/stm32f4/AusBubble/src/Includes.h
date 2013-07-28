@@ -144,17 +144,17 @@
 #define SYNTH_MODEGPO6_PIN              GPIO_Pin_8
 /* Joystick */
 // Left
-#define JOYSTICK_LEFT_PORT              GPIOE
+#define JOYSTICK_LEFT_PORT              GPIOC
 #define JOYSTICK_LEFT_PIN               GPIO_Pin_10
 // Right
-#define JOYSTICK_RIGHT_PORT             GPIOE
+#define JOYSTICK_RIGHT_PORT             GPIOC
 #define JOYSTICK_RIGHT_PIN              GPIO_Pin_11
 // Up
-#define JOYSTICK_UP_PORT                GPIOE
+#define JOYSTICK_UP_PORT                GPIOC
 #define JOYSTICK_UP_PIN                 GPIO_Pin_12
 // Down
-#define JOYSTICK_DOWN_PORT              GPIOE
-#define JOYSTICK_DOWN_PIN               GPIO_Pin_13
+#define JOYSTICK_DOWN_PORT              GPIOD
+#define JOYSTICK_DOWN_PIN               GPIO_Pin_2
 // Select
 #define JOYSTICK_SELECT_PORT            GPIOB
 #define JOYSTICK_SELECT_PIN             GPIO_Pin_2
