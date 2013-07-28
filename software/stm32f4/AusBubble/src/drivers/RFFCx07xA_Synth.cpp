@@ -139,13 +139,13 @@ void RFFCx07xA_Synth::Init(void)
     GPIO_SetBits(SYNTH_RESETX_PORT, SYNTH_RESETX_PIN);
 
     /* Software Reset */
-    Write((REG_SDI_CTRL<<16) | (1<<SHIFT_RESET));      // [1] When this bit is taken high the part is reset
+    Write((REG_SDI_CTRL<<16) | (1<<SHIFT_SDI_CTRL__RESET));      // [1] When this bit is taken high the part is reset
 
     /* Configure device */
     // Set GPO4 to output LOCK flag
-    Write((REG_GPO<<16) | (1<<SHIFT_LOCK));            // [0] Sends LOCK flag to GPO4
+    Write((REG_GPO<<16) | (1<<SHIFT_GPO__LOCK));            // [0] Sends LOCK flag to GPO4
     // Bypass the mixer
-    Write((REG_DEV_CTRL<<16) | (1<<SHIFT_BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
+    Write((REG_DEV_CTRL<<16) | (1<<SHIFT_DEV_CTRL__BYPASS));     // [1] If high, offsets mixer so that LO signal can be viewed at mixer output
 
     /* Enable Device */
     SetEnabled(true);
@@ -157,8 +157,8 @@ void RFFCx07xA_Synth::Init(void)
 void RFFCx07xA_Synth::SetEnabled(bool enable)
 {
     #if USE_SW_CONTROL
-        Write((REG_SDI_CTRL<<16) | (1<<SHIFT_SIPIN) |       // [15] 1=ENBL and MODE pins are ignored and become available as GPO5 and GPO6
-                                   (enable<<SHIFT_ENBL));   // [14] If sipin=1 this field will replace the functionality of the ENBL pin
+        Write((REG_SDI_CTRL<<16) | (1<<SHIFT_SDI_CTRL__SIPIN) |       // [15] 1=ENBL and MODE pins are ignored and become available as GPO5 and GPO6
+                                   (enable<<SHIFT_SDI_CTRL__ENBL));   // [14] If sipin=1 this field will replace the functionality of the ENBL pin
     #else
         if(enable)
             GPIO_WriteBit(SYNTH_ENBLGPO5_PORT, SYNTH_ENBLGPO5_PIN, Bit_SET);
@@ -392,18 +392,18 @@ void RFFCx07xA_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t 
     if(f_vco > 3200000000)
     {
         fbkdiv      = FBKDIV_4;
-        Write((REG_LF<<16) | (1<<SHIFT_LFACT)      // Active loop filter enable, 1=active 0=passive
-                           | (32<<SHIFT_P2CPDEF)   // Charge pump setting. If p2_kv_en=1 this value sets charge pump current during KV compensation measurement. If p2_kv_en=0, this value is used at all times. Default value is 93uA.
-                           | (32<<SHIFT_P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
-                           | (3<<SHIFT_PLLCPL));   // Charge pump leakage settings
+        Write((REG_LF<<16) | (1<<SHIFT_LF__LFACT)      // Active loop filter enable, 1=active 0=passive
+                           | (32<<SHIFT_LF__P2CPDEF)   // Charge pump setting. If p2_kv_en=1 this value sets charge pump current during KV compensation measurement. If p2_kv_en=0, this value is used at all times. Default value is 93uA.
+                           | (32<<SHIFT_LF__P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
+                           | (3<<SHIFT_LF__PLLCPL));   // Charge pump leakage settings
     }
     else
     {
         fbkdiv      = FBKDIV_2;
-        Write((REG_LF<<16) | (1<<SHIFT_LFACT)      // Active loop filter enable, 1=active 0=passive
-                           | (32<<SHIFT_P2CPDEF)   // Charge pump setting. If p2_kv_en=1 this value sets charge pump current during KV compensation measurement. If p2_kv_en=0, this value is used at all times. Default value is 93uA.
-                           | (32<<SHIFT_P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
-                           | (2<<SHIFT_PLLCPL));   // Charge pump leakage settings
+        Write((REG_LF<<16) | (1<<SHIFT_LF__LFACT)      // Active loop filter enable, 1=active 0=passive
+                           | (32<<SHIFT_LF__P2CPDEF)   // Charge pump setting. If p2_kv_en=1 this value sets charge pump current during KV compensation measurement. If p2_kv_en=0, this value is used at all times. Default value is 93uA.
+                           | (32<<SHIFT_LF__P1CPDEF)   // Charge pump setting. If p1_kv_en=1 this value sets charge pump current during KV compensation measurement. If p1_kv_en=0, this value is used at all times. Default value is 93uA.
+                           | (2<<SHIFT_LF__PLLCPL));   // Charge pump leakage settings
     }
     float n_div     = f_vco/(float)(fbkdiv*F_REFERENCE_HZ);
     int n           = n_div;
@@ -415,9 +415,9 @@ void RFFCx07xA_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t 
     numlsb_ref = numlsb;
 
     // Set N divider, LO path divider and feedback divider
-    Write((REG_P1_FREQ1<<16) | (n<<SHIFT_N) |                      // Path 1 VCO divider integer value
-                               ((int)log2(lodiv)<<SHIFT_LODIV) |   // Path 1 LO path divider setting: divide by 2^n (i.e. divide by 1 to divide by 32). 110 and 111 are reserved
-                               ((fbkdiv>>1)<<SHIFT_PRESC));        // Path 1 VCO PLL feedback path divider setting: 01 = divide by 2, 10 = divide by 4 (00 and 11 are reserved)
+    Write((REG_P1_FREQ1<<16) | (n<<SHIFT_P1_FREQ1__P1N) |                      // Path 1 VCO divider integer value
+                               ((int)log2(lodiv)<<SHIFT_P1_FREQ1__P1LODIV) |   // Path 1 LO path divider setting: divide by 2^n (i.e. divide by 1 to divide by 32). 110 and 111 are reserved
+                               ((fbkdiv>>1)<<SHIFT_P1_FREQ1__P1PRESC));        // Path 1 VCO PLL feedback path divider setting: 01 = divide by 2, 10 = divide by 4 (00 and 11 are reserved)
     Write((REG_P1_FREQ2<<16) | (uint16_t)nummsb);                  // Path 1 N divider numerator value, most significant 16 bits
     Write((REG_P1_FREQ3<<16) | numlsb);                            // Path 1 N divider numerator value, least significant 8 bits
 
@@ -426,10 +426,10 @@ void RFFCx07xA_Synth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock, uint16_t 
     Write((REG_FMOD<<16) | 0); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
 
     // Re-lock the PLL
-    Write((REG_PLL_CTRL<<16) | (1<<SHIFT_DIVBY) |  // [15] Force reference divider to divide by 1
-                               (8<<SHIFT_TVCO) |   // [10:6] VCO warm-up time. warm-up time [s] = tvco * 1/[fref*256]
-                               (1<<SHIFT_LDEN) |   // [5] Enable lock detector circuitry
-                               (1<<SHIFT_RELOK));  // [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
+    Write((REG_PLL_CTRL<<16) | (1<<SHIFT_PLL_CTRL__DIVBY) |  // [15] Force reference divider to divide by 1
+                               (8<<SHIFT_PLL_CTRL__TVCO) |   // [10:6] VCO warm-up time. warm-up time [s] = tvco * 1/[fref*256]
+                               (1<<SHIFT_PLL_CTRL__LDEN) |   // [5] Enable lock detector circuitry
+                               (1<<SHIFT_PLL_CTRL__RELOK));  // [3] Self Clearing Bit. When this bit is set high it triggers a relock of the PLL and then clears
 
     // Wait for PLL lock
     while(waitForPLLLock && !isPLLLocked());
@@ -500,8 +500,8 @@ void RFFCx07xA_Synth::SetFreq(uint64_t freq_Hz, bool waitForPLLLock, bool useMod
                     fmod_upper_bound = ((0xFFFFFF-n_24bit) & max_fmod) >> modstep;
 
                 // Enable frequency modulation
-                Write((REG_EXT_MOD<<16) | (1<<SHIFT_MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
-                                          (modstep<<SHIFT_MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
+                Write((REG_EXT_MOD<<16) | (1<<SHIFT_EXT_MOD__MODSETUP) |        // [15:14] Modulation is analog, on every update of modulation the frac-N responds by adding value to frac-N
+                                          (modstep<<SHIFT_EXT_MOD__MODSTEP));   // [13:10] Modulation scale factor. Modulation is multiplied by 2^modstep before being added to frac-N. Maximum usable value is 8
             }
         }
     }
