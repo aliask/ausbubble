@@ -40,10 +40,10 @@ int RFMD_IntSynth::fbkdiv = 0;
 int RFMD_IntSynth::n = 0;
 uint16_t RFMD_IntSynth::numlsb = 0;
 uint16_t RFMD_IntSynth::nummsb = 0;
-uint64_t RFMD_IntSynth::freq_Hz;
-uint64_t RFMD_IntSynth::freq_Hz_prev;
-int32_t RFMD_IntSynth::freq_delta_Hz;
-int32_t RFMD_IntSynth::freq_delta_Hz_prev;
+uint64_t RFMD_IntSynth::freq_Hz = 0;
+uint64_t RFMD_IntSynth::freq_Hz_prev = 0;
+int32_t RFMD_IntSynth::freq_delta_Hz = 0;
+int32_t RFMD_IntSynth::freq_delta_Hz_prev = 0;
 
 void RFMD_IntSynth::HWInit(void)
 {
@@ -460,6 +460,8 @@ void RFMD_IntSynth::SetFreq(uint64_t freq_Hz, bool waitForPLLLock, bool useModul
     // Check 1: Is Frequency Modulation enabled?
     // Check 2: Is the PLL locked?
     // Check 3: Has frequency step size or direction changed? (i.e. are current modulation settings still valid?)
+    // Check 4: Is the frequency step size valid?
+    // Checks 5 & 6: Can we reach the next frequency using modulation?
     if(useModulation &&
             isPLLLocked() &&
             (RFMD_IntSynth::freq_delta_Hz == RFMD_IntSynth::freq_delta_Hz_prev) &&
