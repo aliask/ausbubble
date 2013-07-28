@@ -136,8 +136,8 @@
 #define SYNTH_GPO2ADD2_PIN              GPIO_Pin_10
 #define SYNTH_GPO3FM_PORT               GPIOB
 #define SYNTH_GPO3FM_PIN                GPIO_Pin_5
-#define SYNTH_GPO4LDDO_PORT             GPIOE
-#define SYNTH_GPO4LDDO_PIN              GPIO_Pin_9
+#define SYNTH_GPO4LDDO_PORT             GPIOB
+#define SYNTH_GPO4LDDO_PIN              GPIO_Pin_6
 #define SYNTH_ENBLGPO5_PORT             GPIOB
 #define SYNTH_ENBLGPO5_PIN              GPIO_Pin_7
 #define SYNTH_MODEGPO6_PORT             GPIOB
