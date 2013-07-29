@@ -220,23 +220,23 @@ void UI::setToggle(bool state)
 void UI::drawJammerStep(int line, double stepSize)
 {
     if(stepSize == STEP_1K_HZ)
-        safeString("Step Size:   1 kHz", line, 14);
+        safeString("Step Size:    1 kHz", line, 14);
     else if(stepSize == STEP_10K_HZ)
-        safeString("Step Size:  10 kHz", line, 14);
+        safeString("Step Size:   10 kHz", line, 14);
     else if(stepSize == STEP_25K_HZ)
-        safeString("Step Size:  25 kHz", line, 14);
+        safeString("Step Size:   25 kHz", line, 14);
     else if(stepSize == STEP_50K_HZ)
-        safeString("Step Size:  50 kHz", line, 14);
+        safeString("Step Size:   50 kHz", line, 14);
     else if(stepSize == STEP_100K_HZ)
-        safeString("Step Size: 100 kHz", line, 14);
+        safeString("Step Size:  100 kHz", line, 14);
     else if(stepSize == STEP_250K_HZ)
-        safeString("Step Size: 250 kHz", line, 14);
+        safeString("Step Size:  250 kHz", line, 14);
     else if(stepSize == STEP_500K_HZ)
-        safeString("Step Size: 500 kHz", line, 14);
+        safeString("Step Size:  500 kHz", line, 14);
     else if(stepSize == STEP_1M_HZ)
-        safeString("Step Size:   1 MHz", line, 14);
+        safeString("Step Size:    1 MHz", line, 14);
     else if(stepSize == STEP_NONE)
-        safeString("Step Size:    None", line, 14);
+        safeString("Step Size:     None", line, 14);
 }
 
 void UI::drawJammerAlgorithm(int line, ScanAlgorithms_t algorithm)
@@ -244,13 +244,13 @@ void UI::drawJammerAlgorithm(int line, ScanAlgorithms_t algorithm)
     switch(algorithm)
     {
         case ScanSawtooth:
-            safeString("Algo:     Sawtooth", line, 14);
+            safeString("Algo:      Sawtooth", line, 14);
             break;
         case ScanTriangle:
-            safeString("Algo:     Triangle", line, 14);
+            safeString("Algo:      Triangle", line, 14);
             break;
         case ScanRandom:
-            safeString("Algo:       Random", line, 14);
+            safeString("Algo:        Random", line, 14);
             break;
     }
 }
@@ -312,16 +312,16 @@ void UI::drawJammerScreen()
 
     centredString("Jammer Settings", 1);
 
-    snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", (float) (Jammer::settings.start / 1000000.0f));
+    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", (float) (Jammer::settings.start / 1000000.0f));
     safeString(menuText, 2, 14);
 
-    snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", (float) (Jammer::settings.stop / 1000000.0f));
+    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", (float) (Jammer::settings.stop / 1000000.0f));
     safeString(menuText, 3, 14);
 
     drawJammerAlgorithm(4, Jammer::settings.algorithm);
     drawJammerStep(5, Jammer::settings.stepSize);
 
-    snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", Jammer::settings.rate);
+    snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
     safeString(menuText, 6, 14);
 
     if(isInSetting)
@@ -447,16 +447,23 @@ void UI::doJammerRate(buttonStates action)
     switch(action)
     {
         case ButtonUp:
-            if((Jammer::settings.rate + RATE_STEP_HZ) <= MAX_RATE_HZ)
+            // Special case: saturate rate value for Random Algorithm
+            if((Jammer::settings.algorithm == ScanRandom) && ((Jammer::settings.rate + RATE_STEP_HZ) > MAX_RATE_HZ_NO_FMOD))
+            {
+                Jammer::settings.rate = MAX_RATE_HZ_NO_FMOD;
+                snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
+                safeString(menuText, 6, 14);
+            }
+            else if((Jammer::settings.rate + RATE_STEP_HZ) <= MAX_RATE_HZ)
             {
                 Jammer::settings.rate += RATE_STEP_HZ;
-                snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", Jammer::settings.rate);
+                snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
                 safeString(menuText, 6, 14);
             }
             else
             {
                 Jammer::settings.rate = MAX_RATE_HZ;
-                snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", Jammer::settings.rate);
+                snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
                 safeString(menuText, 6, 14);
             }
             break;
@@ -464,7 +471,7 @@ void UI::doJammerRate(buttonStates action)
             if((Jammer::settings.rate - RATE_STEP_HZ) >= MIN_RATE_HZ)
             {
                 Jammer::settings.rate -= RATE_STEP_HZ;
-                snprintf(menuText, sizeof(menuText), "Rate:      %4d Hz", Jammer::settings.rate);
+                snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
                 safeString(menuText, 6, 14);
             }
             break;
@@ -479,6 +486,8 @@ void UI::doJammerRate(buttonStates action)
 
 void UI::doJammerAlgorithm(buttonStates action)
 {
+    char menuText[21];
+
     switch(action)
     {
         case ButtonSelect:
@@ -492,7 +501,12 @@ void UI::doJammerAlgorithm(buttonStates action)
                 case ScanSawtooth:
                     Jammer::settings.algorithm = ScanRandom;
                     drawJammerAlgorithm(4,Jammer::settings.algorithm);
+                    /* Override step setting */
                     drawJammerStep(5, STEP_NONE);
+                    /* Override rate setting */
+                    Jammer::settings.rate = MAX_RATE_HZ_NO_FMOD;
+                    snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
+                    safeString(menuText, 6, 14);
                     break;
                 case ScanTriangle:
                     Jammer::settings.algorithm = ScanSawtooth;
@@ -517,7 +531,12 @@ void UI::doJammerAlgorithm(buttonStates action)
                 case ScanTriangle:
                     Jammer::settings.algorithm = ScanRandom;
                     drawJammerAlgorithm(4,Jammer::settings.algorithm);
+                    /* Override step setting */
                     drawJammerStep(5, STEP_NONE);
+                    /* Override rate setting */
+                    Jammer::settings.rate = MAX_RATE_HZ_NO_FMOD;
+                    snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
+                    safeString(menuText, 6, 14);
                     break;
                 case ScanRandom:
                     Jammer::settings.algorithm = ScanSawtooth;

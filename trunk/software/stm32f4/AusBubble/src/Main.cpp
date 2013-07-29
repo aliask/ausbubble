@@ -300,7 +300,6 @@ void vJammingTask(void *pvParameters)
         {
             /* Update synthesizer frequency */
             Jammer::Advance();
-
             /* Clear timer flag */
             TIM_ClearFlag(TIM2, TIM_IT_Update);
         }

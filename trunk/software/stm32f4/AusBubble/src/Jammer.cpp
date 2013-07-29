@@ -170,7 +170,7 @@ void Jammer::Advance(void)
     /* Set synthesizer frequency (only if different to current frequency OR if first call when set to single freq) */
     if((newFreq != freq) || (firstAlgoRun && (settings.start==settings.stop)))
     {
-        RFMD_IntSynth::SetFreq(newFreq, true, true);  // Wait for PLL lock, Frequency modulation OFF
+        RFMD_IntSynth::SetFreq(newFreq, SETFREQ__WAIT_FOR_PLL_LOCK, SETFREQ__USE_FMOD);
         freq = newFreq;
     }
 
