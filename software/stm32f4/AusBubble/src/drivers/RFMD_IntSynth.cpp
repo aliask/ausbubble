@@ -161,8 +161,8 @@ void RFMD_IntSynth::Init(void)
     /* Enable Device */
     SetEnabled(true);
 
-    /* Set frequency to 2450 MHz (wait for PLL lock) */
-    SetFreq(2450000000UL, true);
+    /* Set frequency to 2450 MHz (wait for PLL lock, no frequency modulation) */
+    SetFreq(2450000000UL, true, false);
 }
 
 void RFMD_IntSynth::SetEnabled(bool enable)

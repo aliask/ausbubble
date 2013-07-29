@@ -49,7 +49,7 @@
 #include "semphr.h"
 
 /* Macro for crude FreeRTOS-safe printf() */
-// Note: Using the %llu print-specifier (e.g. for uint64_t) gives unpredictable behaviour
+// Note: Using the %llu print-specifier (e.g. for uint64_t) gives unpredictable behavior
 #define vDebugPrintf(A,...)     taskENTER_CRITICAL(); printf(A,##__VA_ARGS__); taskEXIT_CRITICAL();
 
 /* ADC Data Register Addresses */
@@ -69,7 +69,7 @@
 #define RATE_STEP_HZ        1
 #define DISP_MAX            2
 #define UI_DRAW_COUNT_MAX   500
-/* Button behaviour */
+/* Button behavior */
 #define TICK_RATE_1         200         // Slowest
 #define TICK_RATE_2         100
 #define TICK_RATE_3         50
@@ -93,18 +93,26 @@
 /* Scan settings defaults */
 #define SCAN_SETTINGS_DEFAULT_START_FREQ_HZ     2400000000      /* DO NOT MODIFY */
 #define SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ      2500000000      /* DO NOT MODIFY */
-#define SCAN_SETTINGS_DEFAULT_ALGO              ScanTriangle
-#define SCAN_SETTINGS_DEFAULT_STEPSIZE          STEP_1M_HZ
-#define SCAN_SETTINGS_DEFAULT_RATE_HZ           1000
+#define SCAN_SETTINGS_DEFAULT_ALGO              ScanTriangle    /* DO NOT MODIFY */
+#define SCAN_SETTINGS_DEFAULT_STEPSIZE          STEP_1K_HZ
+#define SCAN_SETTINGS_DEFAULT_RATE_HZ           10000           /* DO NOT MODIFY */
 
-/* Synth Frequency */
+/* Synthesizer Frequency */
+// Set Frequency
+#define SETFREQ__WAIT_FOR_PLL_LOCK      true
+#define SETFREQ__USE_FMOD               true
 // Allowable range
-#define MIN_FREQ_HZ                     2400000000  /* DO NOT MODIFY */
-#define MAX_FREQ_HZ                     2500000000  /* DO NOT MODIFY */
+#define MIN_FREQ_HZ                     2400000000          /* DO NOT MODIFY */
+#define MAX_FREQ_HZ                     2500000000          /* DO NOT MODIFY */
 /* Jamming Update Rate */
 // Allowable range
-#define MIN_RATE_HZ                     1           /* DO NOT MODIFY */
-#define MAX_RATE_HZ                     5000        /* DO NOT MODIFY */
+#define MIN_RATE_HZ                     1                   /* DO NOT MODIFY */
+#define MAX_RATE_HZ_NO_FMOD             2500
+#if SETFREQ__USE_FMOD
+    #define MAX_RATE_HZ                 10000               /* DO NOT MODIFY */
+#else
+    #define MAX_RATE_HZ                 MAX_RATE_HZ_NO_FMOD /* DO NOT MODIFY */
+#endif
 
 /* Maximum RF amp operating temperature */
 // RFPA5201 datasheet specifies a 85degC absolute maximum operating ambient temperature
@@ -120,7 +128,7 @@
 /* RTOS Heartbeat LED */
 #define RTOS_LED_PORT                   GPIOD
 #define RTOS_LED_PIN                    GPIO_Pin_12
-/* Synth */
+/* Synthesizer */
 #define SYNTH_SCLK_PORT                 GPIOB
 #define SYNTH_SCLK_PIN                  GPIO_Pin_13
 #define SYNTH_SDATA_PORT                GPIOB
