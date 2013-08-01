@@ -48,23 +48,33 @@
 
 /* Enumerations */
 typedef enum {
-    ScanSawtooth = 0,
-    ScanTriangle,
-    ScanRandom
-} ScanAlgorithms_t;
+    Auto = 0,
+    Force,
+    Off
+} FMODSetting_t;
+
+typedef enum {
+    Sawtooth = 0,
+    Triangle,
+    Random
+} JamAlgorithms_t;
 
 typedef enum {
     Down = 0,
     Up
-} ScanDirection_t;
+} Direction_t;
 
 /* Structure definition */
-struct jamSettings_t {
+struct JamSettings_t {
+    FMODSetting_t fmod;
+    JamAlgorithms_t algorithm;
+    uint16_t rate;
+    bool waitForPLLLock;
+    uint64_t fc;
+    uint64_t BW;
     uint64_t start;
     uint64_t stop;
-    ScanAlgorithms_t algorithm;
-    uint64_t stepSize;
-    uint16_t rate;
+    uint64_t step;
 };
 
 class Jammer
@@ -75,10 +85,10 @@ class Jammer
         static bool isEnabled(void);
         static void SetUpdateRate(uint16_t updateRate_Hz);
         static void Advance(void);
-        static struct jamSettings_t settings;
+        static struct JamSettings_t settings;
     private:
         static bool enabled;
-        static bool firstAlgoRun;
+        static uint64_t currentFreq;
 };
 
 #endif

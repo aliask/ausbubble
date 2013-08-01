@@ -404,7 +404,7 @@ void RFMD_IntSynth::SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock)
 
     /* If the VCO frequency is above 3.2GHz it is necessary to set the prescaler to /4
     and charge pump leakage to 3 for the CT_cal to work correctly */
-    if(f_vco > 3200000000)
+    if(f_vco > CP_THRESHOLD_VCO_FREQ_HZ)
     {
         RFMD_IntSynth::fbkdiv = FBKDIV_4;
         Write((REG_LF<<16) | (1<<SHIFT_LF__LFACT)      // Active loop filter enable, 1=active 0=passive
@@ -459,17 +459,17 @@ void RFMD_IntSynth::SetFreq(uint64_t freq_Hz, bool waitForPLLLock, bool useModul
     /* FREQUENCY MODULATION */
     // Check 1: Is Frequency Modulation enabled?
     // Check 2: Is the PLL locked?
-    // Check 3: Has frequency step size or direction changed? (i.e. are current modulation settings still valid?)
+    // Check 3: Has frequency step size changed? (i.e. are current modulation settings still valid?)
     // Check 4: Is the frequency step size valid?
     // Checks 5 & 6: Can we reach the next frequency using modulation?
     if(useModulation &&
-            isPLLLocked() &&
-            (RFMD_IntSynth::freq_delta_Hz == RFMD_IntSynth::freq_delta_Hz_prev) &&
+            (isPLLLocked()||!waitForPLLLock) &&
+            (abs(RFMD_IntSynth::freq_delta_Hz) == abs(RFMD_IntSynth::freq_delta_Hz_prev)) &&
             (fmod_step != 0) &&
             ((cur_fmod + fmod_step) <= fmod_upper_bound) &&
-            ((cur_fmod + fmod_step) >= fmod_lower_bound))
+            ((cur_fmod - fmod_step) >= fmod_lower_bound))
     {
-        cur_fmod += fmod_step;
+        cur_fmod += fmod_step*(freq_delta_Hz > 0 ? 1 : -1);
         Write((REG_FMOD<<16) | (uint16_t)cur_fmod); // [15:0] Frequency Deviation applied to frac-N, functionality determined by modstep and mod_setup
     }
     /* SET FREQUENCY BY WRITING TO FREQ1, FREQ2, FREQ3 REGISTERS */
@@ -592,7 +592,72 @@ void RFMD_IntSynth::GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_
     {
         fmod_step = 0;
     }
+}
 
-    // Set sign of step
-    fmod_step *= freq_delta_Hz > 0 ? 1 : -1;
+void RFMD_IntSynth::GetFMODFreqLimits(uint64_t freq_Hz, int32_t freq_delta_Hz, uint64_t &f_lower_bound, uint64_t &f_upper_bound)
+{
+    int16_t fmod_lower_bound = 0;
+    int16_t fmod_upper_bound = 0;
+    int16_t fmod_step = 0;
+    uint8_t modstep = 0;
+    uint16_t nummsb = 0;
+    uint16_t numlsb = 0;
+
+    /* Get freq register parameters */
+    RFMD_IntSynth::GetFreqRegParams(freq_Hz, nummsb, numlsb);
+
+    /* Get modulation parameters */
+    RFMD_IntSynth::GetModParams(freq_delta_Hz, modstep, fmod_step);
+
+    /* Valid frequency delta */
+    if(fmod_step != 0)
+    {
+        uint32_t n_24bit = (nummsb<<8) | (numlsb>>8);
+        uint32_t max_fmod = 0x7FFF << modstep; // FMOD is multiplied by 2^MODSTEP before being added to frac-N
+
+        /* LOWER BOUND */
+        if(max_fmod <= n_24bit)
+            fmod_lower_bound = -1*0x7FFF;
+        else
+            fmod_lower_bound = -1*((n_24bit & max_fmod) >> modstep);
+        /* UPPER BOUND */
+        if((n_24bit + max_fmod) <= 0xFFFFFF)
+            fmod_upper_bound = 0x7FFF;
+        else
+            fmod_upper_bound = ((0xFFFFFF-n_24bit) & max_fmod) >> modstep;
+
+        /* Calculate frequency limits */
+        // Lower
+        f_lower_bound = freq_Hz - abs(freq_delta_Hz)*(int)(abs(fmod_lower_bound)/fmod_step);
+        // Upper
+        f_upper_bound = freq_Hz + abs(freq_delta_Hz)*(int)(abs(fmod_upper_bound)/fmod_step);
+    }
+}
+
+void RFMD_IntSynth::GetFreqRegParams(uint64_t f_lo_Hz, uint16_t &nummsb, uint16_t &numlsb)
+{
+    int lodiv = 0;
+    int fbkdiv = 0;
+    int n = 0;
+
+    /* Register calculations taken from RFMD Programming Guide
+    Source: http://www.rfmd.com/CS/Documents/IntegratedSyntMixerProgrammingGuide.pdf */
+    int n_lo                = log2f((float)(F_VCO_MAX_HZ/f_lo_Hz));
+    lodiv                   = 1<<n_lo;
+    uint64_t f_vco          = lodiv*f_lo_Hz;
+
+    /* If the VCO frequency is above 3.2GHz it is necessary to set the prescaler to /4
+    and charge pump leakage to 3 for the CT_cal to work correctly */
+    if(f_vco > CP_THRESHOLD_VCO_FREQ_HZ)
+    {
+        fbkdiv = FBKDIV_4;
+    }
+    else
+    {
+        fbkdiv = FBKDIV_2;
+    }
+    float n_div             = (float)f_vco/(float)(fbkdiv*F_REFERENCE_HZ);
+    n                       = n_div;
+    nummsb                  = (1<<16)*(n_div-n);
+    numlsb                  = (1<<8)*((1<<16)*(n_div-n)-nummsb);
 }
