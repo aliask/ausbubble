@@ -163,7 +163,7 @@ void vUITask(void *pvParameters)
                     else if(buttonState == ButtonSelect)
                     {
                         /* Enable jamming if disabled (and if not at Disclaimer screen) */
-                        if(!Jammer::isEnabled() && (UI::currentState != DisclaimerScreen))
+                        if(!Jammer::isEnabled() && (UI::currentScreen != Disclaimer))
                         {
                             /* Set toggle off (de-selects setting if selected) */
                             UI::setToggle(false);
@@ -173,7 +173,7 @@ void vUITask(void *pvParameters)
                             /* Show splash text */
                             UI::splash("RF Output ENABLED", 1000);
                             /* Draw Home screen */
-                            UI::draw(HomeScreen);
+                            UI::drawScreen(Home);
                             /* Set flag */
                             buttonReleased = false;
                         }
@@ -220,8 +220,8 @@ void vUITask(void *pvParameters)
         else
         {
             /* Re-draw everything if we're on the Home screen */
-            if(UI::currentState == HomeScreen)
-                UI::draw(HomeScreen);
+            if(UI::currentScreen == Home)
+                UI::drawScreen(Home);
             /* Just draw the header otherwise */
             else
                 UI::drawHeader();
@@ -392,7 +392,7 @@ void prvSetupHardware(void)
     /* OLED */
     SSD1306_OLED::HWInit();
     SSD1306_OLED::Init();
-    UI::draw(DisclaimerScreen);
+    UI::drawScreen(Disclaimer);
 
     /* Synthesizer */
     RFMD_IntSynth::HWInit();

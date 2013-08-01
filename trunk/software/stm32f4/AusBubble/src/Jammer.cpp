@@ -35,18 +35,22 @@
 #include "Jammer.h"
 
 /* Initialize static members */
-struct jamSettings_t Jammer::settings;
+struct JamSettings_t Jammer::settings;
 bool Jammer::enabled = false;
-bool Jammer::firstAlgoRun = false;
+uint64_t Jammer::currentFreq = 0;
 
 void Jammer::Init(void)
 {
     /* Initialize settings with defaults */
-    settings.start     = SCAN_SETTINGS_DEFAULT_START_FREQ_HZ;
-    settings.stop      = SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ;
-    settings.algorithm = SCAN_SETTINGS_DEFAULT_ALGO;
-    settings.stepSize  = SCAN_SETTINGS_DEFAULT_STEPSIZE;
-    settings.rate      = SCAN_SETTINGS_DEFAULT_RATE_HZ;
+    settings.fmod           = JAMMER_SETTINGS_DEFAULT_FMOD;
+    settings.algorithm      = JAMMER_SETTINGS_DEFAULT_ALGO;
+    settings.rate           = JAMMER_SETTINGS_DEFAULT_RATE_HZ;
+    settings.waitForPLLLock = JAMMER_SETTINGS_DEFAULT_WAIT_FOR_PLL_LOCK;
+    settings.start          = JAMMER_SETTINGS_DEFAULT_START_FREQ_HZ;
+    settings.stop           = JAMMER_SETTINGS_DEFAULT_STOP_FREQ_HZ;
+    settings.step           = JAMMER_SETTINGS_DEFAULT_STEP_HZ;
+    settings.fc             = JAMMER_SETTINGS_DEFAULT_FC_HZ;
+    settings.BW             = JAMMER_SETTINGS_DEFAULT_BW_HZ;
 
     /* Ensure jamming is disabled */
     SetEnabled(false);
@@ -83,7 +87,7 @@ void Jammer::SetEnabled(bool enable)
 
     /* Set internal flags */
     enabled = enable;
-    firstAlgoRun = enable;
+    currentFreq = 0;
 }
 
 bool Jammer::isEnabled(void)
@@ -108,72 +112,81 @@ void Jammer::SetUpdateRate(uint16_t updateRate_Hz)
 
 void Jammer::Advance(void)
 {
-    static uint64_t freq = settings.start;
-    static ScanDirection_t direction = Up;
+    static uint64_t newFreq;
     static uint32_t random32bit;
-    uint64_t newFreq = freq;
+    static Direction_t direction;
 
-    switch(settings.algorithm)
+    /* Set initial frequency */
+    if(currentFreq == 0)
     {
-        /* SAWTOOTH */
-        case ScanSawtooth:
-            /* Increase frequency */
-            if((freq + settings.stepSize) <= settings.stop)
-                newFreq += settings.stepSize;
-            /* If at upper bound, return to start frequency */
-            else
-                newFreq = settings.start;
-            break;
-        /* TRIANGLE */
-        case ScanTriangle:
-            /* Current direction is UP */
-            if(direction == Up)
-            {
+        if(settings.fmod == Force)
+            newFreq = settings.fc;
+        else
+            newFreq = settings.start;
+    }
+    /* Execute algorithm */
+    else
+    {
+        switch(settings.algorithm)
+        {
+            /* SAWTOOTH */
+            case Sawtooth:
                 /* Increase frequency */
-                if((freq + settings.stepSize) < settings.stop)
-                    newFreq += settings.stepSize;
-                /* At (or exceeded) upper bound, reverse direction */
+                if((currentFreq + settings.step) <= settings.stop)
+                    newFreq += settings.step;
+                /* If at upper bound, return to start frequency */
                 else
-                {
-                    newFreq = settings.stop;
-                    direction = Down;
-                }
-            }
-            /* Current direction is DOWN */
-            else
-            {
-                /* Decrease frequency */
-                if((freq - settings.stepSize) > settings.start)
-                    newFreq -= settings.stepSize;
-                /* At (or exceeded) lower bound, reverse direction */
-                else
-                {
                     newFreq = settings.start;
-                    direction = Up;
+                break;
+            /* TRIANGLE */
+            case Triangle:
+                /* Current direction is UP */
+                if(direction == Up)
+                {
+                    /* Increase frequency */
+                    if((currentFreq + settings.step) <= settings.stop)
+                        newFreq += settings.step;
+                    /* At (or exceeded) upper bound, reverse direction */
+                    else
+                    {
+                        newFreq = settings.stop;
+                        direction = Down;
+                    }
                 }
-            }
-            break;
-        /* RANDOM */
-        case ScanRandom:
-            /* Wait until one RNG number is ready */
-            while(RNG_GetFlagStatus(RNG_FLAG_DRDY) == RESET);
-            /* Get a 32bit Random number */
-            random32bit = RNG_GetRandomNumber();
-            /* Get random number between START and STOP frequency range */
-            newFreq = settings.start + (uint32_t)(((float) random32bit / (float) UINT32_MAX)*(settings.stop - settings.start));
-            break;
-        /* Invalid algorithm */
-        default:
-            break;
+                /* Current direction is DOWN */
+                else
+                {
+                    /* Decrease frequency */
+                    if((currentFreq - settings.step) >= settings.start)
+                        newFreq -= settings.step;
+                    /* At (or exceeded) lower bound, reverse direction */
+                    else
+                    {
+                        newFreq = settings.start;
+                        direction = Up;
+                    }
+                }
+                break;
+            /* RANDOM */
+            case Random:
+                /* Wait until one RNG number is ready */
+                while(RNG_GetFlagStatus(RNG_FLAG_DRDY) == RESET);
+                /* Get a 32bit Random number */
+                random32bit = RNG_GetRandomNumber();
+                /* Get random number between START and STOP frequency range */
+                newFreq = settings.start + (uint32_t)(((float) random32bit / (float) UINT32_MAX)*(settings.stop - settings.start));
+                break;
+            /* Invalid algorithm */
+            default:
+                break;
+        }
     }
 
-    /* Set synthesizer frequency (only if different to current frequency OR if first call when set to single freq) */
-    if((newFreq != freq) || (firstAlgoRun && (settings.start==settings.stop)))
+    /* Set synthesizer frequency (only if different to current frequency) */
+    if(newFreq != currentFreq)
     {
-        RFMD_IntSynth::SetFreq(newFreq, SETFREQ__WAIT_FOR_PLL_LOCK, SETFREQ__USE_FMOD);
-        freq = newFreq;
+        RFMD_IntSynth::SetFreq(newFreq, settings.waitForPLLLock, (settings.fmod == Off) ? false : true);
+        /* Save current frequency in "currentFreq" static variable */
+        currentFreq = newFreq;
     }
-
-    /* Set flag */
-    firstAlgoRun = false;
 }

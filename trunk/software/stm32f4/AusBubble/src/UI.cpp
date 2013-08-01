@@ -36,7 +36,7 @@
 
 /* Initialize static members */
 int UI::cursorPos = 0;
-fsmStates UI::currentState = DisclaimerScreen;
+screenStates UI::currentScreen = Disclaimer;
 bool UI::isInSetting = false;
 bool UI::isSplashActive = false;
 Stats UI::stats;
@@ -78,10 +78,10 @@ void UI::drawHeader(void)
     SSD1306_OLED::drawBatt(stats.batteryLevel,97,0);
 }
 
-void UI::draw(fsmStates state)
+void UI::drawScreen(screenStates screen)
 {
     /* Save location */
-    currentState = state;
+    currentScreen = screen;
 
     if(!isSplashActive)
     {
@@ -91,28 +91,36 @@ void UI::draw(fsmStates state)
         /* Draw header */
         UI::drawHeader();
 
-        switch(state)
+        switch(screen)
         {
-            case DisclaimerScreen:
-                drawDisclaimerScreen();
+            case Disclaimer:
+                drawScreen_Disclaimer();
                 break;
-            case HomeScreen:
+            case Home:
                 /* Draw RIGHT arrow */
                 safeFont57(131, 1, 128-6);
                 /* Draw screen */
-                drawHomeScreen();
+                drawScreen_Home();
                 break;
-            case JammerScreen:
+            case JammerGeneral:
+                /* Draw LEFT arrow */
+                safeFont57(127, 1, 0);
+                /* Draw RIGHT arrow */
+                safeFont57(131, 1, 128-6);
+                /* Draw screen */
+                drawScreen_JammerGeneral();
+                break;
+            case JammerFrequency:
                 /* Draw LEFT arrow */
                 safeFont57(127, 1, 0);
                 /* Draw screen */
-                drawJammerScreen();
+                drawScreen_JammerFrequency();
                 break;
             default:
                 /* Looks like we're lost! Set state to Disclaimer screen */
-                currentState = DisclaimerScreen;
+                currentScreen = Disclaimer;
                 /* Draw screen */
-                drawDisclaimerScreen();
+                drawScreen_Disclaimer();
                 break;
         }
     }
@@ -133,7 +141,7 @@ void UI::splash(const char* text, int duration_ms)
     isSplashActive = false;
 
     /* Redraw UI */
-    UI::draw(currentState);
+    UI::drawScreen(currentScreen);
 }
 
 void UI::doMenu(int buttons)
@@ -156,16 +164,19 @@ void UI::doMenu(int buttons)
         action = ButtonNone;
 
     /* Action dependent on UI state */
-    switch(currentState)
+    switch(currentScreen)
     {
-        case DisclaimerScreen:
-            doDisclaimer(action);
+        case Disclaimer:
+            doScreen_Disclaimer(action);
             break;
-        case JammerScreen:
-            doJammerScreen(action);
+        case Home:
+            doScreen_Home(action);
             break;
-        case HomeScreen:
-            doHomeScreen(action);
+        case JammerGeneral:
+            doScreen_JammerGeneral(action);
+            break;
+        case JammerFrequency:
+            doScreen_JammerFrequency(action);
             break;
         default:
             break;
@@ -217,45 +228,69 @@ void UI::setToggle(bool state)
     isInSetting = state;
 }
 
-void UI::drawJammerStep(int line, double stepSize)
+void UI::drawItem_JammerStep(int line, double step)
 {
-    if(stepSize == STEP_1K_HZ)
+    if(step == STEP_1K_HZ)
         safeString("Step Size:    1 kHz", line, 14);
-    else if(stepSize == STEP_10K_HZ)
+    else if(step == STEP_10K_HZ)
         safeString("Step Size:   10 kHz", line, 14);
-    else if(stepSize == STEP_25K_HZ)
+    else if(step == STEP_25K_HZ)
         safeString("Step Size:   25 kHz", line, 14);
-    else if(stepSize == STEP_50K_HZ)
+    else if(step == STEP_50K_HZ)
         safeString("Step Size:   50 kHz", line, 14);
-    else if(stepSize == STEP_100K_HZ)
+    else if(step == STEP_100K_HZ)
         safeString("Step Size:  100 kHz", line, 14);
-    else if(stepSize == STEP_250K_HZ)
+    else if(step == STEP_250K_HZ)
         safeString("Step Size:  250 kHz", line, 14);
-    else if(stepSize == STEP_500K_HZ)
+    else if(step == STEP_500K_HZ)
         safeString("Step Size:  500 kHz", line, 14);
-    else if(stepSize == STEP_1M_HZ)
+    else if(step == STEP_1M_HZ)
         safeString("Step Size:    1 MHz", line, 14);
-    else if(stepSize == STEP_NONE)
+    else if(step == STEP_NONE)
         safeString("Step Size:     None", line, 14);
 }
 
-void UI::drawJammerAlgorithm(int line, ScanAlgorithms_t algorithm)
+void UI::drawItem_JammerFMOD(int line, FMODSetting_t fmod)
+{
+    switch(fmod)
+    {
+        case Auto:
+            safeString("FMOD:          Auto", line, 14);
+            break;
+        case Force:
+            safeString("FMOD:         Force", line, 14);
+            break;
+        case Off:
+            safeString("FMOD:           Off", line, 14);
+            break;
+    }
+}
+
+void UI::drawItem_JammerAlgorithm(int line, JamAlgorithms_t algorithm)
 {
     switch(algorithm)
     {
-        case ScanSawtooth:
+        case Sawtooth:
             safeString("Algo:      Sawtooth", line, 14);
             break;
-        case ScanTriangle:
+        case Triangle:
             safeString("Algo:      Triangle", line, 14);
             break;
-        case ScanRandom:
+        case Random:
             safeString("Algo:        Random", line, 14);
             break;
     }
 }
 
-void UI::drawDisclaimerScreen()
+void UI::drawItem_JammerWaitForPLLLock(int line, bool wait)
+{
+    if(wait)
+        safeString("WaitForPLLLock: Yes", line, 14);
+    else
+        safeString("WaitForPLLLock:  No", line, 14);
+}
+
+void UI::drawScreen_Disclaimer()
 {
     const char* disclaimer1 = "Use of this device is";
     const char* disclaimer2 = "subject to terms &   ";
@@ -288,7 +323,7 @@ void UI::drawDisclaimerScreen()
     }
 }
 
-void UI::drawHomeScreen()
+void UI::drawScreen_Home()
 {
     char menuText[21];
 
@@ -306,23 +341,20 @@ void UI::drawHomeScreen()
     safeString(menuText, 6, 14);
 }
 
-void UI::drawJammerScreen()
+void UI::drawScreen_JammerGeneral()
 {
     char menuText[21];
 
-    centredString("Jammer Settings", 1);
+    centredString("Jammer - General", 1);
 
-    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", (float) (Jammer::settings.start / 1000000.0f));
-    safeString(menuText, 2, 14);
+    drawItem_JammerFMOD(2, Jammer::settings.fmod);
 
-    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", (float) (Jammer::settings.stop / 1000000.0f));
-    safeString(menuText, 3, 14);
-
-    drawJammerAlgorithm(4, Jammer::settings.algorithm);
-    drawJammerStep(5, Jammer::settings.stepSize);
+    drawItem_JammerAlgorithm(3, Jammer::settings.algorithm);
 
     snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
-    safeString(menuText, 6, 14);
+    safeString(menuText, 4, 14);
+
+    drawItem_JammerWaitForPLLLock(5, Jammer::settings.waitForPLLLock);
 
     if(isInSetting)
         safeFont57(131, cursorPos+2, 6);
@@ -330,17 +362,74 @@ void UI::drawJammerScreen()
         safeFont57(131, cursorPos+2, 4);
 }
 
-void UI::doDisclaimer(buttonStates action)
+void UI::drawScreen_JammerFrequency()
+{
+    char menuText[21];
+    uint64_t f_start;
+    uint64_t f_stop;
+
+    centredString("Jammer - Frequency", 1);
+
+    if(Jammer::settings.fmod == Force)
+    {
+        /* Centre Frequency */
+        snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+        safeString(menuText, 2, 14);
+        /* Calculate Start and Stop Frequency */
+        RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+        /* Preserve user setting */
+        if(Jammer::settings.start < f_start || Jammer::settings.stop > f_stop)
+        {
+            Jammer::settings.start = roundToMultiple(f_start, FREQ_STEP_HZ, true);
+            Jammer::settings.stop = roundToMultiple(f_stop, FREQ_STEP_HZ, false);
+        }
+        /* BW */
+        Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+        snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+        safeString(menuText, 3, 14);
+        /* Start Freq */
+        snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+        safeString(menuText, 4, 14);
+        /* Stop Freq */
+        snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+        safeString(menuText, 5, 14);
+    }
+    else
+    {
+        /* Centre Frequency */
+        snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", (float) (Jammer::settings.fc / 1000000.0f));
+        safeString(menuText, 2, 14);
+        /* BW */
+        Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+        snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", (float) (Jammer::settings.BW / 1000000.0f));
+        safeString(menuText, 3, 14);
+        /* Start Freq */
+        snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", (float) (Jammer::settings.start / 1000000.0f));
+        safeString(menuText, 4, 14);
+        /* Stop Freq */
+        snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", (float) (Jammer::settings.stop / 1000000.0f));
+        safeString(menuText, 5, 14);
+    }
+
+    drawItem_JammerStep(6, Jammer::settings.step);
+
+    if(isInSetting)
+        safeFont57(131, cursorPos+2, 6);
+    else
+        safeFont57(131, cursorPos+2, 4);
+}
+
+void UI::doScreen_Disclaimer(buttonStates action)
 {
     switch(action)
     {
         case ButtonUp:
             cursorPos = 0;
-            drawDisclaimerScreen();
+            drawScreen_Disclaimer();
             break;
         case ButtonDown:
             cursorPos = 1;
-            drawDisclaimerScreen();
+            drawScreen_Disclaimer();
             break;
         case ButtonLeft:
             break;
@@ -350,7 +439,7 @@ void UI::doDisclaimer(buttonStates action)
             if(cursorPos == 1)
             {
                 cursorPos = 0;
-                UI::draw(HomeScreen);
+                UI::drawScreen(Home);
             }
             else
                 splash("Please read", 1000);
@@ -360,35 +449,135 @@ void UI::doDisclaimer(buttonStates action)
     }
 }
 
-void UI::doJammerFreqStart(buttonStates action)
+void UI::doItem_JammerFreqCentre(buttonStates action)
 {
     char menuText[21];
+    uint64_t f_start;
+    uint64_t f_stop;
 
     switch(action)
     {
         case ButtonUp:
-            if((Jammer::settings.start + FREQ_STEP_HZ) <= Jammer::settings.stop)
+            /* Force FMOD */
+            if(Jammer::settings.fmod == Force)
             {
-                Jammer::settings.start += FREQ_STEP_HZ;
-                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", Jammer::settings.start / 1000000.0f);
-                safeString(menuText, 2, 14);
-                showChannelHint_Start(Jammer::settings.start, 500);
+                /* Calculate Start and Stop Frequency */
+                RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc + FREQ_STEP_HZ, Jammer::settings.step, f_start, f_stop);
+                /* Check limits */
+                if(f_start < MIN_FREQ_HZ || f_stop > MAX_FREQ_HZ)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    /* Centre Frequency */
+                    Jammer::settings.fc += FREQ_STEP_HZ;
+                    snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+                    safeString(menuText, 2, 14);
+                    /* Update other dependent frequency variables */
+                    // Calculate Start and Stop Frequency
+                    RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+                    Jammer::settings.start = roundToMultiple(f_start, FREQ_STEP_HZ, true); // Round up
+                    Jammer::settings.stop = roundToMultiple(f_stop, FREQ_STEP_HZ, false); // Round down
+                    // BW
+                    Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                    snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                    safeString(menuText, 3, 14);
+                    // Start Frequency
+                    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                    safeString(menuText, 4, 14);
+                    // Stop Frequency
+                    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                    safeString(menuText, 5, 14);
+                }
+            }
+            /* Normal */
+            else
+            {
+                /* Check limits */
+                if((((Jammer::settings.fc + FREQ_STEP_HZ) + (Jammer::settings.BW/2)) > MAX_FREQ_HZ) ||
+                        ((Jammer::settings.fc + FREQ_STEP_HZ) > MAX_FREQ_HZ))
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    Jammer::settings.fc += FREQ_STEP_HZ;
+                    snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+                    safeString(menuText, 2, 14);
+                    /* Update other dependent frequency variables */
+                    // Start Frequency
+                    Jammer::settings.start = Jammer::settings.fc - (Jammer::settings.BW/2);
+                    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                    safeString(menuText, 4, 14);
+                    // Stop Frequency
+                    Jammer::settings.stop = Jammer::settings.fc + (Jammer::settings.BW/2);
+                    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                    safeString(menuText, 5, 14);
+                }
             }
             break;
         case ButtonDown:
-            if((Jammer::settings.start - FREQ_STEP_HZ) >= MIN_FREQ_HZ)
+            /* Force FMOD */
+            if(Jammer::settings.fmod == Force)
             {
-                Jammer::settings.start -= FREQ_STEP_HZ;
-                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", Jammer::settings.start / 1000000.0f);
-                safeString(menuText, 2, 14);
-                showChannelHint_Start(Jammer::settings.start, 500);
+                /* Calculate Start and Stop Frequency */
+                RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc - FREQ_STEP_HZ, Jammer::settings.step, f_start, f_stop);
+                /* Check limits */
+                if(f_start < MIN_FREQ_HZ || f_stop > MAX_FREQ_HZ)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    Jammer::settings.fc -= FREQ_STEP_HZ;
+                    snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+                    safeString(menuText, 2, 14);
+                    /* Update other dependent frequency variables */
+                    // Calculate Start and Stop Frequency
+                    RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+                    Jammer::settings.start = roundToMultiple(f_start, FREQ_STEP_HZ, true);
+                    Jammer::settings.stop = roundToMultiple(f_stop, FREQ_STEP_HZ, false);
+                    // BW
+                    Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                    snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                    safeString(menuText, 3, 14);
+                    // Start Frequency
+                    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                    safeString(menuText, 4, 14);
+                    // Stop Frequency
+                    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                    safeString(menuText, 5, 14);
+                }
             }
+            /* Normal */
             else
             {
-                Jammer::settings.start = MIN_FREQ_HZ;
-                snprintf(menuText, sizeof(menuText), "Start: %4.2f MHz", Jammer::settings.start / 1000000.0f);
-                safeString(menuText, 2, 14);
-                showChannelHint_Start(Jammer::settings.start, 500);
+                /* Check limits */
+                if((((Jammer::settings.fc - FREQ_STEP_HZ) - (Jammer::settings.BW/2)) < MIN_FREQ_HZ) ||
+                        ((Jammer::settings.fc - FREQ_STEP_HZ) < MIN_FREQ_HZ))
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    Jammer::settings.fc -= FREQ_STEP_HZ;
+                    snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+                    safeString(menuText, 2, 14);
+                    /* Update other dependent frequency variables */
+                    // Start Frequency
+                    Jammer::settings.start = Jammer::settings.fc - (Jammer::settings.BW/2);
+                    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                    safeString(menuText, 4, 14);
+                    // Stop Frequency
+                    Jammer::settings.stop = Jammer::settings.fc + (Jammer::settings.BW/2);
+                    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                    safeString(menuText, 5, 14);
+                }
             }
             break;
         case ButtonSelect:
@@ -400,35 +589,55 @@ void UI::doJammerFreqStart(buttonStates action)
     }
 }
 
-void UI::doJammerFreqStop(buttonStates action)
+void UI::doItem_JammerBW(buttonStates action)
 {
     char menuText[21];
 
     switch(action)
     {
         case ButtonUp:
-            if((Jammer::settings.stop + FREQ_STEP_HZ) <= MAX_FREQ_HZ)
+            if(((Jammer::settings.fc + ((Jammer::settings.BW + FREQ_STEP_HZ) / 2)) <= MAX_FREQ_HZ) &&
+                ((Jammer::settings.fc - ((Jammer::settings.BW + FREQ_STEP_HZ) / 2)) >= MIN_FREQ_HZ))
             {
-                Jammer::settings.stop += FREQ_STEP_HZ;
-                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                Jammer::settings.BW += FREQ_STEP_HZ;
+                snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
                 safeString(menuText, 3, 14);
-                showChannelHint_Stop(Jammer::settings.stop, 500);
+                /* Update other dependent frequency variables */
+                // Start Frequency
+                Jammer::settings.start = Jammer::settings.fc - (Jammer::settings.BW/2);
+                snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                safeString(menuText, 4, 14);
+                // Stop Frequency
+                Jammer::settings.stop = Jammer::settings.fc + (Jammer::settings.BW/2);
+                snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                safeString(menuText, 5, 14);
             }
             else
             {
-                Jammer::settings.stop = MAX_FREQ_HZ;
-                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", Jammer::settings.stop / 1000000.0f);
-                safeString(menuText, 3, 14);
-                showChannelHint_Stop(Jammer::settings.stop, 500);
+                UI::splash("At Limit", 1000);
+                toggleSetting(cursorPos);
             }
             break;
         case ButtonDown:
-            if((Jammer::settings.stop - FREQ_STEP_HZ) >= Jammer::settings.start)
+            if(Jammer::settings.BW == 0)
             {
-                Jammer::settings.stop -= FREQ_STEP_HZ;
-                snprintf(menuText, sizeof(menuText), "Stop:  %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                UI::splash("At Limit", 1000);
+                toggleSetting(cursorPos);
+            }
+            else
+            {
+                Jammer::settings.BW -= FREQ_STEP_HZ;
+                snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
                 safeString(menuText, 3, 14);
-                showChannelHint_Stop(Jammer::settings.stop, 500);
+                /* Update other dependent frequency variables */
+                // Start Frequency
+                Jammer::settings.start = Jammer::settings.fc - (Jammer::settings.BW/2);
+                snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                safeString(menuText, 4, 14);
+                // Stop Frequency
+                Jammer::settings.stop = Jammer::settings.fc + (Jammer::settings.BW/2);
+                snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                safeString(menuText, 5, 14);
             }
             break;
         case ButtonSelect:
@@ -440,31 +649,386 @@ void UI::doJammerFreqStop(buttonStates action)
     }
 }
 
-void UI::doJammerRate(buttonStates action)
+void UI::doItem_JammerFreqStart(buttonStates action)
+{
+    char menuText[21];
+    uint64_t f_start;
+    uint64_t f_stop;
+
+    switch(action)
+    {
+        case ButtonUp:
+            /* Prevent user from exceeding frequency limits */
+            if(Jammer::settings.fmod == Force)
+            {
+                // Calculate Start and Stop Frequency
+                RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+                if((Jammer::settings.start + FREQ_STEP_HZ) > f_stop)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    /* Check limits */
+                    if((Jammer::settings.start + FREQ_STEP_HZ) > Jammer::settings.stop)
+                    {
+                        UI::splash("At Limit", 1000);
+                        toggleSetting(cursorPos);
+                    }
+                    else
+                    {
+                        Jammer::settings.start += FREQ_STEP_HZ;
+                        snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                        safeString(menuText, 4, 14);
+                        /* Update other dependent frequency variables */
+                        // BW
+                        Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                        snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                        safeString(menuText, 3, 14);
+                    }
+                }
+            }
+            else
+            {
+                /* Check limits */
+                if((Jammer::settings.start + FREQ_STEP_HZ) > Jammer::settings.stop)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    Jammer::settings.start += FREQ_STEP_HZ;
+                    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                    safeString(menuText, 4, 14);
+                    /* Update other dependent frequency variables */
+                    // Centre Frequency
+                    Jammer::settings.fc = Jammer::settings.start + ((Jammer::settings.stop - Jammer::settings.start)/2);
+                    snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+                    safeString(menuText, 2, 14);
+                    // BW
+                    Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                    snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                    safeString(menuText, 3, 14);
+                }
+            }
+            break;
+        case ButtonDown:
+            /* Prevent user from exceeding frequency limits */
+            if(Jammer::settings.fmod == Force)
+            {
+                // Calculate Start and Stop Frequency
+                RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+                if((Jammer::settings.start - FREQ_STEP_HZ) < f_start)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    /* Check limits */
+                    if((Jammer::settings.start - FREQ_STEP_HZ) < MIN_FREQ_HZ)
+                    {
+                        UI::splash("At Limit", 1000);
+                        toggleSetting(cursorPos);
+                    }
+                    else
+                    {
+                        Jammer::settings.start -= FREQ_STEP_HZ;
+                        snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                        safeString(menuText, 4, 14);
+                        /* Update other dependent frequency variables */
+                        // BW
+                        Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                        snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                        safeString(menuText, 3, 14);
+                    }
+                }
+            }
+            else
+            {
+                /* Check limits */
+                if((Jammer::settings.start - FREQ_STEP_HZ) < MIN_FREQ_HZ)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    Jammer::settings.start -= FREQ_STEP_HZ;
+                    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                    safeString(menuText, 4, 14);
+                    /* Update other dependent frequency variables */
+                    // Centre Frequency
+                    Jammer::settings.fc = Jammer::settings.start + ((Jammer::settings.stop - Jammer::settings.start)/2);
+                    snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+                    safeString(menuText, 2, 14);
+                    // BW
+                    Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                    snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                    safeString(menuText, 3, 14);
+                }
+            }
+            break;
+        case ButtonSelect:
+        case ButtonLeft:
+        case ButtonRight:
+        default:
+            toggleSetting(cursorPos);
+            break;
+    }
+}
+
+void UI::doItem_JammerFreqStop(buttonStates action)
+{
+    char menuText[21];
+    uint64_t f_start;
+    uint64_t f_stop;
+
+    switch(action)
+    {
+        case ButtonUp:
+            /* Prevent user from exceeding frequency limits */
+            if(Jammer::settings.fmod == Force)
+            {
+                // Calculate Start and Stop Frequency
+                RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+                if((Jammer::settings.stop + FREQ_STEP_HZ) > f_stop)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    /* Check limits */
+                    if((Jammer::settings.stop + FREQ_STEP_HZ) > MAX_FREQ_HZ)
+                    {
+                        UI::splash("At Limit", 1000);
+                        toggleSetting(cursorPos);
+                    }
+                    else
+                    {
+                        Jammer::settings.stop += FREQ_STEP_HZ;
+                        snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                        safeString(menuText, 5, 14);
+                        /* Update other dependent frequency variables */
+                        // BW
+                        Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                        snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                        safeString(menuText, 3, 14);
+                    }
+                }
+            }
+            else
+            {
+                /* Check limits */
+                if((Jammer::settings.stop + FREQ_STEP_HZ) > MAX_FREQ_HZ)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    Jammer::settings.stop += FREQ_STEP_HZ;
+                    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                    safeString(menuText, 5, 14);
+                    /* Update other dependent frequency variables */
+                    // Centre Frequency
+                    Jammer::settings.fc = Jammer::settings.start + ((Jammer::settings.stop - Jammer::settings.start)/2);
+                    snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+                    safeString(menuText, 2, 14);
+                    // BW
+                    Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                    snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                    safeString(menuText, 3, 14);
+                }
+            }
+            break;
+        case ButtonDown:
+            /* Prevent user from exceeding frequency limits */
+            if(Jammer::settings.fmod == Force)
+            {
+                // Calculate Start and Stop Frequency
+                RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+                if((Jammer::settings.stop - FREQ_STEP_HZ) < f_start)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    /* Check limits */
+                    if((Jammer::settings.stop - FREQ_STEP_HZ) < Jammer::settings.start)
+                    {
+                        UI::splash("At Limit", 1000);
+                        toggleSetting(cursorPos);
+                    }
+                    else
+                    {
+                        Jammer::settings.stop -= FREQ_STEP_HZ;
+                        snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                        safeString(menuText, 5, 14);
+                        /* Update other dependent frequency variables */
+                        // BW
+                        Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                        snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                        safeString(menuText, 3, 14);
+                    }
+                }
+            }
+            else
+            {
+                /* Check limits */
+                if((Jammer::settings.stop - FREQ_STEP_HZ) < Jammer::settings.start)
+                {
+                    UI::splash("At Limit", 1000);
+                    toggleSetting(cursorPos);
+                }
+                else
+                {
+                    Jammer::settings.stop -= FREQ_STEP_HZ;
+                    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                    safeString(menuText, 5, 14);
+                    /* Update other dependent frequency variables */
+                    // Centre Frequency
+                    Jammer::settings.fc = Jammer::settings.start + ((Jammer::settings.stop - Jammer::settings.start)/2);
+                    snprintf(menuText, sizeof(menuText), "Fc:     %4.2f MHz", Jammer::settings.fc / 1000000.0f);
+                    safeString(menuText, 2, 14);
+                    // BW
+                    Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                    snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                    safeString(menuText, 3, 14);
+                }
+            }
+            break;
+        case ButtonSelect:
+        case ButtonLeft:
+        case ButtonRight:
+        default:
+            toggleSetting(cursorPos);
+            break;
+    }
+}
+
+void UI::doItem_JammerFMOD(buttonStates action)
+{
+    switch(action)
+    {
+        case ButtonSelect:
+        case ButtonRight:
+        case ButtonLeft:
+            toggleSetting(cursorPos);
+            break;
+        case ButtonUp:
+            switch(Jammer::settings.fmod)
+            {
+                case Auto:
+                    Jammer::settings.fmod = Off;
+                    drawItem_JammerFMOD(2, Jammer::settings.fmod);
+                    break;
+                case Force:
+                    Jammer::settings.fmod = Auto;
+                    drawItem_JammerFMOD(2, Jammer::settings.fmod);
+                    /* Reset Centre Frequency to default */
+                    Jammer::settings.fc = JAMMER_SETTINGS_DEFAULT_FC_HZ;
+                    break;
+                case Off:
+                    Jammer::settings.fmod = Force;
+                    drawItem_JammerFMOD(2, Jammer::settings.fmod);
+                    break;
+            }
+            break;
+        case ButtonDown:
+            switch(Jammer::settings.fmod)
+            {
+                case Auto:
+                    Jammer::settings.fmod = Force;
+                    drawItem_JammerFMOD(2, Jammer::settings.fmod);
+                    break;
+                case Force:
+                    Jammer::settings.fmod = Off;
+                    drawItem_JammerFMOD(2, Jammer::settings.fmod);
+                    /* Reset Centre Frequency to default */
+                    Jammer::settings.fc = JAMMER_SETTINGS_DEFAULT_FC_HZ;
+                    break;
+                case Off:
+                    Jammer::settings.fmod = Auto;
+                    drawItem_JammerFMOD(2, Jammer::settings.fmod);
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void UI::doItem_JammerAlgorithm(buttonStates action)
+{
+    switch(action)
+    {
+        case ButtonSelect:
+        case ButtonRight:
+        case ButtonLeft:
+            toggleSetting(cursorPos);
+            break;
+        case ButtonUp:
+            switch(Jammer::settings.algorithm)
+            {
+                case Sawtooth:
+                    Jammer::settings.algorithm = Random;
+                    drawItem_JammerAlgorithm(3, Jammer::settings.algorithm);
+                    break;
+                case Triangle:
+                    Jammer::settings.algorithm = Sawtooth;
+                    drawItem_JammerAlgorithm(3, Jammer::settings.algorithm);
+                    break;
+                case Random:
+                    Jammer::settings.algorithm = Triangle;
+                    drawItem_JammerAlgorithm(3, Jammer::settings.algorithm);
+                    break;
+            }
+            break;
+        case ButtonDown:
+            switch(Jammer::settings.algorithm)
+            {
+                case Sawtooth:
+                    Jammer::settings.algorithm = Triangle;
+                    drawItem_JammerAlgorithm(3, Jammer::settings.algorithm);
+                    break;
+                case Triangle:
+                    Jammer::settings.algorithm = Random;
+                    drawItem_JammerAlgorithm(3, Jammer::settings.algorithm);
+                    break;
+                case Random:
+                    Jammer::settings.algorithm = Sawtooth;
+                    drawItem_JammerAlgorithm(3, Jammer::settings.algorithm);
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void UI::doItem_JammerRate(buttonStates action)
 {
     char menuText[21];
 
     switch(action)
     {
         case ButtonUp:
-            // Special case: saturate rate value for Random Algorithm
-            if((Jammer::settings.algorithm == ScanRandom) && ((Jammer::settings.rate + RATE_STEP_HZ) > MAX_RATE_HZ_NO_FMOD))
-            {
-                Jammer::settings.rate = MAX_RATE_HZ_NO_FMOD;
-                snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
-                safeString(menuText, 6, 14);
-            }
-            else if((Jammer::settings.rate + RATE_STEP_HZ) <= MAX_RATE_HZ)
+            if((Jammer::settings.rate + RATE_STEP_HZ) <= MAX_RATE_HZ)
             {
                 Jammer::settings.rate += RATE_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
-                safeString(menuText, 6, 14);
+                safeString(menuText, 4, 14);
             }
             else
             {
                 Jammer::settings.rate = MAX_RATE_HZ;
                 snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
-                safeString(menuText, 6, 14);
+                safeString(menuText, 4, 14);
             }
             break;
         case ButtonDown:
@@ -472,7 +1036,7 @@ void UI::doJammerRate(buttonStates action)
             {
                 Jammer::settings.rate -= RATE_STEP_HZ;
                 snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
-                safeString(menuText, 6, 14);
+                safeString(menuText, 4, 14);
             }
             break;
         case ButtonSelect:
@@ -484,74 +1048,33 @@ void UI::doJammerRate(buttonStates action)
     }
 }
 
-void UI::doJammerAlgorithm(buttonStates action)
+void UI::doItem_WaitForPLLLock(buttonStates action)
+{
+    switch(action)
+    {
+        case ButtonUp:
+            Jammer::settings.waitForPLLLock = !Jammer::settings.waitForPLLLock;
+            drawItem_JammerWaitForPLLLock(5, Jammer::settings.waitForPLLLock);
+            break;
+        case ButtonDown:
+            Jammer::settings.waitForPLLLock = !Jammer::settings.waitForPLLLock;
+            drawItem_JammerWaitForPLLLock(5, Jammer::settings.waitForPLLLock);
+            break;
+        case ButtonSelect:
+        case ButtonLeft:
+        case ButtonRight:
+        default:
+            toggleSetting(cursorPos);
+            break;
+    }
+}
+
+void UI::doItem_JammerStepSize(buttonStates action)
 {
     char menuText[21];
+    uint64_t f_start;
+    uint64_t f_stop;
 
-    switch(action)
-    {
-        case ButtonSelect:
-        case ButtonRight:
-        case ButtonLeft:
-            toggleSetting(cursorPos);
-            break;
-        case ButtonUp:
-            switch(Jammer::settings.algorithm)
-            {
-                case ScanSawtooth:
-                    Jammer::settings.algorithm = ScanRandom;
-                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
-                    /* Override step setting */
-                    drawJammerStep(5, STEP_NONE);
-                    /* Override rate setting */
-                    Jammer::settings.rate = MAX_RATE_HZ_NO_FMOD;
-                    snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
-                    safeString(menuText, 6, 14);
-                    break;
-                case ScanTriangle:
-                    Jammer::settings.algorithm = ScanSawtooth;
-                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
-                    drawJammerStep(5, SCAN_SETTINGS_DEFAULT_STEPSIZE);
-                    break;
-                case ScanRandom:
-                    Jammer::settings.algorithm = ScanTriangle;
-                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
-                    drawJammerStep(5, SCAN_SETTINGS_DEFAULT_STEPSIZE);
-                    break;
-            }
-            break;
-        case ButtonDown:
-            switch(Jammer::settings.algorithm)
-            {
-                case ScanSawtooth:
-                    Jammer::settings.algorithm = ScanTriangle;
-                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
-                    drawJammerStep(5, SCAN_SETTINGS_DEFAULT_STEPSIZE);
-                    break;
-                case ScanTriangle:
-                    Jammer::settings.algorithm = ScanRandom;
-                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
-                    /* Override step setting */
-                    drawJammerStep(5, STEP_NONE);
-                    /* Override rate setting */
-                    Jammer::settings.rate = MAX_RATE_HZ_NO_FMOD;
-                    snprintf(menuText, sizeof(menuText), "Rate:      %5d Hz", Jammer::settings.rate);
-                    safeString(menuText, 6, 14);
-                    break;
-                case ScanRandom:
-                    Jammer::settings.algorithm = ScanSawtooth;
-                    drawJammerAlgorithm(4,Jammer::settings.algorithm);
-                    drawJammerStep(5, SCAN_SETTINGS_DEFAULT_STEPSIZE);
-                    break;
-            }
-            break;
-        default:
-            break;
-    }
-}
-
-void UI::doJammerStepSize(buttonStates action)
-{
     switch(action)
     {
         case ButtonSelect:
@@ -561,46 +1084,88 @@ void UI::doJammerStepSize(buttonStates action)
             break;
         case ButtonUp:
             /* Only toggle step size if algorithm is not set to RANDOM */
-            if(Jammer::settings.algorithm != ScanRandom)
+            if(Jammer::settings.algorithm != Random)
             {
                 // Step forwards through the cycle
-                if(Jammer::settings.stepSize == STEP_1K_HZ)
-                    Jammer::settings.stepSize = STEP_10K_HZ;
-                else if(Jammer::settings.stepSize == STEP_10K_HZ)
-                    Jammer::settings.stepSize = STEP_25K_HZ;
-                else if(Jammer::settings.stepSize == STEP_25K_HZ)
-                    Jammer::settings.stepSize = STEP_50K_HZ;
-                else if(Jammer::settings.stepSize == STEP_50K_HZ)
-                    Jammer::settings.stepSize = STEP_100K_HZ;
-                else if(Jammer::settings.stepSize == STEP_100K_HZ)
-                    Jammer::settings.stepSize = STEP_250K_HZ;
-                else if(Jammer::settings.stepSize == STEP_250K_HZ)
-                    Jammer::settings.stepSize = STEP_500K_HZ;
-                else if(Jammer::settings.stepSize == STEP_500K_HZ)
-                    Jammer::settings.stepSize = STEP_1M_HZ;
-                drawJammerStep(5,Jammer::settings.stepSize);
+                if(Jammer::settings.step == STEP_1K_HZ)
+                    Jammer::settings.step = STEP_10K_HZ;
+                else if(Jammer::settings.step == STEP_10K_HZ)
+                    Jammer::settings.step = STEP_25K_HZ;
+                else if(Jammer::settings.step == STEP_25K_HZ)
+                    Jammer::settings.step = STEP_50K_HZ;
+                else if(Jammer::settings.step == STEP_50K_HZ)
+                    Jammer::settings.step = STEP_100K_HZ;
+                else if(Jammer::settings.step == STEP_100K_HZ)
+                    Jammer::settings.step = STEP_250K_HZ;
+                else if(Jammer::settings.step == STEP_250K_HZ)
+                    Jammer::settings.step = STEP_500K_HZ;
+                else if(Jammer::settings.step == STEP_500K_HZ)
+                    Jammer::settings.step = STEP_1M_HZ;
+                drawItem_JammerStep(6, Jammer::settings.step);
+
+                /* Update other dependent frequency variables */
+                if(Jammer::settings.fmod == Force)
+                {
+                    // Calculate Start and Stop Frequency
+                    RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+                    Jammer::settings.start = roundToMultiple(f_start, FREQ_STEP_HZ, true);
+                    Jammer::settings.stop = roundToMultiple(f_stop, FREQ_STEP_HZ, false);
+                    // BW
+                    Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                    snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                    safeString(menuText, 3, 14);
+                    // Start Frequency
+                    Jammer::settings.start = Jammer::settings.fc - (Jammer::settings.BW/2);
+                    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                    safeString(menuText, 4, 14);
+                    // Stop Frequency
+                    Jammer::settings.stop = Jammer::settings.fc + (Jammer::settings.BW/2);
+                    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                    safeString(menuText, 5, 14);
+                }
             }
             break;
         case ButtonDown:
             /* Only toggle step size if algorithm is not set to RANDOM */
-            if(Jammer::settings.algorithm != ScanRandom)
+            if(Jammer::settings.algorithm != Random)
             {
                 // Step backwards through the cycle
-                if(Jammer::settings.stepSize == STEP_1M_HZ)
-                    Jammer::settings.stepSize = STEP_500K_HZ;
-                else if(Jammer::settings.stepSize == STEP_500K_HZ)
-                    Jammer::settings.stepSize = STEP_250K_HZ;
-                else if(Jammer::settings.stepSize == STEP_250K_HZ)
-                    Jammer::settings.stepSize = STEP_100K_HZ;
-                else if(Jammer::settings.stepSize == STEP_100K_HZ)
-                    Jammer::settings.stepSize = STEP_50K_HZ;
-                else if(Jammer::settings.stepSize == STEP_50K_HZ)
-                    Jammer::settings.stepSize = STEP_25K_HZ;
-                else if(Jammer::settings.stepSize == STEP_25K_HZ)
-                    Jammer::settings.stepSize = STEP_10K_HZ;
-                else if(Jammer::settings.stepSize == STEP_10K_HZ)
-                    Jammer::settings.stepSize = STEP_1K_HZ;
-                drawJammerStep(5,Jammer::settings.stepSize);
+                if(Jammer::settings.step == STEP_1M_HZ)
+                    Jammer::settings.step = STEP_500K_HZ;
+                else if(Jammer::settings.step == STEP_500K_HZ)
+                    Jammer::settings.step = STEP_250K_HZ;
+                else if(Jammer::settings.step == STEP_250K_HZ)
+                    Jammer::settings.step = STEP_100K_HZ;
+                else if(Jammer::settings.step == STEP_100K_HZ)
+                    Jammer::settings.step = STEP_50K_HZ;
+                else if(Jammer::settings.step == STEP_50K_HZ)
+                    Jammer::settings.step = STEP_25K_HZ;
+                else if(Jammer::settings.step == STEP_25K_HZ)
+                    Jammer::settings.step = STEP_10K_HZ;
+                else if(Jammer::settings.step == STEP_10K_HZ)
+                    Jammer::settings.step = STEP_1K_HZ;
+                drawItem_JammerStep(6, Jammer::settings.step);
+
+                /* Update other dependent frequency variables */
+                if(Jammer::settings.fmod == Force)
+                {
+                    // Calculate Start and Stop Frequency
+                    RFMD_IntSynth::GetFMODFreqLimits(Jammer::settings.fc, Jammer::settings.step, f_start, f_stop);
+                    Jammer::settings.start = roundToMultiple(f_start, FREQ_STEP_HZ, true);
+                    Jammer::settings.stop = roundToMultiple(f_stop, FREQ_STEP_HZ, false);
+                    // BW
+                    Jammer::settings.BW = Jammer::settings.stop - Jammer::settings.start;
+                    snprintf(menuText, sizeof(menuText), "BW:      %6.2f MHz", Jammer::settings.BW / 1000000.0f);
+                    safeString(menuText, 3, 14);
+                    // Start Frequency
+                    Jammer::settings.start = Jammer::settings.fc - (Jammer::settings.BW/2);
+                    snprintf(menuText, sizeof(menuText), "Start:  %4.2f MHz", Jammer::settings.start / 1000000.0f);
+                    safeString(menuText, 4, 14);
+                    // Stop Frequency
+                    Jammer::settings.stop = Jammer::settings.fc + (Jammer::settings.BW/2);
+                    snprintf(menuText, sizeof(menuText), "Stop:   %4.2f MHz", Jammer::settings.stop / 1000000.0f);
+                    safeString(menuText, 5, 14);
+                }
             }
             break;
         default:
@@ -608,7 +1173,7 @@ void UI::doJammerStepSize(buttonStates action)
     }
 }
 
-void UI::doJammerScreen(buttonStates action)
+void UI::doScreen_JammerGeneral(buttonStates action)
 {
     // We're in a setting, let's handle the key press depending on which one
     if(isInSetting)
@@ -616,19 +1181,99 @@ void UI::doJammerScreen(buttonStates action)
         switch(cursorPos)
         {
             case 0:
-                doJammerFreqStart(action);
+                doItem_JammerFMOD(action);
                 break;
             case 1:
-                doJammerFreqStop(action);
+                doItem_JammerAlgorithm(action);
                 break;
             case 2:
-                doJammerAlgorithm(action);
+                doItem_JammerRate(action);
                 break;
             case 3:
-                doJammerStepSize(action);
+                doItem_WaitForPLLLock(action);
                 break;
             case 4:
-                doJammerRate(action);
+                break;
+            default:
+                break;
+        }
+        return;
+    }
+
+    // We're not in a setting, so let's move around the menus
+    switch(action)
+    {
+        case ButtonUp:
+            if(cursorPos>0)
+            {
+                safeFont57(' ', cursorPos+2, 4);
+                cursorPos--;
+                safeFont57(131, cursorPos+2, 4);
+            }
+            break;
+        case ButtonDown:
+            if(cursorPos<3)
+            {
+                safeFont57(' ', cursorPos+2, 4);
+                cursorPos++;
+                safeFont57(131, cursorPos+2, 4);
+            }
+            break;
+        case ButtonLeft:
+            cursorPos = 0;
+            UI::drawScreen(Home);
+            break;
+        case ButtonRight:
+            cursorPos = 0;
+            UI::drawScreen(JammerFrequency);
+            break;
+        case ButtonSelect:
+            switch(cursorPos)
+            {
+                case 0:
+                    toggleSetting(cursorPos);
+                    break;
+                case 1:
+                    toggleSetting(cursorPos);
+                    break;
+                case 2:
+                    toggleSetting(cursorPos);
+                    break;
+                case 3:
+                    toggleSetting(cursorPos);
+                    break;
+                case 4:
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void UI::doScreen_JammerFrequency(buttonStates action)
+{
+    // We're in a setting, let's handle the key press depending on which one
+    if(isInSetting)
+    {
+        switch(cursorPos)
+        {
+            case 0:
+                doItem_JammerFreqCentre(action);
+                break;
+            case 1:
+                doItem_JammerBW(action);
+                break;
+            case 2:
+                doItem_JammerFreqStart(action);
+                break;
+            case 3:
+                doItem_JammerFreqStop(action);
+                break;
+            case 4:
+                doItem_JammerStepSize(action);
                 break;
             default:
                 break;
@@ -657,7 +1302,7 @@ void UI::doJammerScreen(buttonStates action)
             break;
         case ButtonLeft:
             cursorPos = 0;
-            UI::draw(HomeScreen);
+            UI::drawScreen(JammerGeneral);
             break;
         case ButtonRight:
             break;
@@ -665,9 +1310,20 @@ void UI::doJammerScreen(buttonStates action)
             switch(cursorPos)
             {
                 case 0:
+                    toggleSetting(cursorPos);
+                    break;
                 case 1:
+                    if(Jammer::settings.fmod == Force)
+                        splash("Cannot set (AUTO)", 1000);
+                    else
+                        toggleSetting(cursorPos);
+                    break;
                 case 2:
+                    toggleSetting(cursorPos);
+                    break;
                 case 3:
+                    toggleSetting(cursorPos);
+                    break;
                 case 4:
                     toggleSetting(cursorPos);
                     break;
@@ -678,7 +1334,7 @@ void UI::doJammerScreen(buttonStates action)
     }
 }
 
-void UI::doHomeScreen(buttonStates action)
+void UI::doScreen_Home(buttonStates action)
 {
     switch(action)
     {
@@ -686,219 +1342,20 @@ void UI::doHomeScreen(buttonStates action)
             break;
         case ButtonRight:
             cursorPos = 0;
-            UI::draw(JammerScreen);
+            UI::drawScreen(JammerGeneral);
             break;
         default:
             break;
     }
 }
 
-void UI::showChannelHint_Start(uint64_t freq_Hz, int duration_ms)
+uint64_t UI::roundToMultiple(uint64_t numToRound, uint64_t multiple, bool doRoundUp)
 {
-    switch(freq_Hz)
-    {
-        // CH1
-        case 2401000000:
-            UI::splash("Ch 1 (b: 22M BW)", duration_ms);
-            break;
-        case 2402000000:
-            UI::splash("Ch 1 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH2
-        case 2404000000:
-            UI::splash("Ch 2 (b: 22M BW)", duration_ms);
-            break;
-        case 2405000000:
-            UI::splash("Ch 2 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH3
-        case 2411000000:
-            UI::splash("Ch 3 (b: 22M BW)", duration_ms);
-            break;
-        case 2412000000:
-            UI::splash("Ch 3 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH4
-        case 2416000000:
-            UI::splash("Ch 4 (b: 22M BW)", duration_ms);
-            break;
-        case 2417000000:
-            UI::splash("Ch 4 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH5
-        case 2421000000:
-            UI::splash("Ch 5 (b: 22M BW)", duration_ms);
-            break;
-        case 2422000000:
-            UI::splash("Ch 5 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH6
-        case 2426000000:
-            UI::splash("Ch 6 (b: 22M BW)", duration_ms);
-            break;
-        case 2427000000:
-            UI::splash("Ch 6 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH7
-        case 2431000000:
-            UI::splash("Ch 7 (b: 22M BW)", duration_ms);
-            break;
-        case 2432000000:
-            UI::splash("Ch 7 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH8
-        case 2436000000:
-            UI::splash("Ch 8 (b: 22M BW)", duration_ms);
-            break;
-        case 2437000000:
-            UI::splash("Ch 8 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH9
-        case 2441000000:
-            UI::splash("Ch 9 (b: 22M BW)", duration_ms);
-            break;
-        case 2442000000:
-            UI::splash("Ch 9 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH10
-        case 2446000000:
-            UI::splash("Ch 10 (b: 22M BW)", duration_ms);
-            break;
-        case 2447000000:
-            UI::splash("Ch 10 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH11
-        case 2451000000:
-            UI::splash("Ch 11 (b: 22M BW)", duration_ms);
-            break;
-        case 2452000000:
-            UI::splash("Ch 11 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH12
-        case 2456000000:
-            UI::splash("Ch 12 (b: 22M BW)", duration_ms);
-            break;
-        case 2457000000:
-            UI::splash("Ch 12 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH13
-        case 2461000000:
-            UI::splash("Ch 13 (b: 22M BW)", duration_ms);
-            break;
-        case 2462000000:
-            UI::splash("Ch 13 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH14
-        case 2473000000:
-            UI::splash("Ch 14 (b: 22M BW)", duration_ms);
-            break;
-        case 2474000000:
-            UI::splash("Ch 14 (g/n: 20M BW)", duration_ms);
-            break;
-    }
-}
+    if(multiple == 0)
+        return numToRound;
 
-void UI::showChannelHint_Stop(uint64_t freq_Hz, int duration_ms)
-{
-    switch(freq_Hz)
-    {
-        // CH1
-        case 2423000000:
-            UI::splash("Ch 1 (b: 22M BW)", duration_ms);
-            break;
-        case 2422000000:
-            UI::splash("Ch 1 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH2
-        case 2428000000:
-            UI::splash("Ch 2 (b: 22M BW)", duration_ms);
-            break;
-        case 2427000000:
-            UI::splash("Ch 2 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH3
-        case 2433000000:
-            UI::splash("Ch 3 (b: 22M BW)", duration_ms);
-            break;
-        case 2432000000:
-            UI::splash("Ch 3 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH4
-        case 2438000000:
-            UI::splash("Ch 4 (b: 22M BW)", duration_ms);
-            break;
-        case 2437000000:
-            UI::splash("Ch 4 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH5
-        case 2443000000:
-            UI::splash("Ch 5 (b: 22M BW)", duration_ms);
-            break;
-        case 2442000000:
-            UI::splash("Ch 5 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH6
-        case 2448000000:
-            UI::splash("Ch 6 (b: 22M BW)", duration_ms);
-            break;
-        case 2447000000:
-            UI::splash("Ch 6 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH7
-        case 2453000000:
-            UI::splash("Ch 7 (b: 22M BW)", duration_ms);
-            break;
-        case 2452000000:
-            UI::splash("Ch 7 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH8
-        case 2458000000:
-            UI::splash("Ch 8 (b: 22M BW)", duration_ms);
-            break;
-        case 2457000000:
-            UI::splash("Ch 8 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH9
-        case 2463000000:
-            UI::splash("Ch 9 (b: 22M BW)", duration_ms);
-            break;
-        case 2462000000:
-            UI::splash("Ch 9 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH10
-        case 2468000000:
-            UI::splash("Ch 10 (b: 22M BW)", duration_ms);
-            break;
-        case 2467000000:
-            UI::splash("Ch 10 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH11
-        case 2473000000:
-            UI::splash("Ch 11 (b: 22M BW)", duration_ms);
-            break;
-        case 2472000000:
-            UI::splash("Ch 11 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH12
-        case 2478000000:
-            UI::splash("Ch 12 (b: 22M BW)", duration_ms);
-            break;
-        case 2477000000:
-            UI::splash("Ch 12 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH13
-        case 2483000000:
-            UI::splash("Ch 13 (b: 22M BW)", duration_ms);
-            break;
-        case 2482000000:
-            UI::splash("Ch 13 (g/n: 20M BW)", duration_ms);
-            break;
-        // CH14
-        case 2495000000:
-            UI::splash("Ch 14 (b: 22M BW)", duration_ms);
-            break;
-        case 2494000000:
-            UI::splash("Ch 14 (g/n: 20M BW)", duration_ms);
-            break;
-    }
+    uint64_t remainder = numToRound % multiple;
+    if (remainder == 0)
+        return numToRound;
+    return doRoundUp ? (numToRound + multiple - remainder) : (numToRound - remainder);
 }

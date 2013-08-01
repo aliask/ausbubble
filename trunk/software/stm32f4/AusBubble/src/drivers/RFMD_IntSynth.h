@@ -42,6 +42,7 @@
                                                 // External TCXO: Must be between 10MHz and 104MHz
 #define FBKDIV_2                    2           // Prescaler divider (fvco<3.2GHz: 2)
 #define FBKDIV_4                    4           // Prescaler divider (fvco>3.2GHz: 4)
+#define CP_THRESHOLD_VCO_FREQ_HZ    3200000000  // Charge pump setting change threshold (VCO frequency)
 #define USE_SW_CONTROL              0           // Software Control=1, Hardware Control=0 (via ENBL and MODE pins)
 
 // Synthesizer registers
@@ -289,6 +290,7 @@ class RFMD_IntSynth
         static void SetEnabled(bool enable);
         static bool isPLLLocked(void);
         static void SetFreq(uint64_t freq_Hz, bool waitForPLLLock=false, bool useModulation=false);
+        static void GetFMODFreqLimits(uint64_t freq_Hz, int32_t freq_delta_Hz, uint64_t &f_lower_bound, uint64_t &f_upper_bound);
     private:
         static void Write(uint32_t dataBits);
         static void SendAddress(bool write, uint8_t address);
@@ -297,6 +299,7 @@ class RFMD_IntSynth
         static uint16_t Read(uint8_t address);
         static void SetFreqLO(uint64_t f_lo_Hz, bool waitForPLLLock);
         static void GetModParams(int32_t freq_delta_Hz, uint8_t &modstep, int16_t &fmod_step);
+        static void GetFreqRegParams(uint64_t f_lo_Hz, uint16_t &nummsb, uint16_t &numlsb);
         static uint64_t freq_Hz;
         static uint64_t freq_Hz_prev;
         static int32_t freq_delta_Hz;

@@ -90,17 +90,18 @@
 #define STEP_1M_HZ          1000000
 #define STEP_NONE           0
 
-/* Scan settings defaults */
-#define SCAN_SETTINGS_DEFAULT_START_FREQ_HZ     2400000000      /* DO NOT MODIFY */
-#define SCAN_SETTINGS_DEFAULT_STOP_FREQ_HZ      2500000000      /* DO NOT MODIFY */
-#define SCAN_SETTINGS_DEFAULT_ALGO              ScanTriangle    /* DO NOT MODIFY */
-#define SCAN_SETTINGS_DEFAULT_STEPSIZE          STEP_1K_HZ
-#define SCAN_SETTINGS_DEFAULT_RATE_HZ           10000           /* DO NOT MODIFY */
+/* Jammer settings defaults */
+#define JAMMER_SETTINGS_DEFAULT_FMOD              Auto
+#define JAMMER_SETTINGS_DEFAULT_ALGO              Triangle
+#define JAMMER_SETTINGS_DEFAULT_WAIT_FOR_PLL_LOCK true
+#define JAMMER_SETTINGS_DEFAULT_RATE_HZ           10000           /* DO NOT MODIFY */
+#define JAMMER_SETTINGS_DEFAULT_START_FREQ_HZ     2400000000      /* DO NOT MODIFY */
+#define JAMMER_SETTINGS_DEFAULT_STOP_FREQ_HZ      2500000000      /* DO NOT MODIFY */
+#define JAMMER_SETTINGS_DEFAULT_STEP_HZ           STEP_1K_HZ
+#define JAMMER_SETTINGS_DEFAULT_FC_HZ             JAMMER_SETTINGS_DEFAULT_START_FREQ_HZ + (JAMMER_SETTINGS_DEFAULT_STOP_FREQ_HZ - JAMMER_SETTINGS_DEFAULT_START_FREQ_HZ)/2
+#define JAMMER_SETTINGS_DEFAULT_BW_HZ             JAMMER_SETTINGS_DEFAULT_STOP_FREQ_HZ - JAMMER_SETTINGS_DEFAULT_START_FREQ_HZ
 
 /* Synthesizer Frequency */
-// Set Frequency
-#define SETFREQ__WAIT_FOR_PLL_LOCK      true
-#define SETFREQ__USE_FMOD               true
 // Allowable range
 #define MIN_FREQ_HZ                     2400000000          /* DO NOT MODIFY */
 #define MAX_FREQ_HZ                     2500000000          /* DO NOT MODIFY */
