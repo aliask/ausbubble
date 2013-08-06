@@ -40,6 +40,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <math.h>
 /* Specifies the MCU peripherals to use */
 #include "stm32f4xx_conf.h"
@@ -190,6 +191,7 @@ struct Stats
     bool heartbeat;
     float VBAT_V;
     float OnChipTS_T_degC;
+    bool isUSBConnected;
     /* Battery */
     int batteryLevel;
     bool isCharging;
@@ -200,5 +202,8 @@ struct Stats
     float Pout_dBm;
     float RFAmpTS_T_degC;
 };
+
+/* External variables */
+extern struct Stats stats;
 
 #endif

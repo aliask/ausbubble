@@ -47,6 +47,7 @@ void UI::updateStatsData(Stats input)
     stats.heartbeat = input.heartbeat;
     stats.VBAT_V = input.VBAT_V;
     stats.OnChipTS_T_degC = input.OnChipTS_T_degC;
+    stats.isUSBConnected = input.isUSBConnected;
     /* Battery */
     stats.batteryLevel = input.batteryLevel;
     stats.isCharging = input.isCharging;
@@ -65,17 +66,20 @@ void UI::drawHeader(void)
     centredString("AusBubble", 0);
 
     if(stats.isJamming)
-        safeFont57(138, 0, 5);
+        safeFont57(138, 0, 2);
 
     if(stats.isPLLLocked)
-        safeFont57(139, 0, 13);
+        safeFont57(139, 0, 10);
     else
-        safeFont57(140, 0, 13);
+        safeFont57(140, 0, 10);
 
     if(stats.heartbeat)
-        safeFont57(141, 0, 20);
+        safeFont57(141, 0, 18);
 
-    SSD1306_OLED::drawBatt(stats.batteryLevel,97,0);
+    if(stats.isUSBConnected)
+        safeFont57(142, 0, 26);
+
+    SSD1306_OLED::drawBatt(stats.batteryLevel, 97, 0);
 }
 
 void UI::drawScreen(screenStates screen)
