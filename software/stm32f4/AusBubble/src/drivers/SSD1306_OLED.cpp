@@ -389,10 +389,17 @@ void SSD1306_OLED::drawBatt(int level, int x, int row)
         level=0;
 
     setStartPage(row);
-    setStartColumn(x+1);
 
+    /* Draw battery outline */
     for(int i=0;i<27;i++)
-        writeData(0x41);
+    {
+        /* Leave 1-pixel wide gaps for 25%, 50% and 75% on outline (approximate) */
+        if(i!=7 && i!=13 && i!=20)
+        {
+            setStartColumn(x+1+i);
+            writeData(0x41);
+        }
+    }
 
     setStartColumn(x);
     writeData(0x7F);
@@ -403,10 +410,20 @@ void SSD1306_OLED::drawBatt(int level, int x, int row)
     setStartColumn(x+29);
     writeData(0x1C);
 
+    /* 1 pixel per 4 percentage points */
     for(int i=0;i<level/4;i++)
     {
-        setStartColumn(i+x+2);
-        writeData(0x5D);
+        /* Leave 1-pixel wide gaps for 25%, 50% and 75% on outline (approximate) */
+        if(i!=6 && i!=12 && i!=19)
+        {
+            setStartColumn(x+2+i);
+            writeData(0x5D);
+        }
+        else
+        {
+            setStartColumn(x+2+i);
+            writeData(0x1C);
+        }
     }
 }
 
